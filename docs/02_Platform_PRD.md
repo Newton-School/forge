@@ -70,7 +70,7 @@ The platform exists to convert a high-touch, manually-coordinated mentorship pro
 - **Visibility over reporting.** Progress is surfaced from activity (updates, commits, messages, reviews), not assembled by hand.
 - **Accountability loops, not surveillance.** Every role has both a "do your part" surface and a "see who hasn't" surface — including mentees rating mentors (360°).
 - **Configuration over code.** The drive's shape (phases, cadences, thresholds, rubrics) changes year to year; the platform absorbs that through admin configuration.
-- **One journey, many lenses.** The same underlying record is viewed differently by Mentee, Mentor, Team Lead, Teacher, LCC, and Admin — scoped by RBAC.
+- **One journey, many lenses.** The same underlying record is viewed differently by Mentee, Mentor, Teacher, LCC, and Admin — scoped by RBAC.
 - **Closed-loop concerns.** Nothing raised disappears: every blocker and concern becomes a tracked ticket with a defined lifecycle and an escalation path.
 
 ---
@@ -98,8 +98,7 @@ The Summer Profile Building Drive coordinates four tiers of people (Mentees, Stu
 | Stakeholder | Interest in the platform | Success looks like | Pain removed |
 |---|---|---|---|
 | **Mentee** | Clarity on what to do, where they stand, how to get unblocked | Always knows next task/deadline; feedback visible; concerns heard | No more guessing; updates take 2–3 min |
-| **Student Mentor** | Manage ~5 mentees, stay accountable, surface risks | One screen for all mentees; auto-flagged risks; fast review entry | No manual chasing; review entry guided |
-| **Team Lead** | Engineering/delivery ownership of a team | Issue/PR visibility, blocker triage, weekly summary auto-prepared | No manual status compilation |
+| **Student Mentor** *(also leads the team)* | Manage ~5 mentees + own team delivery (issues/PRs, blockers); stay accountable | One screen for mentees + a delivery board; auto-flagged risks; weekly summary auto-prepared | No manual chasing or status compilation |
 | **Teacher / Faculty** | Domain-wide oversight, gate approvals, mentor quality | All groups visible; L4 reviews queued; mentor performance measurable | No spreadsheet hunting; risks pre-surfaced |
 | **LCC** | Cross-domain coordination, accountability, concern resolution | Drive health at a glance; escalations routed; bulk comms in-app | No manual tracking-sheet auditing |
 | **Admin** | System integrity, configuration, user lifecycle | Provision users, configure drive, audit everything | No code changes to reshape the drive |
@@ -114,7 +113,7 @@ The Summer Profile Building Drive coordinates four tiers of people (Mentees, Stu
 
 **P2 — Student Mentor "Mentor A" (manages 5 mentees across squads).** Second-year student. Twice a week sets each mentee's status and an action note; every Saturday writes the weekly review (Progress Summary, Strength, Improvement Area, Mentor Status). Needs a dashboard that pre-flags "No Updates 4+ Days" and "Repeated Blocker" so attention goes where it's needed.
 
-**P3 — Team Lead "Aniket" (SDSE).** Owns delivery for one engineering team. Triages issues/PRs, watches the branch pipeline, escalates stalled PRs, and produces the weekly mentor summary. Needs GitHub-synced issue/PR state and blocker SLAs.
+**P3 — The Mentor's team-delivery hat (no separate Team Lead role).** The same Student Mentor who manages mentees also leads the team's delivery: triages issues/PRs, watches the branch pipeline, escalates stalled PRs, and produces the weekly summary. Needs GitHub-synced issue/PR state and blocker SLAs alongside the mentee tools.
 
 **P4 — Teacher "Bipul Kumar" (Faculty Mentor, one domain).** Reviews all groups in his domain, runs faculty gates (proposal approval, milestone sign-off, final panel), and completes L4 weekly reviews every Sunday. Needs domain-scoped visibility and a review queue, plus mentor-performance signals.
 
@@ -133,61 +132,62 @@ The Summer Profile Building Drive coordinates four tiers of people (Mentees, Stu
 | **Admin** | Global, all data + system config | Everything |
 | **LCC** | Global (read), coordination actions | All domains, teams, users (no system config) |
 | **Teacher** | **Single domain** (or assigned domains) | All teams/mentors/students in their domain(s) |
-| **Mentor** | **Assigned teams/mentees** | Their mentees' full records |
-| **Team Lead** | **Single team** | Their team's members, issues, PRs |
+| **Mentor** | **Assigned team + mentees** (leads the team) | Their mentees' full records + their team's members, issues, PRs |
 | **Mentee** | **Self + own team (limited)** | Own records, team milestones, assigned mentor/teacher |
 
 ### 6.2 Permissions matrix
 
 Legend: ✅ Full · 🔵 Own/assigned scope · 👁 Read-only · ➖ None
 
-| Capability | Admin | LCC | Teacher | Mentor | Team Lead | Mentee |
-|---|:--:|:--:|:--:|:--:|:--:|:--:|
-| **User Management** |||||||
-| Create / invite users | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
-| Edit / deactivate users | ✅ | 👁 | 👁(domain) | ➖ | ➖ | ➖ |
-| Assign roles | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
-| Reset another user's password | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
-| Change own password | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Org Structure** |||||||
-| Manage domains | ✅ | 👁 | 👁(own) | ➖ | ➖ | ➖ |
-| Manage teams/squads/pods | ✅ | 🔵 | 🔵(domain) | 👁 | 👁 | 👁(own) |
-| Assign mentor↔team↔teacher | ✅ | 🔵 | 🔵(domain) | ➖ | ➖ | ➖ |
-| **Drive Configuration** |||||||
-| Configure phases/gates | ✅ | 🔵 | ➖ | ➖ | ➖ | ➖ |
-| Configure milestones/deliverables | ✅ | 🔵 | 🔵(domain) | 🔵(team) | ➖ | ➖ |
-| Configure review cadence/thresholds | ✅ | 🔵 | ➖ | ➖ | ➖ | ➖ |
-| Configure rubrics/weights | ✅ | 🔵 | 🔵(domain) | ➖ | ➖ | ➖ |
-| **Updates & Reviews** |||||||
-| Submit L1 mentee update | ➖ | ➖ | ➖ | ➖ | ➖ | 🔵 |
-| Submit L2 mentor status | ✅ | 👁 | 👁 | 🔵 | ➖ | ➖ |
-| Submit L3 mentor weekly review | ✅ | 👁 | 👁 | 🔵 | ➖ | ➖ |
-| Submit L4 teacher weekly review | ✅ | 👁 | 🔵 | 👁 | ➖ | ➖ |
-| Approve faculty gates | ✅ | 👁 | 🔵 | ➖ | ➖ | ➖ |
-| Submit mentee→mentor feedback (360°) | ➖ | 👁 | 👁 | ➖ | ➖ | 🔵 |
-| **Projects & Tasks** |||||||
-| Create/assign tasks | ✅ | 🔵 | 🔵 | 🔵 | 🔵 | ➖ |
-| Update task progress | ✅ | 👁 | 👁 | 🔵 | 🔵 | 🔵(own) |
-| Approve/reject deliverables | ✅ | 👁 | 🔵 | 🔵 | 🔵 | ➖ |
-| Submit deliverables | ➖ | ➖ | ➖ | ➖ | 🔵 | 🔵 |
-| **Concerns** |||||||
-| Raise concern | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| View concern (own/raised) | ✅ | ✅ | 🔵 | 🔵 | 🔵 | 🔵 |
-| Triage / assign / resolve concern | ✅ | ✅ | 🔵(domain) | ➖ | ➖ | ➖ |
-| **Communications** |||||||
-| Send bulk email | ✅ | ✅ | 🔵(domain) | 🔵(team) | ➖ | ➖ |
-| Send announcement | ✅ | ✅ | 🔵 | 🔵 | 🔵 | ➖ |
-| Manage email templates | ✅ | 🔵 | ➖ | ➖ | ➖ | ➖ |
-| **Analytics & Reporting** |||||||
-| Global analytics | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
-| Domain analytics | ✅ | ✅ | 🔵 | ➖ | ➖ | ➖ |
-| Team analytics | ✅ | ✅ | 🔵 | 🔵 | 🔵 | ➖ |
-| Self analytics | ✅ | ✅ | ✅ | ✅ | ✅ | 🔵 |
-| Generate/export reports | ✅ | ✅ | 🔵 | 🔵 | 🔵 | ➖ |
-| **System** |||||||
-| View audit logs | ✅ | 👁(scoped) | ➖ | ➖ | ➖ | ➖ |
-| Manage integrations (GitHub/Discord/Calendar) | ✅ | 👁 | ➖ | ➖ | ➖ | ➖ |
-| Demerit management | ✅ | 🔵 | 👁 | 👁 | ➖ | ➖ |
+> The **Mentor** column is the merged role: the Student Mentor manages mentees **and** leads team delivery (board/issues/PRs, blockers, team deliverables). There is no separate Team Lead column.
+
+| Capability | Admin | LCC | Teacher | Mentor | Mentee |
+|---|:--:|:--:|:--:|:--:|:--:|
+| **User Management** ||||||
+| Create / invite users | ✅ | ➖ | ➖ | ➖ | ➖ |
+| Edit / deactivate users | ✅ | 👁 | 👁(domain) | ➖ | ➖ |
+| Assign roles | ✅ | ➖ | ➖ | ➖ | ➖ |
+| Reset another user's password | ✅ | ➖ | ➖ | ➖ | ➖ |
+| Change own password | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Org Structure** ||||||
+| Manage domains | ✅ | 👁 | 👁(own) | ➖ | ➖ |
+| Manage teams/squads/pods | ✅ | 🔵 | 🔵(domain) | 👁 | 👁(own) |
+| Assign mentor↔team↔teacher | ✅ | 🔵 | 🔵(domain) | ➖ | ➖ |
+| **Drive Configuration** ||||||
+| Configure phases/gates | ✅ | 🔵 | ➖ | ➖ | ➖ |
+| Configure milestones/deliverables | ✅ | 🔵 | 🔵(domain) | 🔵(team) | ➖ |
+| Configure review cadence/thresholds | ✅ | 🔵 | ➖ | ➖ | ➖ |
+| Configure rubrics/weights | ✅ | 🔵 | 🔵(domain) | ➖ | ➖ |
+| **Updates & Reviews** ||||||
+| Submit L1 mentee update | ➖ | ➖ | ➖ | ➖ | 🔵 |
+| Submit L2 mentor status | ✅ | 👁 | 👁 | 🔵 | ➖ |
+| Submit L3 mentor weekly review | ✅ | 👁 | 👁 | 🔵 | ➖ |
+| Submit L4 teacher weekly review | ✅ | 👁 | 🔵 | 👁 | ➖ |
+| Approve faculty gates | ✅ | 👁 | 🔵 | ➖ | ➖ |
+| Submit mentee→mentor feedback (360°) | ➖ | 👁 | 👁 | ➖ | 🔵 |
+| **Projects & Tasks** ||||||
+| Create/assign tasks | ✅ | 🔵 | 🔵 | 🔵 | ➖ |
+| Update task progress | ✅ | 👁 | 👁 | 🔵 | 🔵(own) |
+| Approve/reject deliverables | ✅ | 👁 | 🔵 | 🔵 | ➖ |
+| Submit deliverables | ➖ | ➖ | ➖ | 🔵(team) | 🔵 |
+| **Concerns** ||||||
+| Raise concern | ✅ | ✅ | ✅ | ✅ | ✅ |
+| View concern (own/raised) | ✅ | ✅ | 🔵 | 🔵 | 🔵 |
+| Triage / assign / resolve concern | ✅ | ✅ | 🔵(domain) | ➖ | ➖ |
+| **Communications** ||||||
+| Send bulk email | ✅ | ✅ | 🔵(domain) | 🔵(team) | ➖ |
+| Send announcement | ✅ | ✅ | 🔵 | 🔵 | ➖ |
+| Manage email templates | ✅ | 🔵 | ➖ | ➖ | ➖ |
+| **Analytics & Reporting** ||||||
+| Global analytics | ✅ | ✅ | ➖ | ➖ | ➖ |
+| Domain analytics | ✅ | ✅ | 🔵 | ➖ | ➖ |
+| Team analytics | ✅ | ✅ | 🔵 | 🔵 | ➖ |
+| Self analytics | ✅ | ✅ | ✅ | ✅ | 🔵 |
+| Generate/export reports | ✅ | ✅ | 🔵 | 🔵 | ➖ |
+| **System** ||||||
+| View audit logs | ✅ | 👁(scoped) | ➖ | ➖ | ➖ |
+| Manage integrations (GitHub/Discord/Calendar) | ✅ | 👁 | ➖ | ➖ | ➖ |
+| Demerit management | ✅ | 🔵 | 👁 | 👁 | ➖ |
 
 > **Enforcement principle:** RBAC is enforced server-side on every API call via (a) **role** and (b) **scope** (domain/team/self ownership). The matrix above is the canonical authorization spec; the UI hides what the API forbids, but the API is the boundary.
 
@@ -209,7 +209,7 @@ Requirements are grouped by capability area. **FR-x.y** identifiers are stable r
 ### 7.2 Organizational Structure
 - **FR-2.1** Admin/LCC manage **Domains** (AI, ML, SDSE, + arbitrary new domains) with a domain **governance profile** (team model, default milestones, branch policy, rubric).
 - **FR-2.2** Manage **Teams** (aliased per domain as Pod/Group/Team/Squad) within a domain, each with a name, mentor, teacher, and members.
-- **FR-2.3** Assign relationships: **Teacher→Domain**, **Mentor→Team(s)**, **Mentee→Team**, **Team Lead→Team**. A mentor may hold multiple teams; a mentee belongs to exactly one team per drive.
+- **FR-2.3** Assign relationships: **Teacher→Domain**, **Mentor→Team(s)**, **Mentee→Team**. A mentor may hold multiple teams; a mentee belongs to exactly one team per drive.
 - **FR-2.4** Support a **Squad** cross-cut (Alpha/Beta/Gamma) independent of team, as seen in tracking sheets.
 
 ### 7.3 Mentee Experience (L1)
@@ -227,7 +227,7 @@ Requirements are grouped by capability area. **FR-x.y** identifiers are stable r
 - **FR-4.5** **Schedule reviews/meetings** (calendar), **track attendance**, **track milestone completion**, **view GitHub/Discord activity** per mentee.
 - **FR-4.6** **Send announcements** to assigned teams; **raise concerns**.
 
-### 7.5 Team Lead Experience
+### 7.5 Mentor — Team Delivery (the Mentor leads the team; no separate Team Lead role)
 - **FR-5.1** View team members, assigned **issues** and **pull requests** (GitHub-synced), branch-pipeline status.
 - **FR-5.2** Triage issues, flag **blockers** with SLA timers, escalate stalled PRs.
 - **FR-5.3** Auto-assembled **weekly mentor summary** draft (from issues/PRs/updates).
@@ -249,7 +249,7 @@ Requirements are grouped by capability area. **FR-x.y** identifiers are stable r
 - **FR-7.6** Manage hackathons, peer interviews, inter-group presentations, engagement events as **calendar + tracked activities**.
 
 ### 7.8 Concern Management System
-- **FR-8.1** Any role can **raise a concern** with: **Category** (`Mentor`, `Mentee`, `Teacher`, `Team Lead`, `Team Member`, `Domain Issue`, `Technical Issue`, `Process Issue`, `Other`), title, description, severity, optional attachments, optional anonymity.
+- **FR-8.1** Any role can **raise a concern** with: **Category** (`Mentor`, `Mentee`, `Teacher`, `Team Member`, `Domain Issue`, `Technical Issue`, `Process Issue`, `Other`), title, description, severity, optional attachments, optional anonymity.
 - **FR-8.2** On submit, the system **creates a ticket** and **auto-generates an email** to **LCC**, **CC** the configured organizing-team contacts (default: Nipun Sir, Kushagra Sir).
 - **FR-8.3** **Ticket lifecycle** (configurable): `Open → Acknowledged → In Progress → Escalated → Resolved → Closed` (+ `Reopened`). Each transition is logged with actor, timestamp, note.
 - **FR-8.4** **SLA timers** per severity; breach triggers escalation + notification.
@@ -468,7 +468,7 @@ audit_logs(id, actor_fk, action, entity_type, entity_id, before_json, after_json
 `Email Center → Compose → subject + rich body + attachments → select recipients by Domain/Team/Role/individuals → Send now or Schedule → delivery status tracked per recipient.`
 
 ### 11.7 System (automated): missed deadline
-`Scheduler evaluates escalation_rules → finds deliverable overdue / no update ≥ threshold → sets flag (🟡/🔴) → sends notification to Student + Mentor + Team Lead, CC relevant members per notification_rules → logs event → surfaces on dashboards.`
+`Scheduler evaluates escalation_rules → finds deliverable overdue / no update ≥ threshold → sets flag (🟡/🔴) → sends notification to Student + Mentor, CC relevant members per notification_rules → logs event → surfaces on dashboards.`
 
 ---
 
@@ -479,7 +479,7 @@ Text descriptions of primary screens (layout intent, not pixel design).
 - **Login / First-run.** Centered card: email + password, "forgot password." First login intercepts with a forced "set new password" screen. No signup link anywhere.
 - **Mentee Dashboard.** Top: identity strip (mentor, teacher, team, domain, squad). Left column: "Next up" (upcoming deadlines, pending update CTA, pending weekly review). Center: tabs — *Milestones/Phases*, *Tasks*, *Submissions/Deliverables*, *Feedback*. Right rail: activity (GitHub commits, Discord, calendar). Persistent "Submit Update" and "Raise Concern" buttons.
 - **Mentor Dashboard.** A **table of mentees** (the L2 dashboard): columns Updates-This-Week, Last Update, Blocker Streak, Status (colour chip 🟢🟡🔴), Days Since Update, L2 Comment, Action Needed. Row click → mentee detail (update history, projects, GitHub/Discord, feedback). Tabs: *My Mentees*, *Weekly Reviews (L3)*, *Tasks*, *Reviews/Calendar*, *Announcements*.
-- **Team Lead Console.** Kanban of issues/PRs synced from GitHub (`Backlog/In Progress/In Review/Done/Released`); blocker panel with SLA timers; "Generate weekly summary" button.
+- **Mentor — Team Delivery Console.** Kanban of issues/PRs synced from GitHub (`Backlog/In Progress/In Review/Done/Released`); blocker panel with SLA timers; "Generate weekly summary" button. (Lives under the Mentor role, which leads the team.)
 - **Teacher Dashboard.** Domain selector (if multiple). Top metrics: teams on-track/at-risk, pending gates, L4 queue count. Center: *Groups* grid (each card shows mentor, milestone %, flags), *L4 Review Queue*, *Gates*, *Mentor Performance*, *Reports*.
 - **LCC Console.** Global drive-health header (completion %, delayed deliverables, inactive teams, open concerns/escalations). Tabs: *Domains Overview* (comparison), *Concern Queue*, *Email Center*, *Onboarding Tracker*, *Demerits*, *Events/Hackathons*.
 - **Admin Console.** Tabs: *Users* (create/import/roles), *Org Structure* (domains/teams/assignments), *Drive Configuration* (phases, gates, review cycles, escalation thresholds, rubrics, deliverable types), *Email Templates*, *Integrations*, *Audit Logs*.
@@ -580,7 +580,7 @@ All integrations follow a common pattern: **OAuth/app credentials stored encrypt
 - **Tracked:** commits, pull requests, issues, reviews, branch activity, repository contribution, milestone completion.
 - **Mechanism:** webhooks (`push`, `pull_request`, `issues`, `pull_request_review`, `milestone`) for real-time; nightly reconciliation pull for completeness.
 - **Mapping:** GitHub usernames ↔ `users.github_username`; PR/issue state mapped to platform task/milestone status where linked (`Closes #N`).
-- **Used by:** Team Lead console, GitHub analytics (commits/PRs/docs → 25% top-team weight), inactivity flags.
+- **Used by:** Mentor team-delivery console, GitHub analytics (commits/PRs/docs → 25% top-team weight), inactivity flags.
 - **Degradation:** if unavailable, dashboards show "last synced" timestamp; manual progress entry still works.
 
 ### 14.2 Discord
@@ -632,24 +632,24 @@ All triggers are **rule-driven** (`notification_rules` + `escalation_rules`) and
 | # | Trigger | Default audience | CC | Channels | Default rule param |
 |---|---|---|---|---|---|
 | 1 | **Upcoming deadline** | Student, Mentor | — | In-app, Email | T-48h (config) |
-| 2 | **Missed deadline** | **Student, Mentor, Team Lead** | relevant members | In-app, Email | At due+0 |
+| 2 | **Missed deadline** | **Student, Mentor** | relevant members | In-app, Email | At due+0 |
 | 3 | **New task assigned** | Assignee | Mentor | In-app, Email | On assign |
 | 4 | **Deliverable due** | Owner | Mentor | In-app, Email | T-24h |
-| 5 | **Deliverable overdue** | **Student, Mentor, Team Lead** | Teacher | In-app, Email | due+0 |
+| 5 | **Deliverable overdue** | **Student, Mentor** | Teacher | In-app, Email | due+0 |
 | 6 | **Milestone completed** | Team, Mentor, Teacher | LCC | In-app | On sign-off |
 | 7 | **Review scheduled** | Attendees | — | In-app, Email, Calendar | On create |
 | 8 | **Review missed** | Mentor, Teacher | LCC | In-app, Email | After window |
 | 9 | **Weekly update pending** | Student | Mentor | In-app, Email | Per cadence |
 | 10 | **Mentor feedback added** | Mentee | — | In-app | On submit |
-| 11 | **Team inactive** | Mentor, Team Lead, Teacher | LCC | In-app, Email | No activity ≥ threshold |
-| 12 | **GitHub inactivity** | Student, Mentor | Team Lead | In-app, Email | No commits ≥ threshold |
+| 11 | **Team inactive** | Mentor, Teacher | LCC | In-app, Email | No activity ≥ threshold |
+| 12 | **GitHub inactivity** | Student, Mentor | Teacher | In-app, Email | No commits ≥ threshold |
 | 13 | **Discord inactivity** | Student, Mentor | LCC | In-app | No activity ≥ threshold |
 | + | **Inactivity flags** (🟡/🔴) | Mentor | Teacher (on 🔴) | In-app | 3d→🟡, 5d→🔴 (config) |
 | + | **Mentor not reviewing** | Teacher | LCC | In-app, Email | No feedback ≥ 1 wk |
 | + | **Blocker stale** | Faculty/Teacher | LCC | In-app, Email | Unresolved ≥ 3d |
 | + | **Concern raised / SLA breach** | LCC | organizing team | Email, In-app | On raise / SLA due |
 
-> **Missed-task rule (explicit per mandate):** when a task/deliverable is missed, email **Student + Mentor + Team Lead**, with all relevant members in **CC**.
+> **Missed-task rule (explicit per mandate):** when a task/deliverable is missed, email **Student + Mentor**, with all relevant members in **CC**.
 
 ---
 
@@ -791,8 +791,8 @@ The minimum that replaces the spreadsheets and delivers the core accountability 
 Automation and external truth.
 
 - **Email Center** (§15): compose, attachments, recipient targeting, send/schedule, templates.
-- **Full automated notification matrix** (§16) across in-app + email, with configurable rules and the explicit missed-task routing (Student+Mentor+Team Lead, CC members).
-- **GitHub integration** (§14.1): activity sync, Team Lead console, GitHub analytics, inactivity flags.
+- **Full automated notification matrix** (§16) across in-app + email, with configurable rules and the explicit missed-task routing (Student+Mentor, CC members).
+- **GitHub integration** (§14.1): activity sync, Mentor team-delivery console, GitHub analytics, inactivity flags.
 - **Discord integration** (§14.2): onboarding tracker, participation analytics, inactivity flags, announcement fan-out.
 - **Google Calendar integration** (§14.3): review scheduling, deadlines, milestones, events.
 - **360° mentor feedback** (FR-3.4) and **mentor-performance analytics**.
