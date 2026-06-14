@@ -59,7 +59,9 @@ The SPBD is a mentor-driven, cohort-based program that turns an idle summer into
 
 ## 3. Roles & Responsibilities (Consolidated)
 
-The platform mandate specifies six roles: **Admin, LCC, Teacher, Mentor, Team Lead, Mentee**. Below is each role as evidenced in the source documents, with terminology reconciled.
+The platform implements **five roles**: **Admin, LCC, Teacher, Mentor, Mentee**. Below is each role as evidenced in the source documents, with terminology reconciled.
+
+> **Platform decision — Mentor = Team Lead.** In the Profile Building Drive itself, each group has a single **Student Mentor** who *leads* the team (PRD.md, the PDF, and ML's "Group leaders and mentors"). The separate "Team Lead" role only appears in the SDSE DevClub *engineering* handbook (a reference program). The platform therefore **merges Team Lead into Mentor**: the Student Mentor both manages mentees (L2/L3) and owns team delivery (board/issues/PRs, blockers, team deliverables). The "Team Lead" row below is retained only to document the source material.
 
 | Platform Role | Source terms | Core responsibilities (evidenced) |
 |---|---|---|
@@ -67,7 +69,7 @@ The platform mandate specifies six roles: **Admin, LCC, Teacher, Mentor, Team Le
 | **LCC** | "Learner Career Council" (PRD.md) / "Leadership & Coordination Committee" (PDF) — *terminology conflict, both = LCC* | Discord onboarding & community mgmt; mentor/mentee tracking; evaluation management; faculty coordination; team coordination; hackathon planning; **demerit & accountability management**; **issue resolution (first point of contact)**; engagement activities; reporting & operational oversight |
 | **Teacher** | "Faculty", "Faculty Mentor" | Owns a domain; reviews all groups under them; weekly review meetings; reviews proposals (faculty gate); milestone sign-off; final panel scoring; **L4 weekly review (Teacher Decision + Notes, Sundays)**; escalate to LCC |
 | **Mentor** | "Student Mentor" (2nd-year student) | Skill assessment (Phase 1); assign tasks & resources; break project into milestones; **L2 status updates every 2 days**; **L3 weekly review (Sat: Progress Summary, Strength, Improvement Area, Mentor Status)**; resolve blockers; provide feedback |
-| **Team Lead** | DevClub "Team Lead" (2–3 per SDSE team); AI "Maintainer (Student Leader)" | Engineering/delivery ownership; breaks PRD into issues; assigns work; reviews PRs; runs standup; prepares weekly mentor summary; **first escalation point**; sign-off on promotions. *(Most formalized in SDSE; AI's "Maintainer" is the analog; absent as a distinct role in ML.)* |
+| ~~**Team Lead**~~ → **merged into Mentor** | DevClub "Team Lead" (2–3 per SDSE team); AI "Maintainer (Student Leader)" | Engineering/delivery ownership; breaks PRD into issues; assigns work; reviews PRs; runs standup; prepares weekly summary; **first escalation point**; sign-off on promotions. *(Source: most formalized in SDSE; AI's "Maintainer" is the analog; absent in ML. **In the platform these duties belong to the Mentor** — see the decision note above.)* |
 | **Mentee** | "Student", "Participant", "Contributor", "Junior Developer" | **L1 updates every 2 days** (5 fields); complete assigned tasks/exercises; build group + individual projects; submit deliverables; participate in hackathons/presentations/peer interviews; raise blockers/concerns |
 
 **Organizing Team (above LCC):** Named individuals **Nipun Sir** and **Kushagra Sir** are the CC/escalation recipients for concerns — modeled in the platform as a configurable "escalation contact" group, not a login role per se (though they may also hold Admin/LCC accounts).
