@@ -1,0 +1,93 @@
+# Build → push to ECR → roll out to ECS (Fargate). One job per app; only the
+# changed app rebuilds. Auth to AWS via OIDC (no long-lived keys in GitHub).
+# See docs/infra-ecs.md §15 (deployment flow).
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Target environment"
+        type: choice
+        options: [staging, prod]
+        default: staging
+
+permissions:
+  id-token: write   # for AWS OIDC
+  contents: read
+
+env:
+  AWS_REGION: ap-south-1
+  ENVIRONMENT: ${{ github.event.inputs.env || 'staging' }}
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      client: ${{ steps.f.outputs.client }}
+      server: ${{ steps.f.outputs.server }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: f
+        with:
+          filters: |
+            client: ['client/**', 'docker/client.Dockerfile']
+            server: ['server/**', 'docker/server.Dockerfile', 'client/prisma/**']
+
+  deploy:
+    needs: changes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [client, server]
+    steps:
+      - name: Skip if app unchanged
+        id: gate
+        run: |
+          changed="${{ matrix.app == 'client' && needs.changes.outputs.client || needs.changes.outputs.server }}"
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.changed == 'true'
+
+      - name: Configure AWS (OIDC, scoped deploy role)
+        if: steps.gate.outputs.changed == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/forge-github-deploy-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        if: steps.gate.outputs.changed == 'true'
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push image
+        if: steps.gate.outputs.changed == 'true'
+        env:
+          REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+        run: |
+          IMAGE="$REGISTRY/forge-${{ matrix.app }}:${{ github.sha }}"
+          docker build -f docker/${{ matrix.app }}.Dockerfile --target runner -t "$IMAGE" ./${{ matrix.app }}
+          docker push "$IMAGE"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Render task definition
+        if: steps.gate.outputs.changed == 'true'
+        id: taskdef
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: infra/ecs/task-def.${{ matrix.app }}.json
+          container-name: ${{ matrix.app }}
+          image: ${{ env.IMAGE }}
+
+      - name: Deploy to ECS (rolling, with circuit breaker)
+        if: steps.gate.outputs.changed == 'true'
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.taskdef.outputs.task-definition }}
+          service: forge-${{ matrix.app }}-${{ env.ENVIRONMENT }}
+          cluster: forge-${{ env.ENVIRONMENT }}
+          wait-for-service-stability: true

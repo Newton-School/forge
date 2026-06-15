@@ -1,0 +1,42 @@
+{
+  "_comment": "ECS Fargate task definition — CLIENT (Next.js SSR). The client holds NO secrets and never calls the DB/integrations; it only reaches the server API. Placeholders: <ACCOUNT_ID>, <REGION>, <ENV>, <IMAGE_TAG>. See docs/infra-ecs.md.",
+  "family": "forge-client-<ENV>",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "runtimePlatform": { "cpuArchitecture": "X86_64", "operatingSystemFamily": "LINUX" },
+  "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/forge-ecs-execution-role",
+  "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/forge-client-task-role",
+  "tags": [
+    { "key": "app", "value": "forge" },
+    { "key": "env", "value": "<ENV>" }
+  ],
+  "containerDefinitions": [
+    {
+      "name": "client",
+      "image": "<ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/forge-client:<IMAGE_TAG>",
+      "essential": true,
+      "portMappings": [{ "containerPort": 3000, "protocol": "tcp" }],
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "3000" },
+        { "name": "APP_MODE", "value": "production" },
+        { "name": "NEXT_PUBLIC_API_URL", "value": "https://app.<your-domain>/api" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/forge/<ENV>/client",
+          "awslogs-region": "<REGION>",
+          "awslogs-stream-prefix": "client"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ || exit 1"],
+        "interval": 30, "timeout": 5, "retries": 3, "startPeriod": 20
+      },
+      "readonlyRootFilesystem": false
+    }
+  ]
+}
