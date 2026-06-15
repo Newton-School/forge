@@ -1,4 +1,4 @@
-# Architecture — Profile Building Drive Management Platform (PBDMP)
+# Architecture — Profile Building Drive Management Platform (Forge)
 
 > Companion docs: [ui-ux.md](./ui-ux.md) · [security-rbac.md](./security-rbac.md) · [setup-guide.md](./setup-guide.md) · [integration-setup.md](./integration-setup.md)
 > Product spec: [02_Platform_PRD.md](./02_Platform_PRD.md) · Source analysis: [01_RawDocs_Analysis_Report.md](./01_RawDocs_Analysis_Report.md)

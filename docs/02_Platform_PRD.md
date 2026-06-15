@@ -1,5 +1,5 @@
 # Product Requirements Document
-## Profile Building Drive Management Platform (PBDMP)
+## Profile Building Drive Management Platform (Forge)
 ### A Centralized, Multi-Domain Mentorship, Project & Evaluation Platform
 
 > **Document type:** Product Requirements Document (timeless product specification)
@@ -49,9 +49,9 @@
 
 ## 1. Executive Summary
 
-The **Profile Building Drive Management Platform (PBDMP)** is a single, unified web application that replaces the current patchwork of Discord threads, shared spreadsheets, and ad-hoc email to run the **Summer Profile Building Drive** end to end. Today the drive is operated through a multi-tab tracking workbook (Mentee Updates, Mentor Dashboard, Weekly Reviews), Discord channels, and GitHub repositories — with humans manually flagging inactivity, chasing missing updates, and routing concerns over email. This works at small scale but loses visibility and accountability as the drive spans **multiple domains, dozens of groups, hundreds of students, and a four-tier review hierarchy**.
+The **Profile Building Drive Management Platform (Forge)** is a single, unified web application that replaces the current patchwork of Discord threads, shared spreadsheets, and ad-hoc email to run the **Summer Profile Building Drive** end to end. Today the drive is operated through a multi-tab tracking workbook (Mentee Updates, Mentor Dashboard, Weekly Reviews), Discord channels, and GitHub repositories — with humans manually flagging inactivity, chasing missing updates, and routing concerns over email. This works at small scale but loses visibility and accountability as the drive spans **multiple domains, dozens of groups, hundreds of students, and a four-tier review hierarchy**.
 
-PBDMP consolidates all of this into **one dashboard per role**. It implements the drive's existing **L1→L4 review cadence** (mentee updates every 2 days → mentor status → mentor weekly review → teacher weekly review) as an automated workflow engine; it reproduces the existing **auto-flag and escalation rules** as scheduled jobs and notifications; it provides a built-in **email center** and **concern-management ticketing system**; and it integrates **GitHub, Discord, and Google Calendar** so progress is measured from real activity, not self-report alone.
+Forge consolidates all of this into **one dashboard per role**. It implements the drive's existing **L1→L4 review cadence** (mentee updates every 2 days → mentor status → mentor weekly review → teacher weekly review) as an automated workflow engine; it reproduces the existing **auto-flag and escalation rules** as scheduled jobs and notifications; it provides a built-in **email center** and **concern-management ticketing system**; and it integrates **GitHub, Discord, and Google Calendar** so progress is measured from real activity, not self-report alone.
 
 Critically, the platform is **domain-agnostic and fully configurable**. The AI "Pod" model, the ML "single assigned project" model, and the SDSE "engineering team" model are all expressed through the same configurable primitives (domains, teams, projects, milestones, deliverables, review cycles, rubrics, and escalation rules) that **Admin and LCC manage through the UI** — never through code changes.
 

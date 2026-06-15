@@ -1,4 +1,4 @@
-# Setup Guide — PBDMP (portal)
+# Setup Guide — Forge (portal)
 
 ## 1. Prerequisites
 - **Node.js ≥ 20.9** (Next.js 16 minimum; Node 18 unsupported).
