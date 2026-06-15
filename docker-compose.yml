@@ -1,0 +1,93 @@
+# Local development stack — mirrors the production ECS topology at a small scale.
+# client (Next.js) → server (Express) → postgres ; redis for sessions/cache.
+# Production runs these as ECS Fargate services + RDS + ElastiCache (see docs/infra-ecs.md).
+
+services:
+  client:
+    container_name: forge-client
+    build:
+      context: ./client
+      dockerfile: ../docker/client.Dockerfile
+      target: dev
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:4000/api
+      - APP_MODE=presentation
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - server
+    networks:
+      - forge
+
+  server:
+    container_name: forge-server
+    build:
+      context: ./server
+      dockerfile: ../docker/server.Dockerfile
+      target: dev
+    environment:
+      - NODE_ENV=development
+      - PORT=4000
+      - APP_BASE_URL=http://localhost:3000
+      - DATABASE_URL=postgresql://forge:forge@postgres:5432/forge?schema=public
+      - DIRECT_URL=postgresql://forge:forge@postgres:5432/forge?schema=public
+      - REDIS_URL=redis://redis:6379
+      # OAuth / integrations — fill from your own dev credentials (see docs/integration-setup.md)
+      - SESSION_SECRET=dev-only-change-me
+      - ALLOWED_HOSTED_DOMAIN=rishihood.edu.in
+      - GOOGLE_OAUTH_CLIENT_ID=
+      - GOOGLE_OAUTH_CLIENT_SECRET=
+      - GOOGLE_OAUTH_REDIRECT_URI=http://localhost:4000/api/auth/google/callback
+      - GROQ_API_KEY=
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - forge
+
+  postgres:
+    container_name: forge-postgres
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=forge
+      - POSTGRES_PASSWORD=forge
+      - POSTGRES_DB=forge
+    ports:
+      - "5432:5432"
+    volumes:
+      - forge_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forge -d forge"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - forge
+
+  redis:
+    container_name: forge-redis
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    networks:
+      - forge
+
+volumes:
+  forge_pg:
+
+networks:
+  forge:
+    driver: bridge

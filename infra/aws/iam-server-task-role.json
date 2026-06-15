@@ -1,0 +1,33 @@
+{
+  "_comment": "Task ROLE for the SERVER container (the app's runtime AWS permissions). SCOPED to this app's resources ONLY — resource ARNs + tag conditions, no wildcards — so a compromise cannot reach other services in the shared account. See docs/security.md & docs/infra-ecs.md.",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadOwnSecretsOnly",
+      "Effect": "Allow",
+      "Action": ["secretsmanager:GetSecretValue"],
+      "Resource": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/*",
+      "Condition": { "StringEquals": { "aws:ResourceTag/app": "forge" } }
+    },
+    {
+      "Sid": "DecryptWithAppCmkOnly",
+      "Effect": "Allow",
+      "Action": ["kms:Decrypt", "kms:GenerateDataKey"],
+      "Resource": "arn:aws:kms:<REGION>:<ACCOUNT_ID>:key/<FORGE_CMK_ID>",
+      "Condition": { "StringEquals": { "aws:ResourceTag/app": "forge" } }
+    },
+    {
+      "Sid": "WriteOwnLogsOnly",
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+      "Resource": "arn:aws:logs:<REGION>:<ACCOUNT_ID>:log-group:/ecs/forge/<ENV>/*:*"
+    },
+    {
+      "Sid": "SendEmailViaSESOptional",
+      "Effect": "Allow",
+      "Action": ["ses:SendEmail", "ses:SendRawEmail"],
+      "Resource": "arn:aws:ses:<REGION>:<ACCOUNT_ID>:identity/no-reply@<your-domain>",
+      "Condition": { "StringEquals": { "ses:FromAddress": "no-reply@<your-domain>" } }
+    }
+  ]
+}

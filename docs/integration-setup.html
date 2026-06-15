@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Forge — Integration Setup Guide</title>
+<style>
+  :root{
+    --bg:#fafafa;--card:#fff;--fg:#18181b;--mut:#52525b;--sub:#a1a1aa;--border:#e4e4e7;
+    --indigo:#4f46e5;--indigo-bg:#eef2ff;--green:#059669;--green-bg:#ecfdf5;
+    --amber:#d97706;--amber-bg:#fffbeb;--blue:#2563eb;--blue-bg:#eff6ff;--rose:#e11d48;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--fg);font-size:15px;line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 24px}
+  a{color:var(--indigo);text-decoration:none}a:hover{text-decoration:underline}
+  code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86em}
+  code{background:#f4f4f5;border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:#be185d}
+
+  header{background:#fff;border-bottom:1px solid var(--border);padding:32px 0 22px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .logo{width:30px;height:30px;border-radius:8px;background:var(--indigo);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+  h1{font-size:25px;margin:0 0 6px;letter-spacing:-.02em}
+  .lede{color:var(--mut);max-width:760px;margin:0}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;background:#f4f4f5;color:var(--mut);border:1px solid var(--border)}
+
+  .domainbar{margin-top:18px;background:var(--indigo-bg);border:1px solid #c7d2fe;border-radius:10px;padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+  .domainbar label{font-size:13px;font-weight:600;color:#3730a3}
+  .domainbar input{font-family:ui-monospace,monospace;font-size:13px;padding:7px 10px;border:1px solid #c7d2fe;border-radius:7px;min-width:240px;background:#fff;color:var(--fg)}
+  .domainbar .hint{font-size:12px;color:#4338ca}
+
+  nav.toc{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.93);backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
+  nav.toc .wrap{display:flex;gap:4px;flex-wrap:wrap;padding:8px 24px}
+  nav.toc a{font-size:13px;color:var(--mut);padding:6px 10px;border-radius:6px}
+  nav.toc a:hover{background:#f4f4f5;text-decoration:none;color:var(--fg)}
+
+  section{padding:34px 0;border-bottom:1px solid var(--border)}
+  h2{font-size:19px;margin:0 0 4px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+  h2 .ic{width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+  .sub{color:var(--mut);margin:0 0 18px}
+
+  ol.steps{list-style:none;counter-reset:s;padding:0;margin:0}
+  ol.steps>li{counter-increment:s;position:relative;padding:0 0 16px 40px;margin:0}
+  ol.steps>li::before{content:counter(s);position:absolute;left:0;top:-2px;width:26px;height:26px;border-radius:50%;background:var(--indigo);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  ol.steps>li:not(:last-child)::after{content:"";position:absolute;left:13px;top:26px;bottom:2px;width:1px;background:var(--border)}
+  ol.steps b{font-weight:650}
+
+  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0}
+  .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--sub);min-width:96px}
+  .copy{display:inline-flex;align-items:center;gap:8px;background:#0b0b0f;color:#e7e7ea;border-radius:7px;padding:7px 10px;font-family:ui-monospace,monospace;font-size:12.5px;max-width:100%;overflow:auto}
+  .copy button{margin-left:auto;background:#26262c;color:#cfcfd6;border:0;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;white-space:nowrap}
+  .copy button:hover{background:#34343c}
+
+  .env{background:var(--green-bg);border:1px solid #a7f3d0;border-left:3px solid var(--green);border-radius:8px;padding:10px 13px;margin:10px 0;font-size:13px}
+  .env .t{font-weight:700;color:#065f46;font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+  .env code{background:#fff;border-color:#a7f3d0;color:#065f46}
+  .note{background:var(--amber-bg);border:1px solid #fcd34d;border-left:3px solid var(--amber);border-radius:8px;padding:10px 13px;font-size:13px;color:#92400e;margin:10px 0}
+  .scopes{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+  .scope{font-family:ui-monospace,monospace;font-size:11.5px;background:#f4f4f5;border:1px solid var(--border);border-radius:5px;padding:2px 7px;color:var(--mut)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0;background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--border)}
+  th{background:#f8f8f9;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--sub)}
+  tr:last-child td{border-bottom:0}
+  footer{padding:28px 0;color:var(--sub);font-size:13px;text-align:center}
+  .req{color:var(--rose);font-weight:700}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand"><div class="logo">F</div><strong>Forge</strong><span class="pill">Integration Setup Guide</span></div>
+    <h1>Set up Google login, GitHub, Discord &amp; Calendar</h1>
+    <p class="lede">Follow each section to create the apps and credentials. Every OAuth callback &amp; webhook points at the <b>server</b> (Express), never the client. Enter your production domain below and all the URLs on this page update automatically.</p>
+    <div class="domainbar">
+      <label for="dom">Your production domain</label>
+      <input id="dom" value="app.example.com" spellcheck="false" />
+      <span class="hint">Local dev always uses <code>http://localhost:4000</code>. Prod becomes <span class="mono">https://<span class="ph">app.example.com</span></span>.</span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#google">1 · Google Login</a>
+  <a href="#github">2 · GitHub</a>
+  <a href="#discord">3 · Discord</a>
+  <a href="#calendar">4 · Calendar</a>
+  <a href="#email">5 · Email</a>
+  <a href="#groq">6 · Groq</a>
+  <a href="#env">7 · Final .env</a>
+</div></nav>
+
+<!-- GOOGLE LOGIN -->
+<section id="google"><div class="wrap">
+  <h2><span class="ic" style="background:#4285F4">G</span> 1 · Google OAuth — login (required)</h2>
+  <p class="sub">The platform's ONLY login method. Access is granted only if the Google account is on the <code>rishihood.edu.in</code> hosted-domain <b>and</b> the email already exists in the users table.</p>
+  <ol class="steps">
+    <li>Go to the <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a> → create a project (e.g. <code>forge</code>).</li>
+    <li>Open <b>APIs &amp; Services → OAuth consent screen</b>. Choose <b>Internal</b> if your org is a Google Workspace for <code>rishihood.edu.in</code> (recommended — auto-limits to your domain). Otherwise <b>External</b> and we enforce the domain server-side.</li>
+    <li>Add scopes: <span class="scopes"><span class="scope">openid</span><span class="scope">email</span><span class="scope">profile</span></span></li>
+    <li>Open <b>APIs &amp; Services → Credentials → Create credentials → OAuth client ID</b> → <b>Web application</b>.</li>
+    <li>Add these <b>Authorized redirect URIs</b> (server callback):
+      <div class="row"><span class="lbl">Production</span><span class="copy"><span class="u" data-tmpl="https://{host}/api/auth/google/callback"></span><button>copy</button></span></div>
+      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:4000/api/auth/google/callback</span><button>copy</button></span></div>
+    </li>
+    <li>Copy the <b>Client ID</b> and <b>Client Secret</b>.</li>
+  </ol>
+  <div class="env"><div class="t">Env you get → server/.env</div>
+    <code>GOOGLE_OAUTH_CLIENT_ID</code> · <code>GOOGLE_OAUTH_CLIENT_SECRET</code> · <code>GOOGLE_OAUTH_REDIRECT_URI</code> · <code>ALLOWED_HOSTED_DOMAIN=rishihood.edu.in</code>
+  </div>
+</div></section>
+
+<!-- GITHUB -->
+<section id="github"><div class="wrap">
+  <h2><span class="ic" style="background:#24292e">⌥</span> 2 · GitHub — App + webhooks</h2>
+  <p class="sub">Org-owned <b>GitHub App</b> for <code>@lcc-ai-nst</code>: one org installation reads all repo activity, plus a per-user OAuth that links each Forge user to their GitHub identity.</p>
+  <div class="note"><b>Two-token model.</b> The App is <b>installed once on the <code>@lcc-ai-nst</code> org</b> → its <b>installation token</b> reads <i>all</i> org repo activity (commits, PRs, reviews, issues). Each person's <b>“Connect GitHub”</b> is only a per-user OAuth to learn their GitHub id + username, so org activity can be attributed to the right Forge user. You do <b>not</b> store a token per user.</div>
+  <p style="margin:12px 0 0"><b>→ Full org + OAuth walkthrough lives on its own page:</b> <a href="github-setup.html">GitHub App + OAuth Setup</a> (create under the org, URLs, webhooks/smee, permissions, install on the org, get the Installation ID).</p>
+  <div class="env"><div class="t">Env you get → server/.env</div>
+    <code>GITHUB_APP_ID</code> · <code>GITHUB_APP_PRIVATE_KEY</code> · <code>GITHUB_APP_INSTALLATION_ID</code> · <code>GITHUB_WEBHOOK_SECRET</code>
+  </div>
+</div></section>
+
+<!-- DISCORD -->
+<section id="discord"><div class="wrap">
+  <h2><span class="ic" style="background:#5865F2">D</span> 3 · Discord — application &amp; bot</h2>
+  <p class="sub">OAuth to verify a member's username (today); a bot for activity / onboarding / announcements (later).</p>
+  <div class="env"><div class="t">Minimum for username-only (today)</div>
+    Only steps <b>1–3</b> below. Create the Application, generate the <b>Client Secret</b>, add the <b>OAuth redirect</b>, request scope <code>identify</code>. <b>No bot, no intents, no interactions endpoint, no guild.</b> Exchange the <code>code</code> → <code>GET /users/@me</code> → store the Discord <b>id</b> (snowflake, stable) + username. Env needed now: <code>DISCORD_CLIENT_ID</code> · <code>DISCORD_CLIENT_SECRET</code>.
+  </div>
+  <div class="note"><b>Discord ≠ GitHub for activity.</b> A user's OAuth token <b>cannot</b> read their messages/joins/reactions — <code>identify</code>/<code>guilds</code> only say <i>who</i> they are and <i>which</i> servers they're in. Capturing member activity or sending announcements requires the <b>bot</b> in your server listening to <b>gateway events</b> (live from when it joins — it does not backfill history). That's the future phase below.</div>
+  <ol class="steps">
+    <li><span class="scope">now</span> Open the <a href="https://discord.com/developers/applications" target="_blank">Discord Developer Portal</a> → <b>New Application</b> (e.g. <code>Forge</code>). Copy the <b>Application (Client) ID</b>.</li>
+    <li><span class="scope">now</span> <b>OAuth2 → reset secret</b> → copy the <b>Client Secret</b>.</li>
+    <li><span class="scope">now</span> <b>OAuth2 → Redirects</b>, add (scope <span class="scope">identify</span> + optional <span class="scope">guilds</span> to check server membership). <code>localhost</code> is fine here — it's a browser redirect:
+      <div class="row"><span class="lbl">Production</span><span class="copy"><span class="u" data-tmpl="https://{host}/api/integrations/discord/callback"></span><button>copy</button></span></div>
+      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:4000/api/integrations/discord/callback</span><button>copy</button></span></div>
+    </li>
+    <li><span class="scope" style="color:#92400e;background:var(--amber-bg);border-color:#fcd34d">future</span> <b>Bot → Add Bot → Reset Token</b> → copy the <b>Bot Token</b> (highly sensitive). Also copy the <b>Public Key</b> from General Information.</li>
+    <li><span class="scope" style="color:#92400e;background:var(--amber-bg);border-color:#fcd34d">future</span> Under <b>Bot → Privileged Gateway Intents</b>: enable <b>Server Members</b> (for onboarding/joins). Leave <b>Message Content</b> off unless you must read message text.</li>
+    <li><span class="scope" style="color:#92400e;background:var(--amber-bg);border-color:#fcd34d">future</span> <b>General Information → Interactions Endpoint URL</b> (Ed25519-verified with the Public Key). Unlike the OAuth redirect, this <b>can't</b> be <code>localhost</code> — Discord POSTs to it, so use a smee/ngrok tunnel locally:
+      <div class="row"><span class="lbl">Interactions</span><span class="copy"><span class="u" data-tmpl="https://{host}/api/webhooks/discord"></span><button>copy</button></span></div>
+    </li>
+    <li><span class="scope" style="color:#92400e;background:var(--amber-bg);border-color:#fcd34d">future</span> <b>Invite the bot</b>: OAuth2 → URL Generator → scopes <code>bot</code> + <code>applications.commands</code>; minimal permissions (View Channels, Read Message History, Send Messages, Embed Links). Open the URL and add it to your server; note the <b>Guild (Server) ID</b>.</li>
+  </ol>
+  <div class="env"><div class="t">Env you get → server/.env</div>
+    <b>Now:</b> <code>DISCORD_CLIENT_ID</code> · <code>DISCORD_CLIENT_SECRET</code><br>
+    <b>Future (bot phase):</b> <code>DISCORD_BOT_TOKEN</code> · <code>DISCORD_PUBLIC_KEY</code> · <code>DISCORD_GUILD_ID</code>
+  </div>
+</div></section>
+
+<!-- CALENDAR -->
+<section id="calendar"><div class="wrap">
+  <h2><span class="ic" style="background:#34A853">⌗</span> 4 · Google Calendar API</h2>
+  <p class="sub">Sync reviews, deadlines, meetings and drive-wide events to <b>one shared Forge calendar</b>. Same Cloud project as Google login.</p>
+  <ol class="steps">
+    <li><b>Enable the API.</b> In the same <a href="https://console.cloud.google.com" target="_blank">Cloud project</a> as Google login: <b>APIs &amp; Services → Library</b> → search <b>Google Calendar API</b> → <b>Enable</b>.</li>
+  </ol>
+
+  <div class="env"><div class="t">✅ Recommended — Option A: Service account + one shared “Forge Drive” calendar</div>
+    The server uses <b>one</b> dedicated calendar that LCC schedules everything on (reviews, deadlines, meetings). Share that calendar with the service account once → Forge sees every event on it. No per-user login, no redirect URL, no token refresh.
+  </div>
+  <div class="note"><b>How the access actually works — read this first.</b> A service account is its <b>own</b> Google identity; it can only see <b>(a)</b> calendars explicitly <b>shared with it</b> and <b>(b)</b> events it creates. It does <b>NOT</b> automatically see anyone's personal calendar.
+    <ul style="margin:8px 0 0;padding-left:18px">
+      <li>✅ <b>To see all meetings LCC schedules</b>, LCC must put them on the <b>one shared “Forge Drive” calendar</b> (not their personal calendars). Then Forge sees them all.</li>
+      <li>❌ Meetings on someone's <b>personal</b> Google calendar stay invisible — unless that person shares their calendar, or you set up <b>domain-wide delegation</b> (Workspace super-admin lets the SA impersonate users org-wide — heavier; only if you truly need everyone's personal calendars).</li>
+    </ul>
+  </div>
+  <ol class="steps">
+    <li><b>Create the shared calendar.</b> Have LCC (or you) create a Google Calendar named e.g. <b>“Forge Drive”</b> and make it the single place all drive meetings/reviews/deadlines are scheduled.</li>
+    <li><b>Create the service account.</b> <b>APIs &amp; Services → Credentials → Create credentials → Service account</b> → name it <code>forge-calendar</code> → Create. (No roles needed — access comes from sharing the calendar in step 4.)</li>
+    <li><b>Make a JSON key.</b> Open the service account → <b>Keys → Add key → Create new key → JSON</b> → it downloads a file. That file's full contents are <code>GOOGLE_SA_KEY</code>. Also copy the service account's <b>email</b> (e.g. <code>forge-calendar@&lt;project&gt;.iam.gserviceaccount.com</code>).</li>
+    <li><b>Share the “Forge Drive” calendar with that email</b> → <a href="https://calendar.google.com" target="_blank">Google Calendar</a> → that calendar → <b>Settings → Share with specific people → Add people</b> → paste the service-account email → choose the permission:
+      <table><tr><th>If Forge…</th><th>Pick</th></tr>
+        <tr><td>only <b>views</b> LCC's meetings</td><td>See all event details <span class="mono">(read-only)</span></td></tr>
+        <tr><td>also <b>creates</b> events (auto review/deadline entries)</td><td>Make changes to events</td></tr>
+      </table>
+    </li>
+    <li><b>Get the Calendar ID.</b> Same calendar's <b>Settings → Integrate calendar → Calendar ID</b> (e.g. <code>c_abc123@group.calendar.google.com</code>). That's <code>GOOGLE_CALENDAR_ID</code> — <b>not</b> <code>primary</code> for a shared calendar.</li>
+  </ol>
+  <div class="env" style="background:#fff;border-color:var(--border);border-left-color:var(--green)"><div class="t" style="color:#065f46">Env (Option A) → server/.env</div>
+    <code>GOOGLE_SA_KEY</code> · <code>GOOGLE_CALENDAR_ID</code> &nbsp;<span style="color:var(--mut)">(no client id/secret needed)</span>
+  </div>
+
+  <div class="note"><b>Option B — OAuth (only if you need per-organizer calendars).</b> Use this if events must land on each teacher's <i>own</i> Google calendar instead of one shared one. More moving parts: a consent screen, a redirect URL, and stored per-user tokens you must refresh.
+    <ol style="margin:8px 0 0;padding-left:18px;list-style:decimal">
+      <li><b>APIs &amp; Services → Credentials → Create credentials → OAuth client ID → Web application.</b></li>
+      <li>On the <b>OAuth consent screen</b>, add scope <span class="scope">https://www.googleapis.com/auth/calendar.events</span>.</li>
+      <li>Add the <b>Authorized redirect URIs</b> (<code>localhost</code> is fine — browser redirect):
+        <div class="row"><span class="lbl">Production</span><span class="copy"><span class="u" data-tmpl="https://{host}/api/integrations/calendar/callback"></span><button>copy</button></span></div>
+        <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:4000/api/integrations/calendar/callback</span><button>copy</button></span></div>
+      </li>
+      <li>Copy the <b>Client ID</b> + <b>Client Secret</b>; each organizer authorizes once. Calendar ID is each user's <code>primary</code>.</li>
+    </ol>
+    Env (Option B): <code>GOOGLE_CALENDAR_CLIENT_ID</code> · <code>GOOGLE_CALENDAR_CLIENT_SECRET</code> · <code>GOOGLE_CALENDAR_ID</code>
+  </div>
+</div></section>
+
+<!-- EMAIL -->
+<section id="email"><div class="wrap">
+  <h2><span class="ic" style="background:#ea4335">✉</span> 5 · Email — SMTP (nodemailer)</h2>
+  <p class="sub">Server-side transactional email (invites, notifications, announcements) via <b>nodemailer</b> over SMTP. The transport degrades gracefully — if SMTP isn't set, email is logged and skipped, never crashing core flows.</p>
+  <div class="env"><div class="t">✅ Google Workspace / Gmail (App Password)</div>
+    Send from <code>learnercareercouncil@nst.rishihood.edu.in</code> via Gmail's SMTP. Requires <b>2-Step Verification</b> on that account, then a 16-char <b>App Password</b> (the account password will <b>not</b> work for SMTP).
+  </div>
+  <ol class="steps">
+    <li><b>Enable 2-Step Verification</b> on the sending account: <a href="https://myaccount.google.com/security" target="_blank">myaccount.google.com/security</a> → 2-Step Verification → turn on. (App Passwords don't appear until this is on.)</li>
+    <li><b>Create an App Password</b>: <a href="https://myaccount.google.com/apppasswords" target="_blank">myaccount.google.com/apppasswords</a> → name it <code>forge-smtp</code> → <b>Create</b> → copy the 16-character code (shown once). That's <code>SMTP_PASS</code> — remove the spaces.</li>
+    <li>Set the SMTP env:
+      <table><tr><th>Var</th><th>Value</th></tr>
+        <tr><td><code>SMTP_HOST</code></td><td><code>smtp.gmail.com</code></td></tr>
+        <tr><td><code>SMTP_PORT</code></td><td><code>587</code> (STARTTLS; use <code>465</code> for implicit TLS)</td></tr>
+        <tr><td><code>SMTP_USER</code></td><td>the full sending address</td></tr>
+        <tr><td><code>SMTP_PASS</code></td><td>the 16-char App Password</td></tr>
+        <tr><td><code>SMTP_FROM</code></td><td><code>Forge &lt;learnercareercouncil@nst.rishihood.edu.in&gt;</code></td></tr>
+      </table>
+    </li>
+    <li>Restart the server — on boot it runs <code>verifyMailer()</code> and logs <span class="mono">SMTP transport verified</span> (or the error). Send a test from your code via <code>sendEmail(...)</code>.</li>
+  </ol>
+  <div class="note"><b>Limits / prod.</b> Workspace SMTP caps at ~2,000 recipients/day — fine for invites &amp; notices, not bulk blasts. In production prefer <b>AWS SES</b> (<code>email-smtp.&lt;region&gt;.amazonaws.com</code>, port 587, SES SMTP credentials) — same env vars, only host/creds change, since the nodemailer transport is generic. SES needs domain/sender verification and leaving the sandbox.</div>
+  <div class="env"><div class="t">Env you get → server/.env</div>
+    <code>SMTP_HOST</code> · <code>SMTP_PORT</code> · <code>SMTP_USER</code> · <code>SMTP_PASS</code> · <code>SMTP_FROM</code>
+  </div>
+</div></section>
+
+<!-- GROQ -->
+<section id="groq"><div class="wrap">
+  <h2><span class="ic" style="background:#F55036">∿</span> 6 · Groq (AI)</h2>
+  <p class="sub">Server-side only — review summaries, feedback suggestions, analytics insights.</p>
+  <ol class="steps">
+    <li>Open the <a href="https://console.groq.com/keys" target="_blank">Groq Console → API Keys</a> → create a key.</li>
+    <li>Pick a model (default <code>llama-3.1-8b-instant</code>).</li>
+  </ol>
+  <div class="env"><div class="t">Env you get → server/.env</div><code>GROQ_API_KEY</code> · <code>GROQ_MODEL</code></div>
+</div></section>
+
+<!-- FINAL ENV -->
+<section id="env"><div class="wrap">
+  <h2><span class="ic" style="background:var(--indigo)">≡</span> 7 · Final <span class="mono">server/.env</span></h2>
+  <p class="sub">Fill the values you collected. <span class="req">Required to boot</span>: DB + session + Google login. The rest enable their integrations. In production these live in <b>AWS Secrets Manager</b> (<code>/forge/&lt;env&gt;/*</code>), not a file.</p>
+  <div class="copy" style="display:block;white-space:pre;line-height:1.6"><button style="float:right">copy</button><span id="envblock"></span></div>
+  <div class="note">The client holds NONE of these — only <code>NEXT_PUBLIC_API_URL</code> + <code>APP_MODE</code>. Never commit <code>.env</code>; rotate any key that has ever been shared.</div>
+</div></section>
+
+<footer class="wrap">Forge · Integration Setup · all callbacks/webhooks target the Express server · secrets live server-side / in AWS Secrets Manager</footer>
+
+<script>
+  const envTemplate = (host) => `# server/.env  (git-ignored; prod → AWS Secrets Manager)
+NODE_ENV=production
+PORT=4000
+APP_BASE_URL=https://${host.replace(/\\/api$/,'')}
+
+# Platform (REQUIRED)
+DATABASE_URL=postgresql://USER:PASS@HOST/db?sslmode=require
+DIRECT_URL=postgresql://USER:PASS@HOST/db?sslmode=require
+REDIS_URL=redis://HOST:6379
+SESSION_SECRET=__run: openssl rand -base64 32__
+
+# Google login (REQUIRED)
+ALLOWED_HOSTED_DOMAIN=rishihood.edu.in
+GOOGLE_OAUTH_CLIENT_ID=
+GOOGLE_OAUTH_CLIENT_SECRET=
+GOOGLE_OAUTH_REDIRECT_URI=https://${host}/auth/google/callback
+
+# GitHub
+GITHUB_APP_ID=
+GITHUB_APP_PRIVATE_KEY=
+GITHUB_APP_INSTALLATION_ID=
+GITHUB_WEBHOOK_SECRET=
+
+# Discord
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+DISCORD_BOT_TOKEN=
+DISCORD_PUBLIC_KEY=
+DISCORD_GUILD_ID=
+
+# Google Calendar (service account — Option A)
+GOOGLE_SA_KEY_FILE=./secrets/forge-sa.json
+GOOGLE_CALENDAR_ID=
+
+# Email (SMTP) — Gmail/Workspace App Password (prod: AWS SES)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=
+
+# Groq
+GROQ_API_KEY=
+GROQ_MODEL=llama-3.1-8b-instant`;
+
+  function apply(){
+    const host = (document.getElementById('dom').value || 'app.example.com').trim().replace(/^https?:\\/\\//,'').replace(/\\/$/,'');
+    document.querySelectorAll('.ph').forEach(e => e.textContent = host);
+    document.querySelectorAll('.u[data-tmpl]').forEach(e => e.textContent = e.dataset.tmpl.replace('{host}', host));
+    document.getElementById('envblock').textContent = envTemplate(host + '/api');
+  }
+  document.getElementById('dom').addEventListener('input', apply);
+  // copy buttons
+  document.addEventListener('click', (ev) => {
+    const b = ev.target.closest('.copy button'); if(!b) return;
+    const box = b.parentElement; const txt = box.querySelector('span,#envblock')?.textContent || box.textContent.replace(/copy$/,'');
+    navigator.clipboard.writeText(txt.trim()).then(()=>{ const o=b.textContent; b.textContent='copied'; setTimeout(()=>b.textContent=o,1200); });
+  });
+  apply();
+</script>
+</body>
+</html>

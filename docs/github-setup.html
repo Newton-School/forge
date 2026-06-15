@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Forge — GitHub App + OAuth Setup</title>
+<style>
+  :root{
+    --bg:#fafafa;--card:#fff;--fg:#18181b;--mut:#52525b;--sub:#a1a1aa;--border:#e4e4e7;
+    --indigo:#4f46e5;--indigo-bg:#eef2ff;--green:#059669;--green-bg:#ecfdf5;
+    --amber:#d97706;--amber-bg:#fffbeb;--blue:#2563eb;--blue-bg:#eff6ff;--rose:#e11d48;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--fg);font-size:15px;line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 24px}
+  a{color:var(--indigo);text-decoration:none}a:hover{text-decoration:underline}
+  code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86em}
+  code{background:#f4f4f5;border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:#be185d}
+
+  header{background:#fff;border-bottom:1px solid var(--border);padding:32px 0 22px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .logo{width:30px;height:30px;border-radius:8px;background:var(--indigo);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+  h1{font-size:25px;margin:0 0 6px;letter-spacing:-.02em}
+  .lede{color:var(--mut);max-width:760px;margin:0}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;background:#f4f4f5;color:var(--mut);border:1px solid var(--border)}
+
+  .domainbar{margin-top:18px;background:var(--indigo-bg);border:1px solid #c7d2fe;border-radius:10px;padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+  .domainbar label{font-size:13px;font-weight:600;color:#3730a3}
+  .domainbar input{font-family:ui-monospace,monospace;font-size:13px;padding:7px 10px;border:1px solid #c7d2fe;border-radius:7px;min-width:240px;background:#fff;color:var(--fg)}
+  .domainbar .hint{font-size:12px;color:#4338ca}
+
+  section{padding:34px 0;border-bottom:1px solid var(--border)}
+  h2{font-size:19px;margin:0 0 4px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+  h2 .ic{width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+  .sub{color:var(--mut);margin:0 0 18px}
+
+  ol.steps{list-style:none;counter-reset:s;padding:0;margin:0}
+  ol.steps>li{counter-increment:s;position:relative;padding:0 0 16px 40px;margin:0}
+  ol.steps>li::before{content:counter(s);position:absolute;left:0;top:-2px;width:26px;height:26px;border-radius:50%;background:var(--indigo);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  ol.steps>li:not(:last-child)::after{content:"";position:absolute;left:13px;top:26px;bottom:2px;width:1px;background:var(--border)}
+  ol.steps b{font-weight:650}
+
+  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0}
+  .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--sub);min-width:96px}
+  .copy{display:inline-flex;align-items:center;gap:8px;background:#0b0b0f;color:#e7e7ea;border-radius:7px;padding:7px 10px;font-family:ui-monospace,monospace;font-size:12.5px;max-width:100%;overflow:auto}
+  .copy button{margin-left:auto;background:#26262c;color:#cfcfd6;border:0;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;white-space:nowrap}
+  .copy button:hover{background:#34343c}
+
+  .env{background:var(--green-bg);border:1px solid #a7f3d0;border-left:3px solid var(--green);border-radius:8px;padding:10px 13px;margin:10px 0;font-size:13px}
+  .env .t{font-weight:700;color:#065f46;font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+  .env code{background:#fff;border-color:#a7f3d0;color:#065f46}
+  .note{background:var(--amber-bg);border:1px solid #fcd34d;border-left:3px solid var(--amber);border-radius:8px;padding:10px 13px;font-size:13px;color:#92400e;margin:10px 0}
+  .scopes{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+  .scope{font-family:ui-monospace,monospace;font-size:11.5px;background:#f4f4f5;border:1px solid var(--border);border-radius:5px;padding:2px 7px;color:var(--mut)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0;background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--border)}
+  th{background:#f8f8f9;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--sub)}
+  tr:last-child td{border-bottom:0}
+  footer{padding:28px 0;color:var(--sub);font-size:13px;text-align:center}
+  .req{color:var(--rose);font-weight:700}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand"><div class="logo">F</div><strong>Forge</strong><span class="pill">GitHub App + OAuth Setup</span></div>
+    <h1>GitHub — org App, webhooks &amp; per-user connect</h1>
+    <p class="lede">Set up the <b>org-owned GitHub App</b> for <code>@lcc-ai-nst</code>: one installation reads all repo activity, and a lightweight per-user OAuth links each Forge user to their GitHub identity. Every callback &amp; webhook points at the <b>server</b> (Express), never the client. Enter your production domain and the URLs update automatically. <a href="integration-setup.html">← back to all integrations</a></p>
+    <div class="domainbar">
+      <label for="dom">Your production domain</label>
+      <input id="dom" value="app.example.com" spellcheck="false" />
+      <span class="hint">Local dev always uses <code>http://localhost:4000</code> (server). Prod becomes <span class="mono">https://<span class="ph">app.example.com</span></span>.</span>
+    </div>
+  </div>
+</header>
+
+<!-- GITHUB -->
+<section id="github"><div class="wrap">
+  <h2><span class="ic" style="background:#24292e">⌥</span> GitHub — App + webhooks</h2>
+  <p class="sub">Use a <b>GitHub App</b> (org-level, fine-grained, higher rate limits) to read repo activity and receive webhooks.</p>
+  <div class="note"><b>Two-token model.</b> The App is <b>installed once on the <code>@lcc-ai-nst</code> org</b> → its <b>installation token</b> reads <i>all</i> org repo activity (commits, PRs, reviews, issues). Each person's <b>“Connect GitHub”</b> is only a per-user OAuth to learn their GitHub id + username, so org activity can be attributed to the right Forge user. You do <b>not</b> store a token per user — the org install does the data fetching.</div>
+  <ol class="steps">
+    <li><b>Create the App under the organization</b> (so it's owned by the org, not your personal account) — you must be an <b>org owner</b>: open <a href="https://github.com/organizations/lcc-ai-nst/settings/apps/new" target="_blank">github.com/organizations/<b>lcc-ai-nst</b>/settings/apps/new</a>. <b>GitHub App name</b>: <code>forge-dev</code> (dev) / <code>forge</code> (prod) — names are globally unique.</li>
+    <li><b>Homepage URL</b> — this is the client/UI (the only field that points at the client, not the server):
+      <div class="row"><span class="lbl">Production</span><span class="copy"><span class="mono">https://<span class="ph">app.example.com</span></span><button>copy</button></span></div>
+      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:3001</span><button>copy</button></span></div>
+    </li>
+    <li><b>Callback URL</b> (server OAuth callback — for per-user repo linking):
+      <div class="row"><span class="lbl">Production</span><span class="copy"><span class="u" data-tmpl="https://{host}/api/integrations/github/callback"></span><button>copy</button></span></div>
+      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:4000/api/integrations/github/callback</span><button>copy</button></span></div>
+      Leave <b>Setup URL</b> blank. Keep <b>Expire user authorization tokens</b> on (gives a <code>refresh_token</code>). Leave <b>Device Flow</b> off; check <b>Request user authorization (OAuth) during installation</b> only if you want the per-user link flow.
+    </li>
+    <li><b>Webhook</b> → keep <b>Active</b>. Generate a strong <b>Webhook secret</b> with <code>openssl rand -hex 32</code> and paste the same value into <code>GITHUB_WEBHOOK_SECRET</code>.
+      <div class="row"><span class="lbl">Production</span><span class="copy"><span class="u" data-tmpl="https://{host}/api/webhooks/github"></span><button>copy</button></span></div>
+      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>https://smee.io/&lt;your-channel&gt;</span><button>copy</button></span></div>
+      <div class="note"><b>GitHub can't reach <code>localhost</code></b> — webhooks POST from the public internet. For local dev, create a channel at <a href="https://smee.io/new" target="_blank">smee.io/new</a>, use that URL as the Webhook URL, and forward it to your server:<br>
+        <span class="copy" style="margin-top:6px"><span>npx smee-client --url https://smee.io/&lt;your-channel&gt; --target http://localhost:4000/api/webhooks/github</span><button>copy</button></span><br>
+        (ngrok works too: <code>ngrok http 4000</code> → <span class="mono">https://&lt;id&gt;.ngrok.io/api/webhooks/github</span>.)
+      </div>
+    </li>
+    <li><b>Repository permissions</b>:
+      <table><tr><th>Permission</th><th>Access</th></tr>
+        <tr><td>Contents</td><td>Read-only</td></tr>
+        <tr><td>Issues</td><td>Read-only</td></tr>
+        <tr><td>Pull requests</td><td>Read-only</td></tr>
+        <tr><td>Metadata</td><td>Read-only</td></tr>
+      </table>
+      <b>Organization permissions</b>: Members → Read-only.
+    </li>
+    <li><b>Subscribe to events</b>: <span class="scopes"><span class="scope">push</span><span class="scope">pull_request</span><span class="scope">pull_request_review</span><span class="scope">issues</span><span class="scope">milestone</span></span> <span class="mono">(the auto-suggested Installation target / Meta / Security advisory events aren't needed)</span></li>
+    <li><b>Where can this GitHub App be installed?</b> → <b>Only on this account</b> (<code>@lcc-ai-nst</code>). It's an internal org app — there's no reason to let other orgs install it. (<b>Any account</b> is only for public/marketplace apps; don't pick it.)</li>
+    <li>Create the App → <b>Generate a private key</b> (downloads a <code>.pem</code>) → note the <b>App ID</b>.</li>
+    <li><b>Install the App on the organization</b> (this is what produces the installation token used to read all org activity):
+      <ol style="margin:6px 0 0;padding-left:18px;list-style:disc">
+        <li>On the App's page → <b>Install App</b> → choose <b>@lcc-ai-nst</b> → <b>Install</b>.</li>
+        <li><b>Repository access</b>: pick <b>All repositories</b> (recommended — new team repos are covered automatically) or <b>Only select repositories</b>.</li>
+        <li>After installing, the URL is <span class="mono">…/installations/<b>&lt;installation-id&gt;</b></span> → copy that <b>Installation ID</b>.</li>
+      </ol>
+    </li>
+    <li><b>Allow it org-wide</b>: in <a href="https://github.com/organizations/lcc-ai-nst/settings/oauth_application_policy" target="_blank">Org → Settings → Third-party access</a>, make sure OAuth app access isn't blocking your app, so members can complete the per-user “Connect GitHub” step. Org owners may need to approve it once.</li>
+  </ol>
+  <div class="env"><div class="t">Env you get → server/.env</div>
+    <code>GITHUB_APP_ID</code> · <code>GITHUB_APP_PRIVATE_KEY</code> · <code>GITHUB_APP_INSTALLATION_ID</code> · <code>GITHUB_WEBHOOK_SECRET</code>
+  </div>
+  <div class="note">The server verifies every webhook with the <code>X-Hub-Signature-256</code> HMAC against <code>GITHUB_WEBHOOK_SECRET</code> — required, don't skip it.</div>
+</div></section>
+
+<footer class="wrap">Forge · GitHub App + OAuth Setup · all callbacks/webhooks target the Express server · secrets live server-side / in AWS Secrets Manager · <a href="integration-setup.html">all integrations</a></footer>
+
+<script>
+  function apply(){
+    const host = (document.getElementById('dom').value || 'app.example.com').trim().replace(/^https?:\/\//,'').replace(/\/$/,'');
+    document.querySelectorAll('.ph').forEach(e => e.textContent = host);
+    document.querySelectorAll('.u[data-tmpl]').forEach(e => e.textContent = e.dataset.tmpl.replace('{host}', host));
+  }
+  document.getElementById('dom').addEventListener('input', apply);
+  // copy buttons
+  document.addEventListener('click', (ev) => {
+    const b = ev.target.closest('.copy button'); if(!b) return;
+    const box = b.parentElement; const txt = box.querySelector('span')?.textContent || box.textContent.replace(/copy$/,'');
+    navigator.clipboard.writeText(txt.trim()).then(()=>{ const o=b.textContent; b.textContent='copied'; setTimeout(()=>b.textContent=o,1200); });
+  });
+  apply();
+</script>
+</body>
+</html>

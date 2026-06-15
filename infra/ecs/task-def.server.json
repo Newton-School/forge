@@ -1,0 +1,56 @@
+{
+  "_comment": "ECS Fargate task definition — SERVER (Express). Placeholders: <ACCOUNT_ID>, <REGION>, <ENV>. Secrets are pulled from Secrets Manager (namespaced /forge/<ENV>/*), never baked into the image. See docs/infra-ecs.md.",
+  "family": "forge-server-<ENV>",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "runtimePlatform": { "cpuArchitecture": "X86_64", "operatingSystemFamily": "LINUX" },
+  "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/forge-ecs-execution-role",
+  "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/forge-server-task-role",
+  "tags": [
+    { "key": "app", "value": "forge" },
+    { "key": "env", "value": "<ENV>" }
+  ],
+  "containerDefinitions": [
+    {
+      "name": "server",
+      "image": "<ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/forge-server:<IMAGE_TAG>",
+      "essential": true,
+      "portMappings": [{ "containerPort": 4000, "protocol": "tcp" }],
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "4000" },
+        { "name": "APP_BASE_URL", "value": "https://app.<your-domain>" },
+        { "name": "ALLOWED_HOSTED_DOMAIN", "value": "rishihood.edu.in" },
+        { "name": "GROQ_MODEL", "value": "llama-3.1-8b-instant" }
+      ],
+      "secrets": [
+        { "name": "DATABASE_URL",               "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/DATABASE_URL" },
+        { "name": "DIRECT_URL",                  "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/DIRECT_URL" },
+        { "name": "REDIS_URL",                   "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/REDIS_URL" },
+        { "name": "SESSION_SECRET",              "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/SESSION_SECRET" },
+        { "name": "GOOGLE_OAUTH_CLIENT_ID",      "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/GOOGLE_OAUTH_CLIENT_ID" },
+        { "name": "GOOGLE_OAUTH_CLIENT_SECRET",  "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/GOOGLE_OAUTH_CLIENT_SECRET" },
+        { "name": "GITHUB_APP_PRIVATE_KEY",      "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/GITHUB_APP_PRIVATE_KEY" },
+        { "name": "GITHUB_WEBHOOK_SECRET",       "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/GITHUB_WEBHOOK_SECRET" },
+        { "name": "DISCORD_BOT_TOKEN",           "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/DISCORD_BOT_TOKEN" },
+        { "name": "GROQ_API_KEY",                "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/GROQ_API_KEY" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/forge/<ENV>/server",
+          "awslogs-region": "<REGION>",
+          "awslogs-stream-prefix": "server"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/api/health || exit 1"],
+        "interval": 30, "timeout": 5, "retries": 3, "startPeriod": 15
+      },
+      "readonlyRootFilesystem": false,
+      "linuxParameters": { "initProcessEnabled": true }
+    }
+  ]
+}

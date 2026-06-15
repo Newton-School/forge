@@ -1,0 +1,768 @@
+// Forge — Prisma schema (server-owned). Postgres (RDS in prod).
+// Runtime uses pooled DATABASE_URL; migrations use the direct DIRECT_URL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Prisma 7: connection URLs live in prisma.config.ts (Migrate/CLI) and the
+// driver adapter in src/lib/db.ts (runtime). The datasource only names the provider.
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────── Enums ─────────────────────────
+// The Student Mentor leads their team — there is no separate Team Lead role.
+enum RoleKey {
+  ADMIN
+  LCC
+  TEACHER
+  MENTOR
+  MENTEE
+}
+
+enum ScopeType {
+  GLOBAL
+  DOMAIN
+  TEAM
+  SELF
+}
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum TeamAlias {
+  POD
+  GROUP
+  TEAM
+  SQUAD
+}
+
+enum ProjectType {
+  GROUP
+  INDIVIDUAL
+}
+
+enum ProposalStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REVISE_RESUBMIT
+  REJECTED
+}
+
+enum WorkStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  RELEASED
+  BLOCKED
+}
+
+enum ReviewLevel {
+  L1
+  L2
+  L3
+  L4
+}
+
+// Tracking-sheet vocabulary (verbatim intent)
+enum MenteeStatusL2 {
+  DOING_WELL // 🟢
+  NEEDS_CONSISTENCY // 🟡
+  NO_UPDATES_4PLUS // 🔴
+}
+
+enum MentorStatusL3 {
+  ON_TRACK
+  AT_RISK
+  NEEDS_DISCUSSION
+}
+
+enum TeacherDecisionL4 {
+  CONTINUE
+  MONITOR
+  SCHEDULE_DISCUSSION
+}
+
+enum AutoFlag {
+  NONE
+  CONSISTENCY_GAP // <3 updates in a week
+  REPEATED_BLOCKER // same blocker 3+ updates
+  NO_UPDATES // 🔴 inactivity threshold
+}
+
+enum ConcernCategory {
+  MENTOR
+  MENTEE
+  TEACHER
+  TEAM_MEMBER
+  DOMAIN_ISSUE
+  TECHNICAL_ISSUE
+  PROCESS_ISSUE
+  OTHER
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ConcernStatus {
+  OPEN
+  ACKNOWLEDGED
+  IN_PROGRESS
+  ESCALATED
+  RESOLVED
+  CLOSED
+  REOPENED
+}
+
+enum DeliverableReview {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum EmailStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  FAILED
+}
+
+enum IntegrationProvider {
+  GITHUB
+  DISCORD
+  GOOGLE_CALENDAR
+}
+
+enum ActivityType {
+  COMMIT
+  PR
+  ISSUE
+  REVIEW
+  MESSAGE
+  JOIN
+  REACTION
+  ANNOUNCEMENT
+}
+
+enum CalendarEventType {
+  MENTOR_MEETING
+  REVIEW
+  DEADLINE
+  MILESTONE
+  EVENT
+}
+
+// ─────────────────── Identity & Access (M1) ───────────────────
+model User {
+  id                 String     @id @default(cuid())
+  email              String     @unique
+  fullName           String
+  status             UserStatus @default(INVITED)
+  googleSub          String?    @unique // Google OIDC subject — set on first login
+  avatarUrl          String?
+  passwordHash       String? // unused under Google-only auth; retained for schema stability
+  mustChangePassword Boolean    @default(false)
+  tokenVersion       Int        @default(0)
+  mfaSecret          String?
+  failedLoginCount   Int        @default(0)
+  lockedUntil        DateTime?
+  lastLoginAt        DateTime?
+  discordUsername    String? // Discord username — display only; can be changed by the user
+  discordUserId      String? @unique // permanent Discord id (snowflake, as string) — match bot/gateway activity to this, NOT the username
+  githubUsername     String? // GitHub login — display only; can be renamed by the user
+  githubUserId       String? @unique // permanent numeric GitHub id (as string) — match activity/webhooks to this, NOT the login
+  githubConnectedAt  DateTime? // when the user authorized the GitHub App (per-user identity link)
+  createdById        String?
+  createdBy          User?      @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdUsers       User[]     @relation("UserCreatedBy")
+
+  roles            UserRole[]
+  teamMemberships  TeamMember[]
+  mentorTeams      Team[]          @relation("TeamMentor")
+  // A teacher can be assigned to MANY domains (and a domain can have co-teachers):
+  taughtDomains    Domain[]        @relation("DomainTeachers")
+  menteeUpdates    MenteeUpdate[]
+  invitations      Invitation[]
+  passwordResets   PasswordReset[]
+  concernsRaised   Concern[]       @relation("ConcernRaisedBy")
+  concernsAssigned Concern[]       @relation("ConcernAssignee")
+  demerits         Demerit[]       @relation("DemeritUser")
+  auditLogs        AuditLog[]
+  notifications    Notification[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([status])
+}
+
+model UserRole {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      RoleKey
+  scopeType ScopeType @default(SELF)
+  scopeId   String? // Domain or Team id when scoped
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, role, scopeType, scopeId])
+  @@index([role, scopeType, scopeId])
+}
+
+model Invitation {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  expiresAt DateTime
+  acceptedAt DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model PasswordReset {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+// ─────────────────── Org Structure (M2) ───────────────────
+model Drive {
+  id       String   @id @default(cuid())
+  name     String
+  year     Int
+  active   Boolean  @default(true)
+  domains  Domain[]
+  phases   Phase[]
+  rubrics  Rubric[]
+  escalationRules EscalationRule[]
+  reviewCycles ReviewCycle[]
+  createdAt DateTime @default(now())
+}
+
+model Domain {
+  id        String  @id @default(cuid())
+  driveId   String
+  drive     Drive   @relation(fields: [driveId], references: [id])
+  name      String
+  key       String
+  active    Boolean @default(true)
+  governanceProfile Json? // team model, branch policy, default rubric, deliverable types
+  // Many-to-many: a domain can have one or more teachers; a teacher can span domains.
+  teachers  User[]  @relation("DomainTeachers")
+  teams     Team[]
+
+  @@index([driveId])
+}
+
+model Team {
+  id              String     @id @default(cuid())
+  domainId        String
+  domain          Domain     @relation(fields: [domainId], references: [id])
+  name            String
+  alias           TeamAlias  @default(TEAM)
+  // The Student Mentor is the team lead (no separate Team Lead role).
+  mentorId        String?
+  mentor          User?      @relation("TeamMentor", fields: [mentorId], references: [id])
+  githubRepoUrl   String?
+  discordChannelId String?
+  members         TeamMember[]
+  projects        Project[]
+
+  @@index([domainId])
+}
+
+model Squad {
+  id      String       @id @default(cuid())
+  name    String // Alpha / Beta / Gamma
+  members TeamMember[]
+}
+
+model TeamMember {
+  id          String  @id @default(cuid())
+  teamId      String
+  team        Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User    @relation(fields: [userId], references: [id])
+  memberRole  String // Mentee | Contributor | Maintainer | Junior | Engineer ...
+  squadId     String?
+  squad       Squad?  @relation(fields: [squadId], references: [id])
+  githubPermission String?
+
+  @@unique([teamId, userId])
+  @@index([userId])
+}
+
+// ─────────────────── Drive Configuration (M3) ───────────────────
+model Phase {
+  id            String      @id @default(cuid())
+  driveId       String
+  drive         Drive       @relation(fields: [driveId], references: [id])
+  name          String
+  sequence      Int
+  startsAt      DateTime? // exact start (calendar)
+  endsAt        DateTime? // exact end (calendar)
+  durationLabel String? // optional display label, derivable from startsAt/endsAt
+  theme         String?
+  domainId      String? // scope: null = all domains, else this domain only
+  gates         Gate[]
+  milestones    Milestone[]
+
+  @@index([driveId])
+  @@index([domainId])
+}
+
+model Gate {
+  id                String    @id @default(cuid())
+  phaseId           String
+  phase             Phase     @relation(fields: [phaseId], references: [id])
+  name              String
+  scheduledAt       DateTime? // exact gate date/time (calendar)
+  verdictOptions    Json // ["Approved","Revise & Resubmit","Rejected"]
+  blocksProgression Boolean   @default(true)
+  domainId          String? // scope: null = all domains, else this domain only
+}
+
+// Cadence stored as a NUMBER + UNIT the scheduler reads — not the text "every 2 days".
+// e.g. intervalValue=2, intervalUnit=DAY  →  "every 2 days".
+enum CadenceUnit {
+  DAY
+  WEEK
+  MONTH
+}
+
+model ReviewCycle {
+  id            String      @id @default(cuid())
+  driveId       String
+  drive         Drive       @relation(fields: [driveId], references: [id])
+  level         ReviewLevel
+  ownerRole     RoleKey
+  intervalValue Int // e.g. 2  ← a real number
+  intervalUnit  CadenceUnit // DAY → "every 2 days"
+  anchorDay     String? // optional weekday for weekly cadences, e.g. "Saturday"
+  domainId      String? // scope: null = all domains, else this domain only
+  fieldSchema   Json
+  statusEnum    Json
+
+  @@index([domainId])
+}
+
+model EscalationRule {
+  id             String  @id @default(cuid())
+  driveId        String
+  drive          Drive   @relation(fields: [driveId], references: [id])
+  name           String
+  condition      Json
+  thresholdValue Int
+  thresholdUnit  String // days | updates | hours
+  action         String // FLAG | NOTIFY | ESCALATE
+  targetRole     RoleKey?
+  severity       Severity?
+  domainId       String? // scope: null = all domains, else this domain only
+
+  @@index([domainId])
+}
+
+model Rubric {
+  id         String            @id @default(cuid())
+  driveId    String
+  drive      Drive             @relation(fields: [driveId], references: [id])
+  domainId   String?
+  name       String
+  kind       String // GATE | TOP_TEAM | MENTOR
+  dimensions RubricDimension[]
+}
+
+model RubricDimension {
+  id         String @id @default(cuid())
+  rubricId   String
+  rubric     Rubric @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  name       String
+  weight     Float
+  measuredBy String
+}
+
+model DeliverableType {
+  id       String        @id @default(cuid())
+  domainId String?
+  name     String
+  deliverables Deliverable[]
+}
+
+// ─────────────────── Projects & Work (M4) ───────────────────
+model Project {
+  id               String         @id @default(cuid())
+  teamId           String
+  team             Team           @relation(fields: [teamId], references: [id])
+  type             ProjectType
+  ownerId          String?
+  name             String
+  problemStatement String?
+  status           WorkStatus     @default(TODO)
+  proposalStatus   ProposalStatus @default(DRAFT)
+  milestones       Milestone[]
+  tasks            Task[]
+  deliverables     Deliverable[]
+
+  @@index([teamId])
+}
+
+model Milestone {
+  id                 String     @id @default(cuid())
+  projectId          String?
+  project            Project?   @relation(fields: [projectId], references: [id])
+  phaseId            String?
+  phase              Phase?     @relation(fields: [phaseId], references: [id])
+  name               String
+  sequence           Int
+  keyOutput          String?
+  acceptanceCriteria Json?
+  defenseQuestions   Json?
+  dueAt              DateTime?
+  status             WorkStatus @default(TODO)
+  completionPct      Int        @default(0)
+  signedOffById      String?
+  signedOffAt        DateTime?
+  tasks              Task[]
+  deliverables       Deliverable[]
+
+  @@index([projectId])
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  projectId   String
+  project     Project    @relation(fields: [projectId], references: [id])
+  milestoneId String?
+  milestone   Milestone? @relation(fields: [milestoneId], references: [id])
+  title       String
+  description String?
+  assigneeId  String?
+  assignedById String?
+  assignedAt  DateTime   @default(now())
+  dueAt       DateTime?
+  status      WorkStatus @default(TODO)
+  progressPct Int        @default(0)
+  nextAction  String?
+
+  @@index([assigneeId])
+}
+
+model Deliverable {
+  id            String            @id @default(cuid())
+  projectId     String
+  project       Project           @relation(fields: [projectId], references: [id])
+  milestoneId   String?
+  milestone     Milestone?        @relation(fields: [milestoneId], references: [id])
+  typeId        String?
+  type          DeliverableType?  @relation(fields: [typeId], references: [id])
+  submittedById String?
+  submittedAt   DateTime?
+  artifactUrl   String?
+  reviewStatus  DeliverableReview @default(PENDING)
+  reviewerId    String?
+  feedback      String?
+}
+
+model SkillAssessment {
+  id            String  @id @default(cuid())
+  userId        String
+  skill         String
+  startingLevel String
+  currentLevel  String
+  evidence      String?
+  assessedById  String?
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ─────────────────── Reviews L1–L4 + 360° (M5) ───────────────────
+model MenteeUpdate {
+  id       String   @id @default(cuid()) // L1, append-only
+  userId   String
+  user     User     @relation(fields: [userId], references: [id])
+  teamId   String?
+  squadId  String?
+  date     DateTime @default(now())
+  workedOn String
+  learning String
+  blocker  String?
+  nextGoal String
+
+  @@index([userId, date])
+}
+
+model MentorStatus {
+  id              String         @id @default(cuid()) // L2
+  menteeId        String
+  mentorId        String
+  date            DateTime       @default(now())
+  updatesThisWeek Int            @default(0)
+  lastUpdateAt    DateTime?
+  blockerStreak   Int            @default(0)
+  statusL2        MenteeStatusL2 @default(DOING_WELL)
+  daysSinceUpdate Int            @default(0)
+  comment         String?
+  actionNeeded    String?
+
+  @@index([menteeId, date])
+}
+
+model WeeklyReview {
+  id              String             @id @default(cuid()) // L3 (mentor) + L4 (teacher)
+  weekNo          Int
+  menteeId        String
+  mentorId        String
+  domainId        String?
+  squadId         String?
+  progressSummary String?
+  strength        String?
+  improvementArea String?
+  autoFlag        AutoFlag           @default(NONE)
+  mentorStatus    MentorStatusL3?
+  teacherDecision TeacherDecisionL4?
+  teacherNotes    String?
+  teacherId       String?
+  l4CompletedAt   DateTime?
+  createdAt       DateTime           @default(now())
+
+  @@unique([weekNo, menteeId])
+  @@index([menteeId])
+}
+
+model MentorFeedback {
+  id              String   @id @default(cuid()) // 360°
+  menteeId        String
+  mentorId        String
+  date            DateTime @default(now())
+  mentorAvailable Boolean
+  feedbackUseful  Boolean
+  comments        String?
+}
+
+model MentorshipLog {
+  id               String   @id @default(cuid()) // Section G
+  mentorId         String
+  menteeId         String
+  date             DateTime @default(now())
+  discussionSummary String
+  actionItems      String?
+  nextCheckinAt    DateTime?
+}
+
+model Attendance {
+  id      String @id @default(cuid())
+  eventId String
+  userId  String
+  status  String // Present | Absent | Excused
+}
+
+model Evaluation {
+  id          String  @id @default(cuid())
+  rubricId    String
+  subjectType String // Team | User
+  subjectId   String
+  scores      Json
+  total       Float
+  rank        Int?
+  evaluatorId String?
+  createdAt   DateTime @default(now())
+}
+
+// ─────────────────── Concerns & Demerits (M6) ───────────────────
+model Concern {
+  id            String          @id @default(cuid())
+  raisedById    String
+  raisedBy      User            @relation("ConcernRaisedBy", fields: [raisedById], references: [id])
+  category      ConcernCategory
+  subjectUserId String?
+  teamId        String?
+  domainId      String?
+  milestoneId   String?
+  title         String
+  description   String
+  severity      Severity        @default(MEDIUM)
+  anonymous     Boolean         @default(false)
+  status        ConcernStatus   @default(OPEN)
+  assignedToId  String?
+  assignedTo    User?           @relation("ConcernAssignee", fields: [assignedToId], references: [id])
+  slaDueAt      DateTime?
+  resolutionNote String?
+  resolvedAt    DateTime?
+  events        ConcernEvent[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([status])
+  @@index([raisedById])
+}
+
+model ConcernEvent {
+  id         String        @id @default(cuid())
+  concernId  String
+  concern    Concern       @relation(fields: [concernId], references: [id], onDelete: Cascade)
+  actorId    String?
+  fromStatus ConcernStatus?
+  toStatus   ConcernStatus
+  note       String?
+  at         DateTime      @default(now())
+
+  @@index([concernId])
+}
+
+model Demerit {
+  id         String  @id @default(cuid())
+  userId     String
+  user       User    @relation("DemeritUser", fields: [userId], references: [id])
+  reason     String
+  points     Int     @default(1)
+  issuedById String?
+  policyRef  String?
+  escalated  Boolean @default(false)
+  createdAt  DateTime @default(now())
+}
+
+// ─────────────────── Communications (M7) ───────────────────
+model EmailTemplate {
+  id        String  @id @default(cuid())
+  name      String
+  subject   String
+  body      String
+  variables Json?
+  ownerRole RoleKey?
+  emails    Email[]
+}
+
+model Email {
+  id          String      @id @default(cuid())
+  senderId    String?
+  subject     String
+  body        String
+  recipients  Json
+  cc          Json?
+  attachments Json?
+  status      EmailStatus @default(DRAFT)
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  templateId  String?
+  template    EmailTemplate? @relation(fields: [templateId], references: [id])
+  createdAt   DateTime    @default(now())
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  authorId  String
+  scopeType String
+  scopeId   String?
+  title     String
+  body      String
+  channels  Json // ["inapp","email","discord"]
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         String
+  payload      Json
+  readAt       DateTime?
+  sentChannels Json?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, readAt])
+}
+
+model NotificationRule {
+  id         String  @id @default(cuid())
+  triggerKey String
+  audience   Json
+  cc         Json?
+  channels   Json
+  templateId String?
+  active     Boolean @default(true)
+}
+
+// ─────────────────── Integrations (M8) ───────────────────
+model IntegrationAccount {
+  id            String              @id @default(cuid())
+  provider      IntegrationProvider
+  scopeType     String
+  scopeId       String?
+  externalId    String?
+  credentialsRef String? // encrypted reference, never raw token
+  status        String              @default("connected")
+  lastSyncedAt  DateTime?
+}
+
+model GithubActivity {
+  id         String       @id @default(cuid())
+  teamId     String?
+  userId     String?
+  type       ActivityType
+  externalId String       @unique
+  title      String?
+  state      String?
+  url        String?
+  occurredAt DateTime
+  raw        Json?
+
+  @@index([teamId, occurredAt])
+}
+
+model DiscordActivity {
+  id         String       @id @default(cuid())
+  teamId     String?
+  userId     String?
+  channelId  String?
+  type       ActivityType
+  occurredAt DateTime
+  raw        Json?
+
+  @@index([teamId, occurredAt])
+}
+
+model CalendarEvent {
+  id              String            @id @default(cuid())
+  scopeType       String
+  scopeId         String?
+  title           String
+  type            CalendarEventType
+  startsAt        DateTime
+  endsAt          DateTime?
+  externalEventId String?
+  attendees       Json?
+}
+
+// ─────────────────── Audit (M11) ───────────────────
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  action     String
+  entityType String
+  entityId   String?
+  before     Json?
+  after      Json?
+  ip         String?
+  at         DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId, at])
+}

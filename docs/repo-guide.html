@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal — Repository &amp; Architecture Guide</title>
+<style>
+  :root{
+    --page:#fafafa; --card:#ffffff; --text:#18181b; --muted:#52525b;
+    --soft:#71717a; --border:#e4e4e7; --border2:#d4d4d8; --accent:#4f46e5;
+    --accent-soft:#eef2ff; --accent-border:#c7d2fe; --code:#f4f4f5;
+    --green:#16a34a; --green-soft:#f0fdf4; --green-border:#bbf7d0;
+    --amber:#b45309; --amber-soft:#fffbeb; --amber-border:#fde68a;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--page); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6; font-size:15px; -webkit-font-smoothing:antialiased;
+  }
+  .header{
+    background:var(--card); border-bottom:1px solid var(--border);
+    padding:40px 0 36px;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 28px;}
+  .eyebrow{
+    display:inline-block; font-size:12px; font-weight:600; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--accent); background:var(--accent-soft);
+    border:1px solid var(--accent-border); border-radius:5px; padding:4px 10px; margin-bottom:16px;
+  }
+  h1{font-size:32px; line-height:1.2; margin:0 0 10px; letter-spacing:-.02em;}
+  .sub{color:var(--muted); font-size:16px; max-width:680px; margin:0;}
+  .meta-row{margin-top:20px; display:flex; flex-wrap:wrap; gap:8px;}
+
+  .chip{
+    display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:500;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; padding:4px 11px; color:var(--muted);
+  }
+  .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);}
+  .pill{
+    display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600;
+    border-radius:999px; padding:3px 9px; letter-spacing:.01em;
+  }
+  .pill.ok{background:var(--green-soft); color:var(--green); border:1px solid var(--green-border);}
+  .pill.note{background:var(--amber-soft); color:var(--amber); border:1px solid var(--amber-border);}
+  .pill.acc{background:var(--accent-soft); color:var(--accent); border:1px solid var(--accent-border);}
+
+  .layout{max-width:1080px; margin:0 auto; padding:0 28px; display:grid; grid-template-columns:228px 1fr; gap:40px; align-items:start;}
+  nav.toc{
+    position:sticky; top:24px; align-self:start; font-size:13.5px;
+    border:1px solid var(--border); border-radius:10px; background:var(--card); padding:18px 16px;
+  }
+  nav.toc .toc-title{font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--soft); margin-bottom:12px;}
+  nav.toc ol{list-style:none; margin:0; padding:0; counter-reset:toc;}
+  nav.toc li{counter-increment:toc; margin:2px 0;}
+  nav.toc a{
+    display:flex; gap:9px; text-decoration:none; color:var(--muted);
+    padding:5px 8px; border-radius:6px; line-height:1.35;
+  }
+  nav.toc a:before{content:counter(toc); color:var(--soft); font-variant-numeric:tabular-nums; min-width:15px; font-size:12px;}
+  nav.toc a:hover{background:var(--accent-soft); color:var(--accent);}
+
+  main{min-width:0; padding-bottom:80px;}
+  section{padding:34px 0 8px; border-top:1px solid var(--border); margin-top:8px;}
+  section:first-child{border-top:none;}
+  h2{font-size:21px; margin:0 0 6px; letter-spacing:-.01em; display:flex; align-items:center; gap:10px;}
+  h2 .num{
+    font-size:12px; font-weight:700; color:var(--accent); background:var(--accent-soft);
+    border:1px solid var(--accent-border); border-radius:6px; width:26px; height:24px;
+    display:inline-flex; align-items:center; justify-content:center; flex:none;
+  }
+  h3{font-size:15px; margin:24px 0 8px; color:var(--text);}
+  p{margin:10px 0;}
+  .lead{color:var(--muted); font-size:15.5px;}
+  ul,ol{margin:10px 0; padding-left:22px;}
+  li{margin:5px 0;}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12.8px;
+    background:var(--code); border:1px solid var(--border); border-radius:4px; padding:1px 5px;}
+  strong{font-weight:650;}
+  a.inline{color:var(--accent); text-decoration:none; border-bottom:1px solid var(--accent-border);}
+
+  .card{border:1px solid var(--border); border-radius:10px; background:var(--card); padding:18px 20px; margin:16px 0;}
+  .card.accent{border-left:3px solid var(--accent);}
+  .card .label{font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--soft); margin-bottom:8px;}
+
+  .diagram{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12.3px; line-height:1.55;
+    background:var(--code); border:1px solid var(--border); border-radius:10px;
+    padding:18px 20px; margin:16px 0; overflow-x:auto; white-space:pre; color:#3f3f46;
+  }
+
+  table{width:100%; border-collapse:collapse; margin:16px 0; font-size:13.5px;}
+  th,td{border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top;}
+  th{background:#f4f4f5; font-weight:650; font-size:12.5px; letter-spacing:.01em;}
+  td code{background:var(--card);}
+  tr:nth-child(even) td{background:#fcfcfd;}
+  .check{color:var(--green); font-weight:700;}
+  .cross{color:var(--soft);}
+
+  /* CSS topology nodes */
+  .topo{display:flex; flex-direction:column; gap:10px; margin:16px 0;}
+  .tier{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .node{
+    border:1px solid var(--border2); border-radius:8px; background:var(--card);
+    padding:8px 12px; font-size:12.5px; min-width:120px;
+  }
+  .node b{display:block; font-size:12.5px;}
+  .node small{color:var(--soft); font-size:11px;}
+  .node.acc{border-color:var(--accent-border); background:var(--accent-soft);}
+  .arrow-d{color:var(--soft); font-size:18px; margin-left:18px;}
+  .tier-label{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--soft); min-width:80px;}
+
+  .steps{counter-reset:s; list-style:none; padding:0; margin:16px 0;}
+  .steps li{counter-increment:s; position:relative; padding:10px 0 10px 42px; border-bottom:1px solid var(--border);}
+  .steps li:last-child{border-bottom:none;}
+  .steps li:before{
+    content:counter(s); position:absolute; left:0; top:9px;
+    width:26px; height:26px; border-radius:50%; background:var(--accent-soft);
+    border:1px solid var(--accent-border); color:var(--accent); font-weight:700; font-size:12.5px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0;}
+  .footer{border-top:1px solid var(--border); margin-top:40px; padding:24px 0; color:var(--soft); font-size:12.5px;}
+  @media(max-width:860px){
+    .layout{grid-template-columns:1fr;}
+    nav.toc{position:static;}
+    .grid2{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="wrap">
+    <span class="eyebrow">Engineering Onboarding</span>
+    <h1>Portal — Repository &amp; Architecture Guide</h1>
+    <p class="sub">A single-repository platform with two independent applications, deployed on AWS ECS Fargate. This document explains the codebase, architecture, deployment pipeline, and the auth, RBAC, and integration flows for engineers and stakeholders.</p>
+    <div class="meta-row">
+      <span class="chip"><span class="dot"></span>Next.js 15 client</span>
+      <span class="chip"><span class="dot"></span>Express + TS server</span>
+      <span class="chip"><span class="dot"></span>AWS ECS Fargate</span>
+      <span class="chip"><span class="dot"></span>RDS PostgreSQL</span>
+      <span class="chip"><span class="dot"></span>Google OAuth (OIDC)</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#structure">Repository structure</a></li>
+      <li><a href="#client">Client application</a></li>
+      <li><a href="#server">Server application</a></li>
+      <li><a href="#shared">Shared concerns</a></li>
+      <li><a href="#docker">Docker architecture</a></li>
+      <li><a href="#ecs">ECS deployment flow</a></li>
+      <li><a href="#auth">Authentication flow</a></li>
+      <li><a href="#rbac">RBAC flow</a></li>
+      <li><a href="#github">GitHub integration</a></li>
+      <li><a href="#discord">Discord integration</a></li>
+      <li><a href="#calendar">Calendar integration</a></li>
+      <li><a href="#security">Security &amp; isolation</a></li>
+      <li><a href="#start">Getting started</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- 1 -->
+    <section id="overview">
+      <h2><span class="num">1</span>Overview</h2>
+      <p class="lead">Portal is an internal platform with a clean split between presentation and logic: a Next.js client renders the UI, and an Express server owns <em>all</em> business logic, data access, and integrations.</p>
+      <p>Traffic enters through <strong>Cloudflare</strong> (WAF, DDoS protection, DNS proxy), resolves via <strong>Route 53</strong>, and terminates TLS at an <strong>Application Load Balancer</strong> (certificate from ACM). The ALB fronts an <strong>ECS Fargate</strong> cluster running two containers — the Next.js SSR client on port <code>3000</code> and the Express API on port <code>4000</code> — backed by <strong>RDS PostgreSQL</strong>. Supporting services include ECR (images), Secrets Manager (config/secrets), CloudWatch (logs/metrics), and an optional ElastiCache Redis. Everything runs inside a <strong>dedicated VPC</strong> with public and private subnets and a NAT gateway. The ALB routes <code>/api/*</code> to the server and everything else to the client; the client never touches the database or third-party APIs directly.</p>
+
+      <div class="card accent">
+        <div class="label">Topology</div>
+        <div class="diagram">
+ Internet
+    │
+    ▼
+┌─────────────────────────┐
+│  Cloudflare             │  WAF · DDoS · DNS proxy
+└───────────┬─────────────┘
+            ▼
+┌─────────────────────────┐
+│  Route 53 (DNS)         │
+└───────────┬─────────────┘
+            ▼
+┌─────────────────────────┐
+│  Application Load        │  TLS termination (ACM)
+│  Balancer (ALB)          │  /api/* → server · /* → client
+└──────┬───────────┬───────┘
+       │           │
+       ▼           ▼
+ ┌──────────┐  ┌──────────┐    ECS Fargate cluster
+ │  CLIENT  │  │  SERVER  │    (dedicated VPC)
+ │ Next SSR │  │ Express  │
+ │  :3000   │  │  :4000   │
+ └──────────┘  └────┬─────┘
+                    │
+        ┌───────────┼─────────────┬─────────────┐
+        ▼           ▼             ▼             ▼
+   ┌─────────┐ ┌──────────┐ ┌──────────┐  ┌──────────────┐
+   │   RDS   │ │ Secrets  │ │CloudWatch│  │  ElastiCache │
+   │ Postgres│ │ Manager  │ │  logs    │  │   Redis(opt) │
+   └─────────┘ └──────────┘ └──────────┘  └──────────────┘
+        ▲
+        └── Server-only outbound → GitHub · Discord · Google · Groq
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="structure">
+      <h2><span class="num">2</span>Repository structure</h2>
+      <p class="lead">One repository, <code>portal/</code>, containing two <strong>independent</strong> applications plus shared tooling and docs.</p>
+      <p>This is deliberately <strong>not a Turborepo</strong> and has no <code>apps/</code> or <code>packages/</code> layout. There is no shared compiled package and no monorepo build orchestration to maintain. The two apps are decoupled and communicate only over the HTTP API contract, which keeps the mental model simple: the client is a UI app, the server is an API app, and they are deployed as separate containers. A build tool like Turborepo earns its keep when many packages share code and build graphs — here, with exactly two services and a clean network boundary between them, it would add ceremony without payoff.</p>
+
+      <div class="diagram">
+portal/
+├── client/              Next.js 15 · App Router · TypeScript · Tailwind · shadcn  (UI only)
+├── server/              Node.js · Express · TypeScript  (all business logic + data + integrations)
+├── docs/                Architecture & ops documentation (this file lives here)
+├── infra/               Infrastructure-as-code for AWS (VPC, ECS, ALB, RDS, …)
+├── docker/              Dockerfiles and container assets
+├── scripts/             Dev / build / deploy helper scripts
+├── .github/             CI/CD workflows
+├── docker-compose.yml   Local dev orchestration (client · server · postgres · redis?)
+├── README.md            Repo entry point
+└── CLAUDE.md            Agent / contributor guidance
+      </div>
+
+      <div class="grid2">
+        <div class="card"><div class="label">client/</div><strong>UI only.</strong> Renders pages, forms, and views. Holds no business rules, no DB access, no third-party API keys.</div>
+        <div class="card"><div class="label">server/</div><strong>All logic.</strong> Auth, RBAC, persistence, and every external integration live here exclusively.</div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="client">
+      <h2><span class="num">3</span>Client application</h2>
+      <p class="lead"><code>client/</code> — Next.js 15 (App Router), TypeScript, Tailwind, shadcn/ui. <span class="pill acc">UI only</span></p>
+      <p>The client is responsible for rendering and interaction: routing, layouts, server-side rendering of pages, forms, and presentational components. It holds <strong>no business logic</strong>. It does not connect to the database and does not call GitHub, Discord, Google, or Groq directly.</p>
+      <h3>How it talks to the server</h3>
+      <ul>
+        <li>All data flows through the HTTP API exposed by the server under <code>/api/*</code>.</li>
+        <li>The ALB routes <code>/api/*</code> requests to the server container; everything else is served by the client.</li>
+        <li>Session state rides on a secure, httpOnly cookie set by the server — the client never reads or constructs auth tokens.</li>
+        <li>Because authorization is enforced server-side, the client may hide UI it can't use, but it can never grant access the server would deny.</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section id="server">
+      <h2><span class="num">4</span>Server application</h2>
+      <p class="lead"><code>server/</code> — Node.js, Express, TypeScript. <span class="pill acc">All business logic</span></p>
+      <p>The server uses a conventional layered architecture so responsibilities stay isolated and testable:</p>
+      <div class="diagram">
+  HTTP request
+      │
+      ▼
+  ┌──────────────┐   define endpoints, attach middleware
+  │   Routes     │
+  └──────┬───────┘
+         ▼
+  ┌──────────────┐   parse/validate input, shape responses
+  │ Controllers  │
+  └──────┬───────┘
+         ▼
+  ┌──────────────┐   business rules, orchestration, integrations
+  │  Services    │
+  └──────┬───────┘
+         ▼
+  ┌──────────────┐   data access, queries
+  │ Repositories │
+  └──────┬───────┘
+         ▼
+  ┌──────────────┐   ORM / schema / migrations
+  │   Prisma     │ ──► RDS PostgreSQL
+  └──────────────┘
+      </div>
+      <h3>Middleware</h3>
+      <ul>
+        <li>Request logging and correlation</li>
+        <li>Session resolution (httpOnly cookie → user)</li>
+        <li>Authentication guard (rejects unauthenticated requests)</li>
+        <li>RBAC authorization (role × scope checks)</li>
+        <li>Input validation and error handling</li>
+      </ul>
+      <h3>Module list</h3>
+      <table>
+        <tr><th>Module</th><th>Responsibility</th></tr>
+        <tr><td>Auth</td><td>Google OIDC, hosted-domain + allowlist gate, sessions</td></tr>
+        <tr><td>Users &amp; RBAC</td><td>Role/scope model and server-side enforcement</td></tr>
+        <tr><td>GitHub</td><td>App + webhooks, activity tracking</td></tr>
+        <tr><td>Discord</td><td>Bot, OAuth verification, announcements</td></tr>
+        <tr><td>Calendar</td><td>Google Calendar event sync</td></tr>
+        <tr><td>AI</td><td>Groq-backed features (server-side only)</td></tr>
+      </table>
+    </section>
+
+    <!-- 5 -->
+    <section id="shared">
+      <h2><span class="num">5</span>Shared concerns</h2>
+      <p class="lead">Types and validation are shared through the <strong>API contract</strong>, not a compiled package.</p>
+      <p>The boundary between client and server is the HTTP API. Request and response shapes, plus validation rules, are defined and enforced on the server; the client consumes the same contract. With only two apps and a clean network boundary, there is no shared package and none is needed today.</p>
+      <div class="card note" style="border-left:3px solid var(--amber);">
+        <span class="pill note">Future option</span>
+        <p style="margin:8px 0 0;">A shared <code>packages/types</code> (or generated client from an OpenAPI/Zod schema) could be added later if duplication grows. It is intentionally deferred to keep the current two-app model lightweight.</p>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="docker">
+      <h2><span class="num">6</span>Docker architecture</h2>
+      <p class="lead">Two <strong>multi-stage</strong> Dockerfiles (one per app) plus a docker-compose for local development.</p>
+      <p>Each image builds in stages — install &amp; build in a fat builder stage, then copy only the runtime artifacts into a slim final image. Both images run as a <strong>non-root</strong> user and are hardened (minimal base, no dev dependencies in the final layer).</p>
+      <div class="diagram">
+  CLIENT image (multi-stage)            SERVER image (multi-stage)
+  ┌────────────────────┐                ┌────────────────────┐
+  │ deps  → build       │                │ deps  → build       │
+  │ (npm ci, next build)│                │ (npm ci, tsc)       │
+  └─────────┬───────────┘                └─────────┬───────────┘
+            ▼                                       ▼
+  ┌────────────────────┐                ┌────────────────────┐
+  │ runtime (slim)      │                │ runtime (slim)      │
+  │ non-root · :3000    │                │ non-root · :4000    │
+  └────────────────────┘                └────────────────────┘
+
+  Local dev — docker-compose up
+  ┌────────┐  ┌────────┐  ┌──────────┐  ┌───────────────┐
+  │ client │  │ server │  │ postgres │  │ redis (opt.)  │
+  └────────┘  └────────┘  └──────────┘  └───────────────┘
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section id="ecs">
+      <h2><span class="num">7</span>ECS deployment flow</h2>
+      <p class="lead">Build → push to ECR → register task definition → ECS rolling deploy.</p>
+      <ol class="steps">
+        <li><strong>Build</strong> — CI builds the client and server multi-stage images.</li>
+        <li><strong>Push to ECR</strong> — both images are tagged and pushed to Amazon ECR.</li>
+        <li><strong>Register task definition</strong> — a new ECS task definition revision references the new image tags, with secrets injected from Secrets Manager and logs wired to CloudWatch.</li>
+        <li><strong>Rolling deploy</strong> — ECS Fargate starts new tasks, waits for ALB target health checks to pass, then drains and stops the old tasks. No downtime.</li>
+      </ol>
+      <div class="diagram">
+ CI build ──► ECR ──► Task Def revision ──► ECS service update
+   │           │            │                      │
+   ▼           ▼            ▼                      ▼
+ client+    image      secrets from           rolling: start new →
+ server     tags       Secrets Manager        health check (ALB) →
+ images               + CloudWatch logs        drain → stop old
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section id="auth">
+      <h2><span class="num">8</span>Authentication flow</h2>
+      <p class="lead">Google OAuth (OIDC) <strong>only</strong>. <span class="pill ok">No passwords</span> <span class="pill ok">No self-signup</span></p>
+      <p>There is no email/password login and no signup path. Access is granted by a two-part gate: the Google account must belong to the expected <strong>hosted domain</strong> (<code>hd</code>, e.g. <code>rishihood.edu.in</code>) <em>and</em> the email must already exist in the <strong>users table</strong> (allowlist). Unknown emails are rejected outright. Authenticated users get a <strong>server-side session</strong> carried by a secure, httpOnly cookie.</p>
+      <ol class="steps">
+        <li>User clicks "Sign in with Google" in the client.</li>
+        <li>Server redirects to Google's OIDC consent.</li>
+        <li>Google authenticates the user and returns an authorization code.</li>
+        <li>Server exchanges the code for ID/access tokens and verifies them.</li>
+        <li>Server checks the <code>hd</code> claim matches the allowed hosted domain.</li>
+        <li>Server confirms the email pre-exists in the users allowlist table.</li>
+        <li>If both pass, server creates a session and sets a secure httpOnly cookie; otherwise the request is rejected.</li>
+      </ol>
+      <div class="diagram">
+  Client        Server            Google (OIDC)        Users table
+    │  sign in    │                     │                   │
+    │────────────►│  redirect           │                   │
+    │             │────────────────────►│                   │
+    │             │   auth code         │                   │
+    │             │◄────────────────────│                   │
+    │             │  verify token + hd  │                   │
+    │             │  email allowlisted? │──── lookup ──────►│
+    │             │                     │   yes / no        │
+    │             │◄──────────────────────────────────────  │
+    │  cookie     │  session + httpOnly cookie  (or reject) │
+    │◄────────────│                                         │
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section id="rbac">
+      <h2><span class="num">9</span>RBAC flow</h2>
+      <p class="lead">Authorization = <strong>role × scope</strong>, enforced <strong>server-side only</strong>.</p>
+      <div class="meta-row" style="margin:14px 0;">
+        <span class="chip"><span class="dot"></span>Admin</span>
+        <span class="chip"><span class="dot"></span>LCC</span>
+        <span class="chip"><span class="dot"></span>Teacher</span>
+        <span class="chip"><span class="dot"></span>Mentor</span>
+        <span class="chip"><span class="dot"></span>Mentee</span>
+      </div>
+      <p>Every permission is the combination of a <strong>role</strong> (five total) and a <strong>scope</strong> that bounds how far that role's access reaches.</p>
+      <table>
+        <tr><th>Scope</th><th>Reach</th></tr>
+        <tr><td><code>GLOBAL</code></td><td>Across the entire platform</td></tr>
+        <tr><td><code>DOMAIN</code></td><td>Within a domain / cohort</td></tr>
+        <tr><td><code>TEAM</code></td><td>Within a single team</td></tr>
+        <tr><td><code>SELF</code></td><td>Only the user's own records</td></tr>
+      </table>
+
+      <h3>Permission matrix (representative)</h3>
+      <table>
+        <tr><th>Role</th><th>Typical scope</th><th>Manage users</th><th>Manage teams</th><th>View domain data</th><th>Own data</th></tr>
+        <tr><td><strong>Admin</strong></td><td><code>GLOBAL</code></td><td class="check">✔</td><td class="check">✔</td><td class="check">✔</td><td class="check">✔</td></tr>
+        <tr><td><strong>LCC</strong></td><td><code>GLOBAL</code>/<code>DOMAIN</code></td><td class="check">✔</td><td class="check">✔</td><td class="check">✔</td><td class="check">✔</td></tr>
+        <tr><td><strong>Teacher</strong></td><td><code>DOMAIN</code></td><td class="cross">—</td><td class="cross">—</td><td class="check">✔</td><td class="check">✔</td></tr>
+        <tr><td><strong>Mentor</strong></td><td><code>TEAM</code></td><td class="cross">—</td><td class="check">✔ (own team)</td><td class="cross">—</td><td class="check">✔</td></tr>
+        <tr><td><strong>Mentee</strong></td><td><code>SELF</code></td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✔</td></tr>
+      </table>
+
+      <div class="card note" style="border-left:3px solid var(--amber);">
+        <span class="pill note">Config note — "Team Lead"</span>
+        <p style="margin:8px 0 0;">The refactor prompt re-listed a <strong>Team Lead</strong> role, but it was previously <strong>merged into Mentor</strong> — the Student Mentor leads the team. The current model has five roles. Re-adding Team Lead as a distinct role is a small config change if confirmed.</p>
+      </div>
+
+      <h3>Three layers of server-side enforcement</h3>
+      <ol class="steps">
+        <li><strong>Route middleware</strong> — rejects requests whose role can't reach the endpoint at all.</li>
+        <li><strong>Service checks</strong> — applies role × scope rules to the specific action and resource.</li>
+        <li><strong>Data scoping</strong> — repository queries are filtered to the caller's scope (e.g. team or self) so out-of-scope rows are never returned.</li>
+      </ol>
+      <div class="diagram">
+  Request (session → user: role, scope)
+        │
+        ▼  Layer 1 — route middleware:  role allowed on this route?  ──► no → 403
+        ▼  Layer 2 — service:           role × scope allows action?  ──► no → 403
+        ▼  Layer 3 — repository:         query filtered to scope (team/self)
+        ▼
+     Response (only in-scope data)
+      </div>
+      <p>The client may hide controls it can't use, but enforcement is never trusted to the client — all three layers run on the server.</p>
+    </section>
+
+    <!-- 10 -->
+    <section id="github">
+      <h2><span class="num">10</span>GitHub integration</h2>
+      <p class="lead">GitHub App + webhooks, handled <strong>server-side only</strong>.</p>
+      <ul>
+        <li>A GitHub App grants scoped access; <strong>webhooks</strong> push repository events to the server.</li>
+        <li>The server tracks engineering activity (e.g. commits, pull requests, and related contribution signals) to attribute work and surface it in the UI.</li>
+        <li>All credentials and webhook handling live on the server — the client only renders the resulting data via <code>/api/*</code>.</li>
+      </ul>
+    </section>
+
+    <!-- 11 -->
+    <section id="discord">
+      <h2><span class="num">11</span>Discord integration</h2>
+      <p class="lead">Bot + OAuth verification + announcements.</p>
+      <ul>
+        <li><strong>Bot</strong> — operates in the community server for automation and messaging.</li>
+        <li><strong>OAuth verify</strong> — links a user's Discord identity to their Portal account.</li>
+        <li><strong>Announcements</strong> — the server posts updates/notifications into Discord channels.</li>
+      </ul>
+      <p>As with all integrations, tokens and API calls are server-side only.</p>
+    </section>
+
+    <!-- 12 -->
+    <section id="calendar">
+      <h2><span class="num">12</span>Calendar integration</h2>
+      <p class="lead">Google Calendar event sync.</p>
+      <ul>
+        <li>The server syncs events with Google Calendar so schedules stay consistent between Portal and Google.</li>
+        <li>Calendar credentials are managed server-side; the client renders synced events through the API.</li>
+      </ul>
+    </section>
+
+    <!-- 13 -->
+    <section id="security">
+      <h2><span class="num">13</span>Security &amp; AWS account isolation</h2>
+      <p class="lead">The AWS account is <strong>shared</strong> with other services — Portal is fully isolated so there is <strong>zero blast radius</strong> into them. <span class="pill ok">Isolated</span></p>
+      <p>Because the same account also runs unrelated services, Portal is provisioned with its own dedicated boundary at every layer. A compromise or misconfiguration in Portal cannot reach the other services, and vice versa.</p>
+      <table>
+        <tr><th>Layer</th><th>Isolation</th></tr>
+        <tr><td>Network</td><td>Dedicated <strong>VPC</strong>, public + private subnets, NAT; <strong>no peering</strong> to other services' networks</td></tr>
+        <tr><td>Access control</td><td>Dedicated <strong>security groups</strong> and <strong>IAM</strong> roles/policies scoped to least privilege</td></tr>
+        <tr><td>Secrets</td><td>Dedicated <strong>Secrets Manager</strong> entries and <strong>KMS</strong> keys</td></tr>
+        <tr><td>Data &amp; transport</td><td>Private-subnet RDS; TLS at the ALB (ACM); secure httpOnly session cookies; non-root hardened containers</td></tr>
+      </table>
+      <div class="card accent">
+        <div class="label">Blast-radius containment</div>
+        <p style="margin:8px 0 0;">Least-privilege IAM, no network peering, and dedicated VPC / SG / Secrets / KMS mean Portal is sealed off from the account's other services. There is no lateral path in or out.</p>
+      </div>
+    </section>
+
+    <!-- 14 -->
+    <section id="start">
+      <h2><span class="num">14</span>Getting started</h2>
+      <p class="lead">Clone, run the stack with Docker Compose, and start the apps locally.</p>
+      <div class="diagram">
+  git clone &lt;repo-url&gt; portal
+  cd portal
+  docker-compose up        # client + server + postgres (+ redis if enabled)
+      </div>
+      <h3>Where things live</h3>
+      <ul>
+        <li><code>client/</code> — Next.js UI (port <code>3000</code>)</li>
+        <li><code>server/</code> — Express API (port <code>4000</code>, serves <code>/api/*</code>)</li>
+        <li><code>docker/</code> — Dockerfiles · <code>docker-compose.yml</code> — local orchestration</li>
+        <li><code>infra/</code> — AWS infrastructure · <code>.github/</code> — CI/CD · <code>scripts/</code> — helpers</li>
+      </ul>
+      <h3>Further reading</h3>
+      <table>
+        <tr><th>Document</th><th>Covers</th></tr>
+        <tr><td><code>docs/architecture-v2.md</code></td><td>Full system architecture</td></tr>
+        <tr><td><code>docs/infra-ecs.md</code></td><td>AWS ECS infrastructure &amp; deployment</td></tr>
+        <tr><td><code>docs/security.md</code></td><td>Security model &amp; account isolation</td></tr>
+        <tr><td><code>docs/integration-setup.md</code></td><td>GitHub / Discord / Calendar setup</td></tr>
+      </table>
+    </section>
+
+    <div class="footer">
+      Portal — Repository &amp; Architecture Guide · Internal engineering onboarding · Last updated 2026-06-15
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>
