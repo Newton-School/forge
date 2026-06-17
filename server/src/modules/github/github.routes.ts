@@ -7,6 +7,10 @@ import * as svc from "./github.service.js";
 import * as connect from "./github.connect.js";
 import { githubApi } from "./github.api.js";
 import { githubRead } from "./github.read.js";
+import { repoRead } from "./repo.read.js";
+import { syncRepository } from "./repo.sync.js";
+import { parseRepo } from "./github.hooks.js";
+import { githubRepo } from "./github.repository.js";
 
 const listQuery = z.object({
   teamId: z.string().optional(),
@@ -127,3 +131,58 @@ githubRouter.get("/repos/:repo/contributors", requirePermission("review:read"),
 
 githubRouter.get("/teams", requirePermission("review:read"),
   asyncHandler(async (_req, res: Response) => res.json({ items: await githubRead.teams() })));
+
+// ── Repository-mode read endpoints (ML/DVA/SDSE — public repos, no org) ─────────────
+const ownerRepo = z.object({
+  owner: z.string().min(1).max(100).regex(/^[\w.-]+$/),
+  repo: z.string().min(1).max(120).regex(/^[\w.-]+$/),
+});
+const teamParam = z.object({ teamId: z.string().min(1).max(64) });
+
+// Direct owner/repo reads are NOT team-scoped — restrict to Admin/LCC (integration:manage).
+// Team members reach their repo through the scope-checked /teams/:teamId/repo/* routes below.
+githubRouter.get("/repo/:owner/:repo/dashboard", requirePermission("integration:manage"),
+  asyncHandler(async (req, res: Response) => {
+    const { owner, repo } = ownerRepo.parse(req.params);
+    res.json(await repoRead.dashboard(owner, repo));
+  }));
+
+githubRouter.get("/repo/:owner/:repo", requirePermission("integration:manage"),
+  asyncHandler(async (req, res: Response) => {
+    const { owner, repo } = ownerRepo.parse(req.params);
+    res.json(await repoRead.overview(owner, repo));
+  }));
+
+// Individual resources (each maps to a repository dashboard panel).
+const part = (name: "collaborators" | "contributors" | "commits" | "pulls" | "branches" | "releases" | "activity") =>
+  githubRouter.get(`/repo/:owner/:repo/${name}`, requirePermission("integration:manage"),
+    asyncHandler(async (req, res: Response) => {
+      const { owner, repo } = ownerRepo.parse(req.params);
+      res.json({ items: await repoRead[name](owner, repo) });
+    }));
+(["collaborators", "contributors", "commits", "pulls", "branches", "releases", "activity"] as const).forEach(part);
+
+/** Team-scoped dashboard: DB-backed (collaborators/branches/releases) when synced, else live. */
+githubRouter.get("/teams/:teamId/repo/dashboard", requirePermission("review:read"),
+  asyncHandler(async (req, res: Response) => {
+    const { teamId } = teamParam.parse(req.params);
+    await svc.assertTeamAccess(req.auth!, teamId); // domain/team/membership isolation
+    const dash = await repoRead.teamDashboard(teamId);
+    if (dash) return res.json(dash);
+    // Not synced yet — fall back to a live read via the stored repo URL.
+    const url = await githubRepo.teamRepoUrl(teamId);
+    if (!url) return res.status(404).json({ error: { code: "no_repo", message: "No repository connected to this team" } });
+    const { owner, repo } = parseRepo(url);
+    res.json(await repoRead.dashboard(owner, repo));
+  }));
+
+/** Re-sync a team's repo (meta + branches + releases; collaborators are captured at connect). */
+githubRouter.post("/teams/:teamId/repo/sync", requirePermission("integration:manage"),
+  asyncHandler(async (req, res: Response) => {
+    const { teamId } = teamParam.parse(req.params);
+    await svc.assertTeamAccess(req.auth!, teamId);
+    const url = await githubRepo.teamRepoUrl(teamId);
+    if (!url) return res.status(404).json({ error: { code: "no_repo", message: "No repository connected to this team" } });
+    const { owner, repo } = parseRepo(url);
+    res.json(await syncRepository(teamId, owner, repo));
+  }));

@@ -298,8 +298,84 @@ model Team {
   discordChannelId String?
   members         TeamMember[]
   projects        Project[]
+  repository      Repository? // repository-mode connected repo (ML/DVA/SDSE)
 
   @@index([domainId])
+}
+
+// ── Repository mode (ML/DVA/SDSE) — one connected public repo per team ───────────────
+enum RepoVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum RepoPermission {
+  ADMIN
+  WRITE
+  READ
+}
+
+enum RepoCollabRole {
+  OWNER
+  MAINTAINER
+  COLLABORATOR
+}
+
+model Repository {
+  id            String             @id @default(cuid())
+  teamId        String             @unique
+  team          Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  owner         String // GitHub owner login (team lead or mentor)
+  name          String
+  fullName      String             @unique
+  visibility    RepoVisibility     @default(PUBLIC)
+  description   String?
+  defaultBranch String             @default("main")
+  hasIssues     Boolean            @default(false)
+  topics        String[]
+  lastSyncedAt  DateTime? // last successful GitHub → DB sync
+  collaborators RepoCollaborator[]
+  branches      RepoBranch[]
+  releases      RepoRelease[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+}
+
+// Captured at connect time using the OWNER's token (listing collaborators needs write
+// access, which the read-only machine token doesn't have) — closes the collaborators gap.
+model RepoCollaborator {
+  id           String         @id @default(cuid())
+  repositoryId String
+  repository   Repository     @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  login        String
+  permission   RepoPermission @default(READ)
+  repoRole     RepoCollabRole @default(COLLABORATOR)
+
+  @@unique([repositoryId, login])
+}
+
+model RepoBranch {
+  id           String     @id @default(cuid())
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  name         String
+  protected    Boolean    @default(false)
+  sha          String
+
+  @@unique([repositoryId, name])
+}
+
+model RepoRelease {
+  id           String     @id @default(cuid())
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  tag          String
+  name         String
+  publishedAt  DateTime
+  author       String?
+  notes        String?
+
+  @@unique([repositoryId, tag])
 }
 
 model Squad {

@@ -29,6 +29,19 @@ describe("can() — domain scope isolation", () => {
   });
 });
 
+describe("can() — team & self scope isolation", () => {
+  const mentor: AuthContext = { id: "mt", email: "mt", fullName: "MT", roles: [{ role: "MENTOR", scopeType: "TEAM", scopeId: "t1" }] };
+  it("mentor reads their own team only", () => {
+    expect(can(mentor, "review:read", { teamId: "t1" })).toBe(true);
+    expect(can(mentor, "review:read", { teamId: "t2" })).toBe(false);
+  });
+  it("self scope covers the owner only, not a team resource", () => {
+    expect(can(mentee, "review:read", { ownerId: "m" })).toBe(true);
+    expect(can(mentee, "review:read", { ownerId: "other" })).toBe(false);
+    expect(can(mentee, "review:read", { teamId: "t1" })).toBe(false);
+  });
+});
+
 describe("effectiveScope()", () => {
   it("collects all of a multi-domain teacher's domains", () => {
     const s = effectiveScope(teacher);

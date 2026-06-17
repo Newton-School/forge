@@ -64,6 +64,35 @@ export async function listActivity(ctx: AuthContext, q: { teamId?: string; take:
   return { items: await githubRepo.list(where, q.take, q.skip) };
 }
 
+/**
+ * Pure team-isolation rule: a user may reach a team's GitHub data iff they are global
+ * (Admin/LCC), a teacher of the team's domain, the team's mentor, or a member of the team.
+ * Membership is the key addition — a mentee's role grant is SELF-scoped, so team access
+ * comes from belonging to the team, not from a TEAM-scoped grant.
+ */
+export function teamAccessAllowed(
+  scope: { global: boolean; domainIds: string[]; teamIds: string[] },
+  team: { id: string; domainId: string; mentorId: string | null; members: { userId: string }[] },
+  userId: string,
+): boolean {
+  return (
+    scope.global ||
+    scope.domainIds.includes(team.domainId) ||
+    scope.teamIds.includes(team.id) ||
+    team.mentorId === userId ||
+    team.members.some((m) => m.userId === userId)
+  );
+}
+
+/** Authorize a team-scoped GitHub read (route gate is permission-only; this adds the scope). */
+export async function assertTeamAccess(ctx: AuthContext, teamId: string): Promise<void> {
+  const team = await githubRepo.teamAccess(teamId);
+  if (!team) throw Errors.notFound("Team not found");
+  if (!teamAccessAllowed(effectiveScope(ctx), team, ctx.id)) {
+    throw Errors.forbidden("You don't have access to this team's repository");
+  }
+}
+
 /** Integration status for the admin connections view. */
 export function status() {
   return {

@@ -24,7 +24,10 @@ authRouter.get(
   authRateLimit,
   (req: Request, res: Response, next: NextFunction) =>
     passport.authenticate("google", { failureRedirect: `${CLIENT}/login?error=denied` })(req, res, next),
-  (_req: Request, res: Response) => res.redirect(`${CLIENT}/`),
+  (req: Request, res: Response) => {
+    req.session.loginAt = Date.now(); // anchor the absolute-timeout window
+    res.redirect(`${CLIENT}/`);
+  },
 );
 
 /** Current session's authenticated user (RBAC context). */

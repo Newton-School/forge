@@ -11,6 +11,9 @@ const schema = z.object({
   REDIS_URL: z.string().default("redis://localhost:6379"),
 
   SESSION_SECRET: z.string().min(16, "SESSION_SECRET must be at least 16 chars"),
+  // Hard cap on a session's lifetime regardless of activity (idle window is the cookie
+  // maxAge). Forces re-auth after this many hours even for a continuously-active user.
+  SESSION_ABSOLUTE_HOURS: z.coerce.number().int().min(1).max(720).default(24),
 
   ALLOWED_HOSTED_DOMAIN: z.string().default("rishihood.edu.in"),
   GOOGLE_OAUTH_CLIENT_ID: z.string().optional(),
@@ -41,6 +44,12 @@ const schema = z.object({
     .string()
     .url()
     .default("http://localhost:4000/api/integrations/github/oauth/callback"),
+
+  // Repository-mode reads (ML/DVA/SDSE public repos). The machine account added as a
+  // read collaborator on connect; its optional classic PAT (public_repo) raises the read
+  // rate limit and lets the server list collaborators. Reads work unauthenticated too.
+  GITHUB_READER_LOGIN: z.string().default("lcc-ai-nst"),
+  GITHUB_READER_TOKEN: z.string().optional(),
 
   // Discord integration — interactions public key (Ed25519) + optional bot token.
   DISCORD_PUBLIC_KEY: z.string().optional(),

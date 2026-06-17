@@ -27,6 +27,7 @@ async function main() {
       { id: "d-ai", key: "AI", name: "Artificial Intelligence" },
       { id: "d-ml", key: "ML", name: "Machine Learning" },
       { id: "d-sdse", key: "SDSE", name: "Software Dev & Systems Eng" },
+      { id: "d-dva", key: "DVA", name: "Data Visualisation & Analytics" },
     ].map((d) =>
       prisma.domain.upsert({
         where: { id: d.id },

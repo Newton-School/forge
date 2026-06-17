@@ -59,4 +59,17 @@ export const githubRepo = {
   /** Bind a repo URL to a team (matched later by the webhook's repo full-name). */
   setTeamRepo: (teamId: string, repoUrl: string) =>
     prisma.team.update({ where: { id: teamId }, data: { githubRepoUrl: repoUrl }, select: { id: true } }),
+
+  /** The repo URL connected to a team (repository-mode dashboards). */
+  teamRepoUrl: async (teamId: string): Promise<string | null> => {
+    const t = await prisma.team.findUnique({ where: { id: teamId }, select: { githubRepoUrl: true } });
+    return t?.githubRepoUrl ?? null;
+  },
+
+  /** Facts used to authorize team-scoped reads: domain, mentor, and member ids. */
+  teamAccess: (teamId: string) =>
+    prisma.team.findUnique({
+      where: { id: teamId },
+      select: { id: true, domainId: true, mentorId: true, members: { select: { userId: true } } },
+    }),
 };
