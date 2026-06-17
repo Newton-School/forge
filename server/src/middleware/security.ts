@@ -4,7 +4,7 @@ import cors from "cors";
 import crypto from "node:crypto";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
+import { rateLimit } from "express-rate-limit";
 import { env } from "../config/env.js";
 import { Errors } from "../lib/errors.js";
 
