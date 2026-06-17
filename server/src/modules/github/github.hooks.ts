@@ -11,7 +11,12 @@ import { fetchWithRetry } from "../../lib/http.js";
  * that already has our hook.
  */
 const API = "https://api.github.com";
-const EVENTS = ["push", "pull_request", "pull_request_review", "issues"] as const;
+// Covers the repository dashboards: code, PRs/reviews, issues, branch create/delete,
+// releases, and collaborator changes (repository mode reads all of these).
+const EVENTS = [
+  "push", "pull_request", "pull_request_review", "issues",
+  "create", "delete", "release", "member",
+] as const;
 
 /** The public URL GitHub POSTs events to — derived from the server's OAuth origin. */
 export function webhookPayloadUrl(): string {
@@ -110,4 +115,30 @@ export async function ensureRepoWebhook(
   const created = (await res.json()) as { id: number };
   logger.info({ owner, repo, id: created.id }, "repo webhook created");
   return { created: true, id: created.id };
+}
+
+/**
+ * Invite the Forge machine reader as a READ collaborator so the server can durably read
+ * the repo (and list collaborators, which needs push-level access even on public repos).
+ * Best-effort + idempotent: GitHub returns 201 (invite), 204 (already a collaborator), or
+ * an error we swallow — repository mode still works on public repos without it.
+ */
+export async function ensureReadCollaborator(token: string, owner: string, repo: string, reader: string): Promise<boolean> {
+  if (!reader || reader.toLowerCase() === owner.toLowerCase()) return false;
+  try {
+    const res = await fetchWithRetry(
+      `${API}/repos/${owner}/${repo}/collaborators/${reader}`,
+      { method: "PUT", headers: { ...authHeaders(token), "Content-Type": "application/json" }, body: JSON.stringify({ permission: "pull" }) },
+      { retries: 0 },
+    );
+    if (res.ok || res.status === 204) {
+      logger.info({ owner, repo, reader, status: res.status }, "read collaborator ensured");
+      return true;
+    }
+    logger.warn({ owner, repo, reader, status: res.status }, "could not add read collaborator (continuing)");
+    return false;
+  } catch (err) {
+    logger.warn({ err, owner, repo, reader }, "read collaborator add failed (continuing)");
+    return false;
+  }
 }

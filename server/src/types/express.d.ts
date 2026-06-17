@@ -1,4 +1,12 @@
 import type { AuthContext } from "../rbac/types.js";
+import "express-session";
+
+declare module "express-session" {
+  interface SessionData {
+    /** Epoch ms of the original login — backs the absolute-session-timeout cap. */
+    loginAt?: number;
+  }
+}
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

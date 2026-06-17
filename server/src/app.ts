@@ -5,7 +5,7 @@ import swaggerUi from "swagger-ui-express";
 import { applySecurity, csrf } from "./middleware/security.js";
 import { buildSession } from "./middleware/session.js";
 import { configurePassport } from "./middleware/passport.js";
-import { attachAuth, requireAuth } from "./middleware/auth.js";
+import { attachAuth, enforceAbsoluteTimeout, requireAuth } from "./middleware/auth.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 import { logger } from "./lib/logger.js";
 import { healthPayload } from "./lib/health.js";
@@ -54,6 +54,7 @@ export function buildApp(): Express {
   // Email open-tracking pixel is public (mail clients fetch it with no cookie).
   app.use("/api/email/track", emailTrackRouter);
 
+  app.use(enforceAbsoluteTimeout); // hard session lifetime cap (beyond the rolling idle window)
   app.use(attachAuth); // loads the fresh AuthContext onto req.auth
   app.use(csrf); // double-submit CSRF for state-changing requests
 

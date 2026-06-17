@@ -1,9 +1,11 @@
 import type { AuthContext } from "../../rbac/types.js";
 import { effectiveScope } from "../../rbac/policy.js";
+import { env } from "../../config/env.js";
 import { audit } from "../../lib/audit.js";
 import { logger } from "../../lib/logger.js";
 import { githubRepo } from "./github.repository.js";
-import { ensureRepoWebhook, parseRepo } from "./github.hooks.js";
+import { ensureRepoWebhook, ensureReadCollaborator, parseRepo } from "./github.hooks.js";
+import { syncRepository } from "./repo.sync.js";
 import {
   authorizeUrl,
   decodeState,
@@ -92,12 +94,19 @@ export async function handleCallback(
   const fullName = `${owner}/${repo}`;
   try {
     const hook = await ensureRepoWebhook(token, owner, repo);
+    // Add the Forge machine reader so reads + collaborator listing are durable (public repos).
+    const readerAdded = await ensureReadCollaborator(token, owner, repo, env.GITHUB_READER_LOGIN);
     await githubRepo.setTeamRepo(state.teamId, `https://github.com/${fullName}`);
+    // Capture repo meta + collaborators (owner token) + branches/releases into the DB now,
+    // so the dashboards read from Forge and the collaborators list is populated.
+    await syncRepository(state.teamId, owner, repo, token).catch((err) =>
+      logger.warn({ err, teamId: state.teamId, repo: fullName }, "initial repository sync failed (will retry on demand)"),
+    );
     await audit(ctx, {
       action: "github.connectRepo",
       entityType: "Team",
       entityId: state.teamId,
-      after: { repo: fullName, webhookCreated: hook.created },
+      after: { repo: fullName, webhookCreated: hook.created, readerAdded },
       ip,
     });
     return { status: hook.created ? "repo_ok" : "repo_exists", login: viewer.login };
