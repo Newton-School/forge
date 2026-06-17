@@ -4,13 +4,15 @@ const SRC: Record<string, string> = {
   github: "/github.svg",
   discord: "/discord.png",
   calendar: "/google_calendar.png",
+  email: "/email.svg",
+  groq: "/groq.svg",
 };
 
-/** Brand logos served from /public (GitHub, Discord, Google Calendar). */
+/** Brand logos served from /public (GitHub, Discord, Google Calendar, Email, Groq). */
 export function BrandIcon({
   name, size = 20, className,
 }: {
-  name: "github" | "discord" | "calendar";
+  name: "github" | "discord" | "calendar" | "email" | "groq";
   size?: number;
   className?: string;
 }) {

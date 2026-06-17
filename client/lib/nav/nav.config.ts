@@ -76,6 +76,7 @@ export const NAV: Record<RoleKey, NavSection[]> = {
         { label: "Concerns", href: "/lcc/concerns", icon: "OctagonAlert" },
         { label: "Email Center", href: "/lcc/email", icon: "Mail" },
         { label: "Onboarding", href: "/lcc/onboarding", icon: "UserPlus" },
+        { label: "Invitations", href: "/lcc/invitations", icon: "UserCheck" },
         { label: "Demerits", href: "/lcc/demerits", icon: "ShieldAlert" },
       ],
     },
@@ -89,6 +90,7 @@ export const NAV: Record<RoleKey, NavSection[]> = {
       label: "People & Org",
       items: [
         { label: "Users", href: "/admin/users", icon: "Users" },
+        { label: "Invitations", href: "/admin/invitations", icon: "UserCheck" },
         { label: "Domains", href: "/admin/domains", icon: "Boxes" },
         { label: "Teams", href: "/admin/teams", icon: "Network" },
         { label: "Roles", href: "/admin/roles", icon: "ShieldCheck" },
@@ -100,6 +102,7 @@ export const NAV: Record<RoleKey, NavSection[]> = {
         { label: "Configuration", href: "/admin/configuration", icon: "Settings" },
         { label: "Integrations", href: "/admin/integrations", icon: "Plug" },
         { label: "Email Templates", href: "/admin/email-templates", icon: "Mail" },
+        { label: "Email Testing", href: "/admin/email-testing", icon: "ClipboardCheck" },
         { label: "Audit Logs", href: "/admin/audit-logs", icon: "ScrollText" },
       ],
     },
@@ -114,6 +117,63 @@ export const SHARED_NAV: NavSection = {
     { label: "Connections", href: "/connections", icon: "Plug" },
     { label: "Notifications", href: "/notifications", icon: "Bell" },
     { label: "Profile", href: "/profile", icon: "User" },
+  ],
+};
+
+/**
+ * AI-Domain GitHub navigation. Injected by the sidebar **only when the active domain
+ * is AI** (GitHub is the source of truth there). ML/SDSE keep just the drive nav above.
+ * These sit alongside the drive nav — additive, nothing is removed.
+ */
+export const GITHUB_NAV: Partial<Record<RoleKey, NavSection[]>> = {
+  TEACHER: [
+    {
+      label: "GitHub · AI",
+      items: [
+        { label: "Org Dashboard", href: "/teacher/github", icon: "Boxes" },
+        { label: "Team Comparison", href: "/teacher/github/teams", icon: "GitCompare" },
+        { label: "Project Comparison", href: "/teacher/github/projects", icon: "FolderGit2" },
+        { label: "Repositories", href: "/teacher/github/repos", icon: "GitBranch" },
+        { label: "Mentor Performance", href: "/teacher/github/mentors", icon: "UserCheck" },
+        { label: "Student Contributions", href: "/teacher/github/students", icon: "GraduationCap" },
+      ],
+    },
+  ],
+  MENTOR: [
+    {
+      label: "GitHub · AI",
+      items: [
+        { label: "Team Dashboard", href: "/mentor/github", icon: "LayoutDashboard" },
+        { label: "Repository", href: "/mentor/github/repo", icon: "GitBranch" },
+        { label: "Issues", href: "/mentor/github/issues", icon: "CircleDot" },
+        { label: "Pull Requests", href: "/mentor/github/pulls", icon: "GitPullRequest" },
+        { label: "Student Performance", href: "/mentor/github/students", icon: "Users" },
+      ],
+    },
+  ],
+  MENTEE: [
+    {
+      label: "GitHub · AI",
+      items: [
+        { label: "My Repository", href: "/mentee/github", icon: "GitBranch" },
+        { label: "Issues", href: "/mentee/github/issues", icon: "CircleDot" },
+        { label: "My Pull Requests", href: "/mentee/github/pulls", icon: "GitPullRequest" },
+        { label: "Contribution Analytics", href: "/mentee/github/analytics", icon: "ChartBar" },
+        { label: "Milestones", href: "/mentee/github/milestones", icon: "Flag" },
+      ],
+    },
+  ],
+  LCC: [
+    {
+      label: "GitHub · AI",
+      items: [{ label: "AI Domain Overview", href: "/lcc/github", icon: "Boxes" }],
+    },
+  ],
+  ADMIN: [
+    {
+      label: "GitHub · AI",
+      items: [{ label: "AI Domain Overview", href: "/admin/github", icon: "Boxes" }],
+    },
   ],
 };
 

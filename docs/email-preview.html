@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Forge — Onboarding Email Preview</title>
+<style>
+  :root{
+    --bg:#fafafa;--card:#fff;--fg:#18181b;--mut:#52525b;--sub:#a1a1aa;--border:#e4e4e7;
+    --indigo:#4f46e5;--indigo-bg:#eef2ff;--green:#059669;--green-bg:#ecfdf5;--amber:#d97706;--amber-bg:#fffbeb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-size:15px;line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86em;background:#fafafa;border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:#be185d}
+  a{color:var(--indigo)}
+  header{background:#fff;border-bottom:1px solid var(--border);padding:26px 0}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .logo{width:30px;height:30px;border-radius:8px;background:var(--indigo);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+  h1{font-size:22px;margin:0 0 6px;letter-spacing:-.02em}
+  .lede{color:var(--mut);max-width:760px;margin:0}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;background:#fafafa;color:var(--mut);border:1px solid var(--border)}
+
+  .controls{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:18px;background:var(--indigo-bg);border:1px solid #c7d2fe;border-radius:10px;padding:12px 16px}
+  .controls .lbl{font-size:13px;font-weight:600;color:#3730a3}
+  .seg{display:inline-flex;border:1px solid #c7d2fe;border-radius:8px;overflow:hidden;background:#fff}
+  .seg button{border:0;background:#fff;color:#3730a3;font-size:13px;font-weight:600;padding:7px 14px;cursor:pointer}
+  .seg button.on{background:var(--indigo);color:#fff}
+  .subject{font-family:ui-monospace,monospace;font-size:12.5px;color:#3730a3;background:#fff;border:1px solid #c7d2fe;border-radius:7px;padding:6px 10px}
+
+  section{padding:30px 0;border-bottom:1px solid var(--border)}
+  h2{font-size:16px;margin:0 0 14px;letter-spacing:-.01em}
+  .frames{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+  .device{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .device .cap{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--sub);margin:0 2px 10px;display:flex;justify-content:space-between}
+  iframe{border:0;background:#fafafa;border-radius:8px;display:block}
+  .desktop iframe{width:640px;height:840px}
+  .mobile iframe{width:375px;height:780px}
+  @media (max-width:1080px){ .desktop iframe{width:100%;max-width:560px} }
+
+  .legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+  .legend .item{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:#fff}
+  .legend code{display:inline-block;margin-bottom:4px}
+  .legend .d{font-size:12.5px;color:var(--mut)}
+  pre.txt{white-space:pre-wrap;background:#0b0b0f;color:#e7e7ea;border-radius:10px;padding:18px 20px;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;overflow:auto}
+  .note{background:var(--amber-bg);border:1px solid #fcd34d;border-left:3px solid var(--amber);border-radius:8px;padding:10px 13px;font-size:13px;color:#92400e;margin:12px 0}
+  footer{padding:26px 0;color:var(--sub);font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand"><div class="logo">F</div><strong>Forge</strong><span class="pill">Onboarding Email · Preview</span></div>
+    <h1>Onboarding email — stakeholder preview</h1>
+    <p class="lede">The exact HTML that ships in the user-onboarding invitation, rendered with sample data on desktop and mobile. Toggle the production vs <b>[TEST]</b> variant; the plain-text fallback is below. Source of truth: <code>docs/onboarding-email.html</code>.</p>
+    <div class="controls">
+      <span class="lbl">Variant</span>
+      <span class="seg" id="seg">
+        <button data-v="prod" class="on">Production</button>
+        <button data-v="test">[TEST]</button>
+      </span>
+      <span class="lbl" style="margin-left:8px">Subject</span>
+      <span class="subject" id="subject"></span>
+    </div>
+  </div>
+</header>
+
+<section><div class="wrap">
+  <h2>Rendered email</h2>
+  <div class="frames">
+    <div class="device desktop">
+      <div class="cap"><span>Desktop · Gmail / Apple Mail</span><span>~600px</span></div>
+      <iframe id="fDesk" title="Desktop preview"></iframe>
+    </div>
+    <div class="device mobile">
+      <div class="cap"><span>Mobile</span><span>375px</span></div>
+      <iframe id="fMob" title="Mobile preview"></iframe>
+    </div>
+  </div>
+  <div class="note" id="testNote" style="display:none"><b>TEST variant.</b> A “TEST EMAIL — For Review &amp; Validation Purposes Only” banner is injected at the top and the subject is prefixed with <code>[TEST]</code>. Everything else matches the production send exactly.</div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Merge fields</h2>
+  <div class="legend">
+    <div class="item"><code>{{fullName}}</code><div class="d">Recipient's full name.</div></div>
+    <div class="item"><code>{{role}}</code><div class="d">Admin · LCC · Teacher · Mentor · Mentee.</div></div>
+    <div class="item"><code>{{domain}}</code><div class="d">AI · ML · SDSE.</div></div>
+    <div class="item"><code>{{team}}</code><div class="d">Assigned team, or “—” if none.</div></div>
+    <div class="item"><code>{{portalUrl}}</code><div class="d">Portal login URL (env-derived).</div></div>
+    <div class="item"><code>{{supportEmail}}</code><div class="d">learnercareercouncil@nst.rishihood.edu.in</div></div>
+    <div class="item"><code>{{testBanner}}</code><div class="d">Empty in production; TEST banner in test sends.</div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Plain-text fallback <span class="pill">multipart/alternative</span></h2>
+  <pre class="txt" id="txt"></pre>
+</div></section>
+
+<footer class="wrap">Forge · Learner Career Council &times; Forge · Newton School of Technology · onboarding email preview</footer>
+
+<script>
+  // ── Source-of-truth email HTML (kept identical to docs/onboarding-email.html) ──
+  const EMAIL_HTML = String.raw`<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+  body, table, td, a { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  body { margin:0; padding:0; background:#fafafa; }
+  a { color:#4f46e5; }
+  @media only screen and (max-width:620px){ .container{width:100%!important} .px{padding-left:24px!important;padding-right:24px!important} }
+</style></head>
+<body style="margin:0;padding:0;background:#fafafa;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;"><tr>
+  <td align="center" style="padding:32px 12px;">
+    <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;overflow:hidden;">
+      {{testBanner}}
+      <tr><td class="px" style="padding:28px 36px 22px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td style="width:40px;height:40px;vertical-align:middle;"><img src="https://res.cloudinary.com/doexqrehm/image/upload/v1781667863/images_hllr4y.png" width="40" height="40" alt="Newton School of Technology" style="display:block;width:40px;height:40px;border-radius:9px;border:1px solid #e4e4e7;object-fit:cover;"/></td>
+          <td style="padding-left:12px;vertical-align:middle;">
+            <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#18181b;line-height:1.2;">Newton School of Technology</div>
+            <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#71717a;line-height:1.4;margin-top:2px;">Learner Career Council &nbsp;&times;&nbsp; Forge</div>
+          </td></tr></table>
+      </td></tr>
+      <tr><td style="border-top:1px solid #e4e4e7;font-size:0;line-height:0;">&nbsp;</td></tr>
+      <tr><td class="px" style="padding:30px 36px 6px;">
+        <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6366f1;">Profile Building Drive</div>
+        <h1 style="margin:10px 0 0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:24px;line-height:1.25;font-weight:700;color:#18181b;">Welcome to the Profile Building Drive Portal</h1>
+        <p style="margin:14px 0 0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#3f3f46;">Hi {{fullName}}, you've been added to <strong>Forge</strong> — the platform the Learner Career Council uses to run the Profile Building Drive. Your account is ready; here's everything you need to sign in.</p>
+      </td></tr>
+      <tr><td class="px" style="padding:24px 36px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border:1px solid #e4e4e7;border-radius:10px;"><tr><td style="padding:18px 20px;">
+          <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#a1a1aa;padding-bottom:12px;">Your account</div>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;">
+            <tr><td style="padding:7px 0;color:#71717a;width:38%;">Name</td><td style="padding:7px 0;color:#18181b;font-weight:600;">{{fullName}}</td></tr>
+            <tr><td style="padding:7px 0;color:#71717a;border-top:1px solid #ececef;">Role</td><td style="padding:7px 0;color:#18181b;font-weight:600;border-top:1px solid #ececef;">{{role}}</td></tr>
+            <tr><td style="padding:7px 0;color:#71717a;border-top:1px solid #ececef;">Domain</td><td style="padding:7px 0;color:#18181b;font-weight:600;border-top:1px solid #ececef;">{{domain}}</td></tr>
+            <tr><td style="padding:7px 0;color:#71717a;border-top:1px solid #ececef;">Team</td><td style="padding:7px 0;color:#18181b;font-weight:600;border-top:1px solid #ececef;">{{team}}</td></tr>
+          </table>
+        </td></tr></table>
+      </td></tr>
+      <tr><td class="px" style="padding:26px 36px 0;">
+        <h2 style="margin:0 0 8px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;font-weight:700;color:#18181b;">How you sign in</h2>
+        <p style="margin:0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#3f3f46;">Forge uses <strong>Google sign-in only</strong> — there is no password to set. Please sign in with the <strong>same email address that received this invitation</strong>; access is granted to that account specifically.</p>
+      </td></tr>
+      <tr><td class="px" align="left" style="padding:20px 36px 0;">
+        <a href="{{portalUrl}}" style="display:inline-block;background:#4f46e5;color:#ffffff;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;line-height:46px;text-align:center;text-decoration:none;border-radius:9px;padding:0 28px;">Continue with Google &rarr;</a>
+      </td></tr>
+      <tr><td class="px" style="padding:26px 36px 0;">
+        <h2 style="margin:0 0 10px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;font-weight:700;color:#18181b;">Getting started</h2>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.55;color:#3f3f46;">
+          <tr><td style="padding:3px 0;"><strong style="color:#4f46e5;">1.</strong>&nbsp; Open the portal: <a href="{{portalUrl}}" style="color:#4f46e5;word-break:break-all;">{{portalUrl}}</a></td></tr>
+          <tr><td style="padding:3px 0;"><strong style="color:#4f46e5;">2.</strong>&nbsp; Click <strong>Continue with Google</strong> and choose your invited email.</td></tr>
+          <tr><td style="padding:3px 0;"><strong style="color:#4f46e5;">3.</strong>&nbsp; You'll land on your <strong>{{role}}</strong> dashboard for the <strong>{{domain}}</strong> domain.</td></tr>
+        </table>
+        <p style="margin:14px 0 0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:13.5px;line-height:1.6;color:#52525b;">As a <strong>{{role}}</strong>, you'll track progress, updates and reviews through the portal. Your mentor and the LCC will share specifics for your team after you sign in.</p>
+      </td></tr>
+      <tr><td class="px" style="padding:24px 36px 4px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border:1px solid #e4e4e7;border-radius:10px;"><tr><td style="padding:16px 20px;">
+          <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;color:#18181b;">Need help?</div>
+          <p style="margin:6px 0 0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.6;color:#52525b;">Reach the Learner Career Council at <a href="mailto:{{supportEmail}}" style="color:#4f46e5;">{{supportEmail}}</a>. If your sign-in is rejected, your email may not be provisioned yet — reply to this invitation and the LCC will resolve it.</p>
+        </td></tr></table>
+      </td></tr>
+      <tr><td class="px" style="padding:24px 36px 28px;border-top:1px solid #e4e4e7;">
+        <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;color:#18181b;">Learner Career Council (LCC)</div>
+        <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#71717a;margin-top:2px;">Newton School of Technology<br/><a href="mailto:{{supportEmail}}" style="color:#71717a;text-decoration:underline;">{{supportEmail}}</a></div>
+        <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:11px;color:#a1a1aa;margin-top:12px;">Powered by <strong style="color:#52525b;">Forge</strong> &nbsp;·&nbsp; Learner Career Council &times; Forge<br/>This is an automated invitation. If you weren't expecting it, you can ignore this email.</div>
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
+
+  const TEST_BANNER = `<tr><td style="background:#fffbeb;border-bottom:1px solid #fcd34d;padding:12px 36px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+    <div style="font-size:12px;font-weight:800;letter-spacing:.08em;color:#92400e;text-transform:uppercase;">⚠ TEST EMAIL</div>
+    <div style="font-size:12px;color:#b45309;margin-top:2px;">For Review &amp; Validation Purposes Only — not a live invitation.</div>
+  </td></tr>`;
+
+  const SAMPLE = {
+    fullName: "Aryan Sharma",
+    role: "Mentor",
+    domain: "AI",
+    team: "AI · Team Alpha",
+    portalUrl: "https://forge.nst.app",
+    supportEmail: "learnercareercouncil@nst.rishihood.edu.in",
+  };
+
+  const PROD_SUBJECT = "Welcome to the Profile Building Drive Portal";
+  const TEST_SUBJECT = "[TEST] Profile Building Drive Portal - User Onboarding";
+
+  const PLAINTEXT = (s) => `WELCOME TO THE PROFILE BUILDING DRIVE PORTAL
+Learner Career Council (LCC) x Forge — Newton School of Technology
+
+Hi ${s.fullName},
+
+You've been added to Forge, the platform the Learner Career Council uses to
+run the Profile Building Drive. Your account is ready.
+
+YOUR ACCOUNT
+  Name   : ${s.fullName}
+  Role   : ${s.role}
+  Domain : ${s.domain}
+  Team   : ${s.team}
+
+HOW YOU SIGN IN
+Forge uses Google sign-in only — there is no password to set. Please sign in
+with the SAME email address that received this invitation.
+
+GET STARTED
+  1. Open the portal: ${s.portalUrl}
+  2. Click "Continue with Google" and choose your invited email.
+  3. You'll land on your ${s.role} dashboard for the ${s.domain} domain.
+
+NEED HELP?
+Reach the Learner Career Council at ${s.supportEmail}. If your sign-in is
+rejected, your email may not be provisioned yet — reply and the LCC will help.
+
+—
+Learner Career Council (LCC)
+Newton School of Technology
+${s.supportEmail}
+Powered by Forge`;
+
+  function render(html, data) {
+    return html.replace(/\{\{(\w+)\}\}/g, (_, k) => (k in data ? data[k] : ""));
+  }
+
+  let variant = "prod";
+  function paint() {
+    const isTest = variant === "test";
+    const data = { ...SAMPLE, testBanner: isTest ? TEST_BANNER : "" };
+    const html = render(EMAIL_HTML, data);
+    document.getElementById("fDesk").srcdoc = html;
+    document.getElementById("fMob").srcdoc = html;
+    document.getElementById("subject").textContent = isTest ? TEST_SUBJECT : PROD_SUBJECT;
+    document.getElementById("txt").textContent = (isTest ? "Subject: " + TEST_SUBJECT + "\n\n[TEST EMAIL — For Review & Validation Purposes Only]\n\n" : "Subject: " + PROD_SUBJECT + "\n\n") + PLAINTEXT(SAMPLE);
+    document.getElementById("testNote").style.display = isTest ? "block" : "none";
+    document.querySelectorAll("#seg button").forEach((b) => b.classList.toggle("on", b.dataset.v === variant));
+  }
+  document.getElementById("seg").addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    variant = b.dataset.v; paint();
+  });
+  paint();
+</script>
+</body>
+</html>

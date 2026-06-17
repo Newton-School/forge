@@ -221,14 +221,29 @@ model UserRole {
   @@index([role, scopeType, scopeId])
 }
 
+enum InvitationStatus {
+  PENDING
+  SENT
+  OPENED
+  COMPLETED
+  EXPIRED
+}
+
 model Invitation {
-  id        String    @id @default(cuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String    @unique
-  expiresAt DateTime
-  acceptedAt DateTime?
-  createdAt DateTime  @default(now())
+  id         String           @id @default(cuid())
+  userId     String
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email      String // denormalized recipient — audit + resend without a user join
+  token      String           @unique
+  status     InvitationStatus @default(PENDING)
+  expiresAt  DateTime
+  sentAt     DateTime? // set when the onboarding email is dispatched
+  openedAt   DateTime? // set by the tracking pixel
+  acceptedAt DateTime? // set on first successful Google sign-in
+  createdAt  DateTime         @default(now())
+
+  @@index([userId])
+  @@index([status])
 }
 
 model PasswordReset {

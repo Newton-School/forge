@@ -13,19 +13,25 @@
  *     migrates pages from the synchronous fixtures to these accessors.
  */
 import * as fixtures from "@/lib/mock/data";
+import { fetchRetry } from "@/lib/http";
 
 // (1) Synchronous fixtures + all Mock* types — the single re-export seam.
 export * from "@/lib/mock/data";
+// AI Domain — GitHub-as-source-of-truth fixtures + derived analytics selectors.
+export * from "@/lib/mock/github";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 // Demo mode is on unless explicitly disabled (NEXT_PUBLIC_* so it reaches the browser).
 const PRESENTATION =
   (process.env.NEXT_PUBLIC_APP_MODE ?? process.env.APP_MODE ?? "presentation") === "presentation";
 
-/** Typed GET against the backend; falls back to the fixture in presentation mode. */
+/**
+ * Typed GET against the backend; falls back to the fixture in presentation mode.
+ * Reads are idempotent, so they go through `fetchRetry` (timeout + exponential backoff).
+ */
 async function get<T>(path: string, fixture: T): Promise<T> {
   if (PRESENTATION) return fixture;
-  const res = await fetch(`${API_BASE}${path}`, { credentials: "include" });
+  const res = await fetchRetry(`${API_BASE}${path}`, { credentials: "include" });
   if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
   return (await res.json()) as T;
 }

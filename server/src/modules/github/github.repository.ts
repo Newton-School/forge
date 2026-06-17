@@ -40,4 +40,23 @@ export const githubRepo = {
 
   list: (where: Record<string, unknown>, take: number, skip: number) =>
     prisma.githubActivity.findMany({ where, orderBy: { occurredAt: "desc" }, take, skip }),
+
+  /** Link a Forge user to their verified GitHub identity (Connect with GitHub). */
+  setUserGithub: (userId: string, login: string, githubId: number) =>
+    prisma.user.update({
+      where: { id: userId },
+      data: { githubUsername: login, githubUserId: String(githubId), githubConnectedAt: new Date() },
+      select: { id: true },
+    }),
+
+  /** Team ownership facts used to authorize binding a repo to it. */
+  teamForBind: (teamId: string) =>
+    prisma.team.findUnique({
+      where: { id: teamId },
+      select: { id: true, mentorId: true, domainId: true },
+    }),
+
+  /** Bind a repo URL to a team (matched later by the webhook's repo full-name). */
+  setTeamRepo: (teamId: string, repoUrl: string) =>
+    prisma.team.update({ where: { id: teamId }, data: { githubRepoUrl: repoUrl }, select: { id: true } }),
 };

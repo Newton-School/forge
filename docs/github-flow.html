@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Forge — AI Domain GitHub Integration Flow</title>
+<style>
+  :root{
+    --bg:#fafafa;--card:#fff;--fg:#18181b;--mut:#52525b;--sub:#a1a1aa;--border:#e4e4e7;
+    --indigo:#4f46e5;--indigo-bg:#eef2ff;--green:#059669;--green-bg:#ecfdf5;
+    --amber:#d97706;--amber-bg:#fffbeb;--blue:#2563eb;--blue-bg:#eff6ff;--rose:#e11d48;--purple:#7c3aed;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--fg);font-size:15px;line-height:1.6;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 24px}
+  a{color:var(--indigo);text-decoration:none}a:hover{text-decoration:underline}
+  code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85em}
+  code{background:#f4f4f5;border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:#be185d}
+
+  header{background:#fff;border-bottom:1px solid var(--border);padding:34px 0 24px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .logo{width:30px;height:30px;border-radius:8px;background:var(--indigo);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.02em}
+  .lede{color:var(--mut);max-width:780px;margin:0}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;background:#f4f4f5;color:var(--mut);border:1px solid var(--border)}
+  .pill.ai{background:var(--indigo-bg);color:#3730a3;border-color:#c7d2fe}
+  nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  nav.toc a{font-size:12.5px;border:1px solid var(--border);background:#fff;border-radius:7px;padding:5px 10px;color:var(--mut)}
+
+  section{padding:32px 0;border-bottom:1px solid var(--border)}
+  h2{font-size:20px;margin:0 0 4px;letter-spacing:-.01em}
+  .sub{color:var(--mut);margin:0 0 16px}
+  p{margin:8px 0}
+  pre{background:#0b0b0f;color:#e7e7ea;border-radius:10px;padding:16px 18px;overflow:auto;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.55}
+  pre .c1{color:#a5b4fc}.c2{color:#6ee7b7}.c3{color:#fcd34d}.c4{color:#fca5a5}.dim{color:#71717a}
+
+  .tiers{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+  .tier{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--border);border-radius:10px;background:#fff;padding:12px 14px}
+  .tier .t{width:96px;shrink:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--sub);padding-top:2px}
+  .tier .b{flex:1;min-width:0}
+  .tier .b b{font-size:14px}
+  .tag{display:inline-block;font-size:10.5px;border-radius:5px;padding:1px 6px;margin-left:6px}
+  .tag.gh{background:#f4f4f5;color:#3f3f46;border:1px solid var(--border)}
+  .tag.srv{background:var(--green-bg);color:#065f46;border:1px solid #a7f3d0}
+  .tag.cli{background:var(--indigo-bg);color:#3730a3;border:1px solid #c7d2fe}
+
+  .grid{display:grid;gap:14px}
+  @media(min-width:720px){.grid.c2{grid-template-columns:1fr 1fr}}
+  .card{border:1px solid var(--border);border-radius:10px;background:#fff;padding:14px 16px}
+  .card h4{margin:0 0 6px;font-size:14px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0;background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{background:#f8f8f9;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--sub)}
+  tr:last-child td{border-bottom:0}
+  .note{background:var(--indigo-bg);border:1px solid #c7d2fe;border-left:3px solid var(--indigo);border-radius:8px;padding:11px 14px;font-size:13.5px;color:#3730a3;margin:12px 0}
+  .note.amber{background:var(--amber-bg);border-color:#fcd34d;border-left-color:var(--amber);color:#92400e}
+  .note.green{background:var(--green-bg);border-color:#a7f3d0;border-left-color:var(--green);color:#065f46}
+  .req{color:var(--rose);font-weight:700}
+  footer{padding:28px 0;color:var(--sub);font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand"><div class="logo">F</div><strong>Forge</strong><span class="pill ai">AI Domain · GitHub Integration</span></div>
+    <h1>How the GitHub integration works (AI Domain)</h1>
+    <p class="lede">The AI Domain runs on a <b>teacher-owned GitHub Organization</b>. This document explains <b>how data flows from GitHub into Forge</b> — the tiers it passes through, what gets ingested, how it's attributed and rolled up into analytics, and where the security boundaries sit. GitHub is the <b>source of truth</b>; Forge is the layer on top.</p>
+    <nav class="toc">
+      <a href="#tiers">The three tiers</a>
+      <a href="#flow">End-to-end flow</a>
+      <a href="#events">What's ingested</a>
+      <a href="#mapping">Entity mapping</a>
+      <a href="#attribution">Attribution &amp; rollups</a>
+      <a href="#read">Read access</a>
+      <a href="#security">Security boundary</a>
+      <a href="#phases">Mock now, real later</a>
+    </nav>
+  </div>
+</header>
+
+<!-- TIERS -->
+<section id="tiers"><div class="wrap">
+  <h2>1 · The three tiers</h2>
+  <p class="sub">Every byte of GitHub data crosses these — and the browser never talks to GitHub.</p>
+  <div class="tiers">
+    <div class="tier"><div class="t">GitHub</div><div class="b"><b>Organization, repos, issues, PRs, reviews, commits</b><span class="tag gh">source of truth</span><br><span class="dim" style="color:#71717a">Where the work actually happens. Emits webhook events and answers read API calls.</span></div></div>
+    <div class="tier"><div class="t">Server</div><div class="b"><b>Express backend</b> — webhook receiver, verifier, ingester, analytics<span class="tag srv">all logic + secrets</span><br><span style="color:#52525b">Verifies signatures, normalizes events, attributes them, stores them, exposes a clean scoped API. The <b>only</b> tier that holds GitHub credentials.</span></div></div>
+    <div class="tier"><div class="t">Client</div><div class="b"><b>Next.js portal</b> — dashboards, workflow visualization, analytics<span class="tag cli">UI only</span><br><span style="color:#52525b">Calls the server's <code>/api</code> and nothing else. Renders the issue→PR→review→merge story. Holds no secrets, never calls GitHub.</span></div></div>
+  </div>
+  <div class="note"><b>Hard boundary:</b> the client never reaches GitHub directly. All GitHub communication is server-side. The portal only ever sees Forge's own API.</div>
+</div></section>
+
+<!-- FLOW -->
+<section id="flow"><div class="wrap">
+  <h2>2 · End-to-end flow</h2>
+  <p class="sub">Two directions: GitHub <b>pushes</b> events in (webhooks), and the server <b>pulls</b> detail on demand (token).</p>
+  <pre><span class="dim"># INBOUND — a student's work lands in the portal</span>
+Student raises PR  ──▶  <span class="c1">GitHub Org</span>
+                          │  fires webhook (push / pull_request / pull_request_review / issues)
+                          ▼  POST + <span class="c3">X-Hub-Signature-256</span> (HMAC)
+                      <span class="c2">Express: /api/integrations/github/webhook</span>
+                          │  1. verify HMAC against GITHUB_WEBHOOK_SECRET   <span class="dim">(reject if bad → 403)</span>
+                          │  2. normalize event → activity record
+                          │  3. attribute: repo → team, github login → Forge user
+                          │  4. upsert by externalId  <span class="dim">(idempotent; redelivery-safe)</span>
+                          ▼
+                      <span class="c2">Database</span>  (GithubActivity, rollups)
+                          │
+                          ▼  GET /api/integrations/github/activity  <span class="dim">(scope-filtered)</span>
+                      <span class="c1">Portal dashboards</span>  ──▶  Teacher / Mentor / Mentee see it
+
+<span class="dim"># OUTBOUND — extra detail on demand (optional)</span>
+Server  ──▶  GitHub REST API  (read-only token, GITHUB_API_TOKEN)  ──▶  repo / issue / PR detail</pre>
+  <div class="note green"><b>Idempotent + verified.</b> Each event is HMAC-verified and upserted by its GitHub <code>externalId</code>, so GitHub re-deliveries never create duplicates and a forged payload is rejected before it touches the database.</div>
+</div></section>
+
+<!-- EVENTS -->
+<section id="events"><div class="wrap">
+  <h2>3 · What gets ingested</h2>
+  <p class="sub">Only the four event types the AI workflow needs — the rest are safely ignored.</p>
+  <table>
+    <tr><th>GitHub event</th><th>Becomes</th><th>Surfaced as</th></tr>
+    <tr><td><code>push</code></td><td>one activity per commit</td><td>commit counts, activity feed, contributor analytics</td></tr>
+    <tr><td><code>pull_request</code></td><td>PR opened / merged / closed</td><td>PR list, review queue, merge rate, issue fan-out</td></tr>
+    <tr><td><code>pull_request_review</code></td><td>a review event</td><td>mentor review throughput, learning-eval anchor</td></tr>
+    <tr><td><code>issues</code></td><td>issue opened / closed</td><td>open/closed issue counts, the unit-of-work board</td></tr>
+  </table>
+  <p>Pick <b>“Send me everything”</b> on the webhook if you prefer — the server verifies every delivery and simply no-ops on event types it doesn't model (returning <code>200</code>). See <a href="github-setup.html">github-setup.html</a> for configuration.</p>
+</div></section>
+
+<!-- MAPPING -->
+<section id="mapping"><div class="wrap">
+  <h2>4 · GitHub → Forge entity mapping</h2>
+  <p class="sub">How raw GitHub objects become the portal's domain model.</p>
+  <table>
+    <tr><th>GitHub</th><th>Forge entity</th><th>Notes</th></tr>
+    <tr><td>Organization</td><td>AI Domain</td><td>One teacher-owned org per domain.</td></tr>
+    <tr><td>Team / repo</td><td>Team</td><td>Repo URL maps the work back to a team (and its mentor).</td></tr>
+    <tr><td>Issue</td><td>Issue (unit of work)</td><td>Students self-assign; one issue → many attempts.</td></tr>
+    <tr><td>Pull request</td><td>Pull Request</td><td>Multiple PRs per issue; one merged, others rejected with reasons.</td></tr>
+    <tr><td>Review</td><td>Review + <b>learning evaluation</b></td><td>The portal adds understanding/explanation/technical-depth scores on top of the GitHub review.</td></tr>
+    <tr><td>Commit</td><td>Commit / activity</td><td>Feeds contributor + team analytics.</td></tr>
+    <tr><td>GitHub login</td><td>Forge user</td><td>Matched by the username on the user's profile.</td></tr>
+  </table>
+  <div class="note"><b>The portal enhances, never duplicates.</b> Issues/PRs/commits stay in GitHub. Forge stores enough to make them <i>visible and mentorable</i> — and adds what GitHub can't: the <b>learning evaluation</b> and cross-team analytics.</div>
+</div></section>
+
+<!-- ATTRIBUTION -->
+<section id="attribution"><div class="wrap">
+  <h2>5 · Attribution &amp; analytics rollups</h2>
+  <p class="sub">Every event is tagged with a team and a person, then aggregated.</p>
+  <pre>incoming event
+   ├─ repo full-name        ──▶  Team        (repo belongs to one team)
+   ├─ author github login   ──▶  Forge user  (profile-linked username)
+   └─ type + state          ──▶  metric
+
+rollups derived from the tagged events:
+   <span class="c2">Org</span>      repos · teams · contributors · commits · PRs · open/closed issues
+   <span class="c2">Team</span>     commits · PRs · merge-rate · issues closed · milestone progress
+   <span class="c2">Student</span>  attempted · solved · PRs raised/merged · acceptance-rate · commits · review scores
+   <span class="c2">Mentor</span>   reviews completed · PRs reviewed · team health</pre>
+  <p>These power the Teacher comparison screens, the Mentor review queue, and the Mentee analytics — all from the same attributed event stream.</p>
+</div></section>
+
+<!-- READ -->
+<section id="read"><div class="wrap">
+  <h2>6 · Who can read what</h2>
+  <p class="sub">The same events, filtered by role on every request.</p>
+  <table>
+    <tr><th>Role</th><th>Sees GitHub activity for…</th></tr>
+    <tr><td><b>Admin · LCC</b></td><td>Every domain, every team (global) — the LCC reads AI, ML and SDSE.</td></tr>
+    <tr><td><b>Teacher</b></td><td>Their own domain(s).</td></tr>
+    <tr><td><b>Mentor</b></td><td>Their own team.</td></tr>
+    <tr><td><b>Mentee</b></td><td>Their own activity.</td></tr>
+  </table>
+  <div class="note">Read access is enforced <b>server-side</b> by the scope filter — the client receives only what the role is allowed to see. For multiple domain orgs, the LCC's cross-org read uses a classic read-only token owned by an all-orgs account (see <a href="github-setup.html">github-setup.html</a>).</div>
+</div></section>
+
+<!-- SECURITY -->
+<section id="security"><div class="wrap">
+  <h2>7 · Security boundary</h2>
+  <div class="grid c2">
+    <div class="card"><h4>Webhook authenticity</h4>Every delivery carries <code>X-Hub-Signature-256</code>; the server recomputes the HMAC over the <b>raw body</b> with <code>GITHUB_WEBHOOK_SECRET</code> and rejects mismatches with <code>403</code>. <span class="req">Never skipped.</span></div>
+    <div class="card"><h4>Secrets stay server-side</h4>The webhook secret and read token live in <code>server/.env</code> / AWS Secrets Manager — never in the client bundle, never in git.</div>
+    <div class="card"><h4>Client is sandboxed</h4>The browser calls only Forge's <code>/api</code>. It cannot reach GitHub, cannot see tokens, and gets pre-filtered data.</div>
+    <div class="card"><h4>Least privilege</h4>The API token is <b>read-only</b> (Contents/Metadata/PRs/Issues). The portal never writes to GitHub.</div>
+  </div>
+</div></section>
+
+<!-- PHASES -->
+<section id="phases"><div class="wrap">
+  <h2>8 · Mock now, real later</h2>
+  <p class="sub">Phase 1 proves the experience; the wiring lands in Phase 2.</p>
+  <div class="note amber"><b>Phase 1 (current):</b> the flow above is <b>mocked end-to-end in the client</b> — <code>lib/mock/github.ts</code> seeds a believable AI org and the dashboards render the full issue→PR→review→merge story. No real GitHub calls, no backend. This validates the product before any integration is built.</div>
+  <div class="note green"><b>Phase 2+:</b> the server-side webhook receiver, signature verification, attribution and scoped API are wired to the real org. Because the portal already reads through a single data-access seam (<code>@/lib/api</code>), flipping from mock fixtures to the live API is a one-place change — no screen rewrites.</div>
+</div></section>
+
+<footer class="wrap">Forge · AI Domain GitHub Integration Flow · GitHub = source of truth · server owns all integration + secrets · client is UI only · <a href="github-setup.html">setup</a> · <a href="repo-guide.html">product guide</a></footer>
+</body>
+</html>

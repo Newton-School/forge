@@ -43,3 +43,13 @@ export async function createEvent(ctx: AuthContext, input: CreateEventInput, ip?
   await audit(ctx, { action: "calendar:create", entityType: "CalendarEvent", entityId: event.id, after: { title: input.title, scopeType: input.scopeType, synced: externalEventId !== null }, ip });
   return event;
 }
+
+/** Integration status — which calendar provider is active. */
+export function status() {
+  return { provider: calendarProvider().name, googleConfigured: calendarProvider().name === "google" };
+}
+
+/** Live connectivity probe — confirms the provider can authenticate. */
+export function check() {
+  return calendarProvider().verify();
+}

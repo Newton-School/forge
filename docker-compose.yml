@@ -64,8 +64,10 @@ services:
       - POSTGRES_USER=forge
       - POSTGRES_PASSWORD=forge
       - POSTGRES_DB=forge
+    # Host port 5433 (not 5432) to avoid clashing with other local stacks (e.g.
+    # maverick-postgres); the server still reaches it as postgres:5432 internally.
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - forge_pg:/var/lib/postgresql/data
     healthcheck:
@@ -80,8 +82,10 @@ services:
     container_name: forge-redis
     image: redis:7-alpine
     command: ["redis-server", "--save", "", "--appendonly", "no"]
+    # Host port 6380 (not 6379) to avoid clashing with other local stacks; the
+    # server still reaches it as redis:6379 inside the compose network.
     ports:
-      - "6379:6379"
+      - "6380:6379"
     networks:
       - forge
 

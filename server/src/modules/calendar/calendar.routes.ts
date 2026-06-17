@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { asyncHandler } from "../../lib/errors.js";
+import { requirePermission } from "../../middleware/auth.js";
 import { validateBody } from "../../middleware/validate.js";
 import { createEventSchema, listEventsQuery } from "./calendar.schema.js";
 import * as svc from "./calendar.service.js";
@@ -18,4 +19,16 @@ calendarRouter.post(
   validateBody(createEventSchema),
   asyncHandler(async (req: Request, res: Response) =>
     res.status(201).json({ event: await svc.createEvent(req.auth!, req.body, req.ip) })),
+);
+
+// Integration status + live connectivity probe (Admin).
+calendarRouter.get(
+  "/status",
+  requirePermission("integration:manage"),
+  asyncHandler(async (_req: Request, res: Response) => res.json(svc.status())),
+);
+calendarRouter.get(
+  "/check",
+  requirePermission("integration:manage"),
+  asyncHandler(async (_req: Request, res: Response) => res.json(await svc.check())),
 );

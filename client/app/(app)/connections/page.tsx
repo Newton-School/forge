@@ -1,11 +1,17 @@
+import { Suspense } from "react";
 import { ShieldCheck } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { ConnectionsPanel } from "@/components/integrations/connections-panel";
-import { getCurrentUser } from "@/lib/session";
+import { getCurrentUser, getActiveDomain } from "@/lib/session";
 import { TEAMS } from "@/lib/api";
+
+const PRESENTATION =
+  (process.env.NEXT_PUBLIC_APP_MODE ?? process.env.APP_MODE ?? "presentation") === "presentation";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
 export default async function ConnectionsPage() {
   const user = await getCurrentUser();
+  const domainKey = await getActiveDomain();
   const team = TEAMS.find((t) => t.id === user.teamId);
   const local = user.email.split("@")[0];
 
@@ -29,19 +35,26 @@ export default async function ConnectionsPage() {
         </p>
       </div>
 
-      <ConnectionsPanel
-        fullName={user.fullName}
-        githubUsername={githubUsername}
-        discordUsername={discordUsername}
-        googleEmail={`${local}@nst.edu`}
-        repo={team?.repo ?? ""}
-        hasTeam={Boolean(user.teamId)}
-      />
+      <Suspense fallback={null}>
+        <ConnectionsPanel
+          fullName={user.fullName}
+          githubUsername={githubUsername}
+          discordUsername={discordUsername}
+          googleEmail={`${local}@nst.edu`}
+          repo={team?.repo ?? ""}
+          domainKey={domainKey}
+          role={user.role}
+          teamId={user.teamId}
+          presentation={PRESENTATION}
+          apiBase={API_BASE}
+        />
+      </Suspense>
 
       <p className="text-xs text-subtle-foreground">
-        Phase 1 preview — connecting simulates the OAuth round-trip and reveals the verified identity.
-        Live OAuth (GitHub App, Discord <span className="font-mono">identify</span>, Google) is wired in a later
-        phase; see <span className="font-mono">docs/integration-setup.md</span>.
+        <strong>GitHub Connect is live</strong> — in production the button redirects to the GitHub OAuth App
+        (owned by <span className="font-mono">lcc-ai-nst</span>), which verifies your username and, for an
+        ML/SDSE mentor, creates the team repo webhook automatically. In demo mode it simulates the round-trip.
+        Discord and Google sign-in are wired in a later phase; see <span className="font-mono">docs/github-setup.html</span>.
       </p>
     </div>
   );

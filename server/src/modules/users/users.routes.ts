@@ -51,3 +51,12 @@ usersRouter.post(
     res.json({ user: await svc.assignRole(req.auth!, req.params.id!, req.body, req.ip) });
   }),
 );
+
+// Resend the onboarding invitation (reissues the token + email).
+usersRouter.post(
+  "/:id/resend-invite",
+  requirePermission("invitation:send"),
+  asyncHandler(async (req: Request, res: Response) => {
+    res.json(await svc.resendInvitation(req.auth!, req.params.id!, req.ip));
+  }),
+);

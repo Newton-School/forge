@@ -1,4 +1,4 @@
-import { Upload, Plus, Pencil } from "lucide-react";
+import { Upload, Pencil } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { DomainFilter } from "@/components/dashboard/domain-filter";
 import { SectionCard } from "@/components/dashboard/section-card";
@@ -9,81 +9,20 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FormDialog, Field } from "@/components/ui/form-dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { UserFields } from "@/components/onboarding/user-fields";
+import { CreateUserButton } from "@/components/onboarding/create-user-button";
 import type { BadgeTone } from "@/lib/labels";
 import { ROLE_LABEL } from "@/lib/labels";
 import type { RoleKey } from "@/lib/types";
-import { USERS, DOMAINS, TEAMS } from "@/lib/api";
-import type { MockUser } from "@/lib/api";
+import { USERS } from "@/lib/api";
 import { parseDomains, inDomains } from "@/lib/domains";
 import { initials, shortDate } from "@/lib/utils";
 
 const STATUS: Record<string, { text: string; tone: BadgeTone }> = {
   ACTIVE: { text: "Active", tone: "success" },
-  INVITED: { text: "Invited", tone: "warning" },
+  INVITED: { text: "Pending Invitation", tone: "warning" },
   SUSPENDED: { text: "Suspended", tone: "danger" },
 };
-
-function UserFields({ user }: { user?: MockUser }) {
-  return (
-    <>
-      <Field label="Full name">
-        <Input placeholder="Jane Doe" defaultValue={user?.name} />
-      </Field>
-      <Field label="Email" hint="An invitation email is sent">
-        <Input type="email" placeholder="jane@nst.edu" defaultValue={user?.email} />
-      </Field>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Role">
-          <Select defaultValue={user?.role}>
-            <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ADMIN">Admin</SelectItem>
-              <SelectItem value="LCC">LCC</SelectItem>
-              <SelectItem value="TEACHER">Teacher</SelectItem>
-              <SelectItem value="MENTOR">Mentor</SelectItem>
-              <SelectItem value="MENTEE">Mentee</SelectItem>
-            </SelectContent>
-          </Select>
-        </Field>
-        <Field label="Status">
-          <Select defaultValue={user?.status}>
-            <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ACTIVE">Active</SelectItem>
-              <SelectItem value="INVITED">Invited</SelectItem>
-              <SelectItem value="SUSPENDED">Suspended</SelectItem>
-            </SelectContent>
-          </Select>
-        </Field>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Domain">
-          <Select defaultValue={user?.domainKey}>
-            <SelectTrigger><SelectValue placeholder="Select domain" /></SelectTrigger>
-            <SelectContent>
-              {DOMAINS.map((d) => (
-                <SelectItem key={d.id} value={d.key}>{d.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-        <Field label="Team">
-          <Select defaultValue={user?.team}>
-            <SelectTrigger><SelectValue placeholder="Select team" /></SelectTrigger>
-            <SelectContent>
-              {TEAMS.map((t) => (
-                <SelectItem key={t.id} value={t.name}>{t.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-      </div>
-    </>
-  );
-}
 
 export default async function AdminUsersPage({
   searchParams,
@@ -116,18 +55,7 @@ export default async function AdminUsersPage({
                 <Input type="file" accept=".csv" />
               </Field>
             </FormDialog>
-            <FormDialog
-              trigger={
-                <Button size="sm">
-                  <Plus />
-                  Create User
-                </Button>
-              }
-              title="Create user"
-              submitLabel="Create user"
-            >
-              <UserFields />
-            </FormDialog>
+            <CreateUserButton />
           </>
         }
       />

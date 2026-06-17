@@ -1,10 +1,16 @@
 import { redirect } from "next/navigation";
-import { getCurrentRole } from "@/lib/session";
+import { cookies } from "next/headers";
+import { getCurrentRole, ROLE_COOKIE_NAME } from "@/lib/session";
 import { ROLE_HOME } from "@/lib/nav/nav.config";
 
 export default async function RootPage() {
-  // Phase 1: route to the previewed role's dashboard. Phase 3: redirect to
-  // /login when unauthenticated, else to the authenticated role home.
+  // First-time / signed-out visitors (no role cookie yet) see the public landing
+  // page. Returning demo users who've picked a role go straight to their
+  // dashboard. Phase 3 replaces the cookie check with the real Auth.js session.
+  const store = await cookies();
+  if (!store.get(ROLE_COOKIE_NAME)?.value) {
+    redirect("/landing");
+  }
   const role = await getCurrentRole();
   redirect(ROLE_HOME[role]);
 }

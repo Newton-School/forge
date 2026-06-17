@@ -41,6 +41,12 @@ export function RoleSwitcher({ current }: { current: RoleKey }) {
             {role === current ? <Check className="size-4 text-primary" /> : null}
           </DropdownMenuItem>
         ))}
+        <DropdownMenuSeparator />
+        {/* The Student Mentor leads the team — "Team Lead" is an alias for Mentor, not a separate role. */}
+        <DropdownMenuItem onClick={() => switchTo("MENTOR")}>
+          <span className="flex-1">Team Lead</span>
+          <span className="text-[10px] text-subtle-foreground">→ Mentor</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

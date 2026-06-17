@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Forge — Authentication & Onboarding Flow</title>
+<style>
+  :root{
+    --bg:#fafafa;--card:#fff;--fg:#18181b;--mut:#52525b;--sub:#a1a1aa;--border:#e4e4e7;
+    --indigo:#4f46e5;--indigo-bg:#eef2ff;--green:#059669;--green-bg:#ecfdf5;--amber:#d97706;--amber-bg:#fffbeb;
+    --rose:#e11d48;--rose-bg:#fff1f2;--blue:#2563eb;--blue-bg:#eff6ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-size:15px;line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85em;background:#f4f4f5;border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:#be185d}
+  header{background:#fff;border-bottom:1px solid var(--border);padding:30px 0}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .logo{width:30px;height:30px;border-radius:8px;background:var(--indigo);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+  h1{font-size:23px;margin:0 0 6px;letter-spacing:-.02em}
+  .lede{color:var(--mut);max-width:780px;margin:0}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;background:#f4f4f5;color:var(--mut);border:1px solid var(--border)}
+  section{padding:32px 0;border-bottom:1px solid var(--border)}
+  h2{font-size:18px;margin:0 0 4px;letter-spacing:-.01em}
+  .sub{color:var(--mut);margin:0 0 20px}
+
+  /* Flow steps */
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:0}
+  .step{flex:1;min-width:150px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:14px 15px;position:relative}
+  .step + .step{margin-left:30px}
+  .step + .step::before{content:"→";position:absolute;left:-23px;top:50%;transform:translateY(-50%);color:var(--sub);font-size:18px}
+  .step .n{width:24px;height:24px;border-radius:50%;background:var(--indigo);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+  .step h3{margin:0 0 4px;font-size:13.5px}
+  .step p{margin:0;font-size:12px;color:var(--mut);line-height:1.5}
+  .step .who{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--indigo);margin-bottom:6px}
+  .step.gate{border-color:#fcd34d;background:var(--amber-bg)}
+  .step.gate .n{background:var(--amber)}
+  .step.ok{border-color:#a7f3d0;background:var(--green-bg)}
+  .step.ok .n{background:var(--green)}
+
+  .branch{display:flex;flex-wrap:wrap;gap:18px;margin-top:22px}
+  .outcome{flex:1;min-width:280px;border-radius:11px;padding:16px 18px}
+  .outcome.allow{background:var(--green-bg);border:1px solid #a7f3d0}
+  .outcome.deny{background:var(--rose-bg);border:1px solid #fecdd3}
+  .outcome h3{margin:0 0 6px;font-size:14px;display:flex;align-items:center;gap:8px}
+  .outcome.allow h3{color:#065f46}
+  .outcome.deny h3{color:#9f1239}
+  .outcome p{margin:0;font-size:13px;color:var(--mut);line-height:1.55}
+  .ic{width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
+  .ic.g{background:var(--green)} .ic.r{background:var(--rose)}
+
+  .check{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+  .check li{background:#fff;border:1px solid var(--border);border-radius:9px;padding:11px 13px;font-size:13.5px;display:flex;gap:10px;align-items:flex-start}
+  .check .b{width:20px;height:20px;border-radius:5px;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .check b{font-weight:650}
+  .check span.d{display:block;color:var(--mut);font-size:12px;margin-top:2px}
+  .note{background:var(--blue-bg);border:1px solid #bfdbfe;border-left:3px solid var(--blue);border-radius:8px;padding:11px 14px;font-size:13.5px;color:#1e40af;margin:16px 0 0}
+  .note.amber{background:var(--amber-bg);border-color:#fcd34d;border-left-color:var(--amber);color:#92400e}
+
+  /* Lifecycle strip */
+  .life{display:flex;flex-wrap:wrap;align-items:center;gap:0;margin-top:6px}
+  .life .s{background:#fff;border:1px solid var(--border);border-radius:999px;padding:7px 15px;font-size:12.5px;font-weight:600;color:var(--mut)}
+  .life .s.on{border-color:#c7d2fe;background:var(--indigo-bg);color:#3730a3}
+  .life .s.end{border-color:#a7f3d0;background:var(--green-bg);color:#065f46}
+  .life .s.exp{border-color:#fecdd3;background:var(--rose-bg);color:#9f1239}
+  .life .arr{color:var(--sub);padding:0 10px;font-size:14px}
+  .legend{font-size:12px;color:var(--mut);margin-top:10px}
+  footer{padding:26px 0;color:var(--sub);font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand"><div class="logo">F</div><strong>Forge</strong><span class="pill">Auth &amp; Onboarding Flow</span><span class="pill">invite-only</span></div>
+    <h1>Authentication &amp; onboarding — how access works</h1>
+    <p class="lede">Forge is a <b>private, invite-only</b> platform. Accounts are created by Admin or LCC; users sign in with <b>Google only</b>. Being authenticated by Google never grants access on its own — the email must already exist in the database and pass every check below.</p>
+  </div>
+</header>
+
+<!-- ONBOARDING FLOW -->
+<section><div class="wrap">
+  <h2>The onboarding journey</h2>
+  <p class="sub">From account creation to first sign-in. No signup page, no registration, no self-onboarding.</p>
+  <div class="flow">
+    <div class="step">
+      <div class="who">Admin / LCC</div>
+      <div class="n">1</div>
+      <h3>Create user</h3>
+      <p>Enter name, email, role, domain, team. Status starts <b>Pending Invitation</b>.</p>
+    </div>
+    <div class="step">
+      <div class="who">System</div>
+      <div class="n">2</div>
+      <h3>Invitation email</h3>
+      <p>A branded onboarding email is sent automatically with a portal link.</p>
+    </div>
+    <div class="step">
+      <div class="who">User</div>
+      <div class="n">3</div>
+      <h3>Open portal</h3>
+      <p>User clicks the link and lands on the login screen — only “Continue with Google”.</p>
+    </div>
+    <div class="step">
+      <div class="who">User</div>
+      <div class="n">4</div>
+      <h3>Continue with Google</h3>
+      <p>Google OAuth completes and returns the verified email + hosted domain.</p>
+    </div>
+    <div class="step gate">
+      <div class="who">Server</div>
+      <div class="n">5</div>
+      <h3>Validate access</h3>
+      <p>Backend runs every check (below) before any session is created.</p>
+    </div>
+    <div class="step ok">
+      <div class="who">Server</div>
+      <div class="n">6</div>
+      <h3>Grant access</h3>
+      <p>Session created, role loaded, status → <b>Active</b>. Dashboard opens.</p>
+    </div>
+  </div>
+
+  <div class="branch">
+    <div class="outcome allow">
+      <h3><span class="ic g">✓</span> Allowed — email is provisioned</h3>
+      <p>The Google email exists in the users table, the account is Active/Invited and not suspended, and it holds a role. A server-side session (Redis) is created and the user enters the portal. An <b>Invited</b> user flips to <b>Active</b> on this first successful sign-in.</p>
+    </div>
+    <div class="outcome deny">
+      <h3><span class="ic r">✕</span> Denied — not provisioned</h3>
+      <p>The email isn't in the database, the hosted domain isn't <code>rishihood.edu.in</code>, or the account is suspended/disabled. <b>No session is created.</b> The user sees an access-denied message: <i>“That account isn't allowed. Use your institute Google account that's already been added to Forge.”</i></p>
+    </div>
+  </div>
+  <div class="note">Examples — <b>Allowed:</b> <code>taj@rishihood.edu.in</code>, <code>mentor@rishihood.edu.in</code> (already in the DB). &nbsp; <b>Rejected:</b> <code>random@gmail.com</code>, <code>unknown@rishihood.edu.in</code> (authenticates with Google, but isn't provisioned).</div>
+</div></section>
+
+<!-- VALIDATION CHECKLIST -->
+<section><div class="wrap">
+  <h2>Access validation — every login</h2>
+  <p class="sub">All five must pass on every sign-in. Google authentication alone is never sufficient.</p>
+  <ul class="check">
+    <li><span class="b">1</span><div><b>Email exists in the database</b><span class="d">Admin-provisioned allowlist — unknown emails are rejected.</span></div></li>
+    <li><span class="b">2</span><div><b>Hosted domain is the institute domain</b><span class="d">Google <code>hd</code> / email domain must be <code>rishihood.edu.in</code>.</span></div></li>
+    <li><span class="b">3</span><div><b>Account is active, not suspended</b><span class="d">Suspended / Disabled accounts are blocked.</span></div></li>
+    <li><span class="b">4</span><div><b>User has an assigned role</b><span class="d">Role + scope load into the session for RBAC.</span></div></li>
+    <li><span class="b">5</span><div><b>User has portal access</b><span class="d">Only then is a server-side session created.</span></div></li>
+  </ul>
+  <div class="note amber"><b>Defense in depth.</b> These run server-side on the OAuth callback (in <code>resolveGoogleLogin</code>). The browser only ever holds an opaque, HttpOnly session id — no tokens, no role logic the client can tamper with.</div>
+</div></section>
+
+<!-- INVITATION LIFECYCLE -->
+<section><div class="wrap">
+  <h2>Invitation lifecycle</h2>
+  <p class="sub">Each created user gets one tracked invitation. Admin/LCC can watch its status and resend.</p>
+  <div class="life">
+    <span class="s on">Pending</span><span class="arr">→</span>
+    <span class="s on">Sent</span><span class="arr">→</span>
+    <span class="s on">Opened</span><span class="arr">→</span>
+    <span class="s end">Completed</span>
+    <span class="arr" style="padding:0 14px;">|</span>
+    <span class="s exp">Expired</span>
+  </div>
+  <div class="legend">
+    <b>Pending</b> created, not yet sent &nbsp;·&nbsp; <b>Sent</b> email dispatched (<code>sentAt</code>) &nbsp;·&nbsp; <b>Opened</b> tracking pixel hit (<code>openedAt</code>) &nbsp;·&nbsp;
+    <b>Completed</b> user signed in with Google (<code>acceptedAt</code>) &nbsp;·&nbsp; <b>Expired</b> link passed <code>expiresAt</code> before completion (resend to reissue).
+  </div>
+</div></section>
+
+<footer class="wrap">Forge · Authentication &amp; Onboarding · Learner Career Council &times; Forge · Newton School of Technology</footer>
+</body>
+</html>

@@ -47,3 +47,12 @@ discordRouter.get(
     res.json(svc.status());
   }),
 );
+
+// Live connectivity probe — confirms the bot token reaches Discord.
+discordRouter.get(
+  "/check",
+  requirePermission("integration:manage"),
+  asyncHandler(async (_req: Request, res: Response) => {
+    res.json(await svc.check());
+  }),
+);

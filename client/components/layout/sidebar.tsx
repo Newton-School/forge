@@ -2,15 +2,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GitBranch } from "lucide-react";
-import { NAV, SHARED_NAV } from "@/lib/nav/nav.config";
+import { NAV, GITHUB_NAV, SHARED_NAV } from "@/lib/nav/nav.config";
 import { ROLE_LABEL } from "@/lib/labels";
 import type { AuthUser } from "@/lib/types";
+import type { DomainKey } from "@/lib/presentation";
 import { NavIcon } from "./icon";
 import { cn } from "@/lib/utils";
 
-export function Sidebar({ user }: { user: AuthUser }) {
+export function Sidebar({ user, domain = "AI" }: { user: AuthUser; domain?: DomainKey }) {
   const pathname = usePathname();
-  const sections = NAV[user.role];
+  // Drive nav for every domain; AI also gets the GitHub-driven nav (source of truth).
+  const sections = [...NAV[user.role], ...(domain === "AI" ? GITHUB_NAV[user.role] ?? [] : [])];
 
   const isActive = (href: string) =>
     pathname === href || (href !== `/${user.role.toLowerCase()}` && pathname.startsWith(href + "/")) || pathname === href;
@@ -37,6 +39,15 @@ export function Sidebar({ user }: { user: AuthUser }) {
               {user.domainId ? "Domain-scoped" : user.role === "MENTEE" ? "Self-scoped" : "Global"}
             </p>
           </div>
+          <span
+            className={cn(
+              "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+              domain === "AI" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+            )}
+            title={domain === "AI" ? "GitHub-driven domain" : "Drive workflow domain"}
+          >
+            {domain}
+          </span>
         </div>
       </div>
 

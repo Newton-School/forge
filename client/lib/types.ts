@@ -1,5 +1,5 @@
-// Shared domain types mirrored from prisma/schema.prisma.
-// Phase 1 uses these for mock data + UI; Phase 3 aligns with generated Prisma types.
+// UI domain types — hand-written to mirror the server's schema (server/prisma/schema.prisma).
+// The client never imports Prisma or touches the DB; these typed shapes back the mock data + UI.
 
 // The Student Mentor leads their team — there is no separate Team Lead role.
 export type RoleKey =
