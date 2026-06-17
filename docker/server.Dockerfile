@@ -18,7 +18,9 @@ COPY package.json package-lock.json* ./
 RUN npm install
 COPY . .
 EXPOSE 4000
-CMD ["npm", "run", "dev"]
+# Prisma 7 has no built-in engine — generate the client against the (bind-mounted)
+# schema at each start before launching the watcher.
+CMD ["sh", "-c", "npx prisma generate && npm run dev"]
 
 # ---- builder (compile TS + generate prisma client) ----
 FROM base AS builder

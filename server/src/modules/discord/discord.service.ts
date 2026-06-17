@@ -4,6 +4,7 @@ import { logger } from "../../lib/logger.js";
 import { effectiveScope } from "../../rbac/policy.js";
 import type { AuthContext } from "../../rbac/types.js";
 import { discordRepo } from "./discord.repository.js";
+import { discordApi, discordBotConfigured } from "./discord.api.js";
 import {
   normalizeInteraction, verifyDiscordSignature, RESPONSE_PONG, RESPONSE_MESSAGE,
 } from "./discord.webhook.js";
@@ -63,5 +64,10 @@ export async function listActivity(ctx: AuthContext, q: { teamId?: string; take:
 }
 
 export function status() {
-  return { provider: "DISCORD", interactionsConfigured: discordConfigured, botConfigured: Boolean(env.DISCORD_BOT_TOKEN) };
+  return { provider: "DISCORD", interactionsConfigured: discordConfigured, botConfigured: discordBotConfigured() };
+}
+
+/** Live connectivity probe — confirms the bot token reaches Discord. */
+export function check() {
+  return discordApi.ping();
 }

@@ -12,6 +12,8 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { RoleSwitcher } from "./role-switcher";
+import { DomainSwitcher } from "./domain-switcher";
+import type { DomainKey } from "@/lib/presentation";
 import { RaiseConcernDialog } from "@/components/concerns/raise-concern-dialog";
 import { NOTIFICATIONS } from "@/lib/api";
 
@@ -39,7 +41,7 @@ function Breadcrumbs() {
   );
 }
 
-export function TopNav({ user, presentation = false }: { user: AuthUser; presentation?: boolean }) {
+export function TopNav({ user, domain, presentation = false }: { user: AuthUser; domain: DomainKey; presentation?: boolean }) {
   const unread = NOTIFICATIONS.filter((n) => n.unread).length;
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -62,6 +64,7 @@ export function TopNav({ user, presentation = false }: { user: AuthUser; present
               title="Demo mode — showing seeded mock data">
               <FlaskConical className="size-3" /> Presentation
             </span>
+            <DomainSwitcher current={domain} />
             <RoleSwitcher current={user.role} />
           </>
         ) : null}

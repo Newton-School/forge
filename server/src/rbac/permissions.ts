@@ -3,6 +3,7 @@ import type { RoleKey } from "./types.js";
 /** resource:action permissions. Extend freely. */
 export type Permission =
   | "user:read" | "user:create" | "user:import" | "user:update"
+  | "invitation:read" | "invitation:send"
   | "role:assign"
   | "domain:read" | "domain:manage"
   | "team:read" | "team:manage"
@@ -29,6 +30,7 @@ export const ROLE_PERMISSIONS: Record<RoleKey, Permission[]> = {
   ADMIN: [
     "review:read",
     "user:read", "user:create", "user:import", "user:update", "role:assign",
+    "invitation:read", "invitation:send",
     "domain:read", "domain:manage", "team:read", "team:manage", "project:manage", "config:edit",
     "mentorStatus:submit", "weeklyReview:l3Submit", "weeklyReview:l4Submit", "gate:decide",
     "task:assign", "deliverable:review", "concern:read", "concern:raise", "concern:triage",
@@ -38,7 +40,8 @@ export const ROLE_PERMISSIONS: Record<RoleKey, Permission[]> = {
   ],
   LCC: [
     "review:read",
-    "user:read", "domain:read", "team:read", "team:manage", "project:manage", "config:edit",
+    "user:read", "user:create", "user:update", "invitation:read", "invitation:send",
+    "domain:read", "team:read", "team:manage", "project:manage", "config:edit",
     "concern:read", "concern:raise", "concern:triage", "concern:resolve",
     "email:send", "email:bulkSend", "emailTemplate:manage", "announcement:send",
     "analytics:global", "analytics:domain", "analytics:team", "analytics:self",

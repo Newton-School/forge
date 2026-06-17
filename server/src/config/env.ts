@@ -27,9 +27,20 @@ const schema = z.object({
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().optional(), // e.g. "Forge <no-reply@…>"; falls back to SMTP_USER
 
-  // GitHub integration — webhook HMAC secret + optional API token for outbound reads.
+  // GitHub integration — webhook HMAC secret + read token + the AI-domain org slug.
   GITHUB_WEBHOOK_SECRET: z.string().optional(),
   GITHUB_API_TOKEN: z.string().optional(),
+  GITHUB_ORG: z.string().default("newton-school-ai"),
+
+  // GitHub OAuth App (owned by the lcc-ai-nst account) — powers "Connect with GitHub":
+  // verifies each user's username and lets a mentor's one click auto-create the repo
+  // webhook. Optional: when unset, the Connect flow is unavailable (no crash).
+  GITHUB_OAUTH_CLIENT_ID: z.string().optional(),
+  GITHUB_OAUTH_CLIENT_SECRET: z.string().optional(),
+  GITHUB_OAUTH_REDIRECT_URI: z
+    .string()
+    .url()
+    .default("http://localhost:4000/api/integrations/github/oauth/callback"),
 
   // Discord integration — interactions public key (Ed25519) + optional bot token.
   DISCORD_PUBLIC_KEY: z.string().optional(),
@@ -80,6 +91,10 @@ export const mailerConfigured = Boolean(
 );
 /** GitHub webhooks are only verified when a signing secret is configured. */
 export const githubWebhookConfigured = Boolean(env.GITHUB_WEBHOOK_SECRET);
+/** The "Connect with GitHub" OAuth flow is wired only when the app id + secret exist. */
+export const githubOAuthConfigured = Boolean(
+  env.GITHUB_OAUTH_CLIENT_ID && env.GITHUB_OAUTH_CLIENT_SECRET,
+);
 /** Discord interactions are only verified when the app public key is configured. */
 export const discordConfigured = Boolean(env.DISCORD_PUBLIC_KEY);
 /** Google Calendar push is wired only when the service-account + calendar id exist. */

@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import type { AuthUser, RoleKey, Scope } from "@/lib/types";
+import { type DomainKey, DOMAIN_KEYS, DOMAIN_COOKIE_NAME } from "@/lib/presentation";
 
 /**
  * PHASE 1 ONLY — dev session resolution by cookie (no real auth yet).
@@ -53,3 +54,10 @@ export async function getCurrentUser(): Promise<AuthUser> {
 }
 
 export const ROLE_COOKIE_NAME = ROLE_COOKIE;
+
+/** Active preview domain from the `forge_domain` cookie (server-only). Defaults to AI. */
+export async function getActiveDomain(): Promise<DomainKey> {
+  const store = await cookies();
+  const v = store.get(DOMAIN_COOKIE_NAME)?.value as DomainKey | undefined;
+  return v && DOMAIN_KEYS.includes(v) ? v : "AI";
+}

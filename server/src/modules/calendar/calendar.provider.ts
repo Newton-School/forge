@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { env, googleCalendarConfigured } from "../../config/env.js";
 import { logger } from "../../lib/logger.js";
+import { fetchWithTimeout, fetchWithRetry } from "../../lib/http.js";
 
 export interface CalendarEventData {
   title: string;
@@ -9,11 +10,20 @@ export interface CalendarEventData {
   attendees?: string[];
 }
 
+export interface CalendarHealth {
+  ok: boolean;
+  provider: string;
+  calendarId?: string;
+  message?: string;
+}
+
 /** Outbound calendar port (Adapter). The service depends only on this interface. */
 export interface CalendarProvider {
   readonly name: string;
   /** Push an event to the external calendar; returns its external id (or null when local-only). */
   createEvent(e: CalendarEventData): Promise<{ externalId: string | null }>;
+  /** Connectivity probe — confirms the provider can authenticate (no-op for local). */
+  verify(): Promise<CalendarHealth>;
 }
 
 /** Default: store locally only, no external push. */
@@ -21,6 +31,9 @@ class LocalCalendarProvider implements CalendarProvider {
   readonly name = "local";
   async createEvent(): Promise<{ externalId: string | null }> {
     return { externalId: null };
+  }
+  async verify(): Promise<CalendarHealth> {
+    return { ok: true, provider: "local", message: "Google service account not configured — events are stored locally only" };
   }
 }
 
@@ -49,7 +62,8 @@ class GoogleCalendarProvider implements CalendarProvider {
     const signature = base64url(crypto.sign("RSA-SHA256", Buffer.from(signingInput), key));
     const assertion = `${signingInput}.${signature}`;
 
-    const res = await fetch("https://oauth2.googleapis.com/token", {
+    // Idempotent auth exchange — safe to retry with backoff.
+    const res = await fetchWithRetry("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion }),
@@ -58,6 +72,15 @@ class GoogleCalendarProvider implements CalendarProvider {
     const json = (await res.json()) as { access_token?: string };
     if (!json.access_token) throw new Error("Google token response missing access_token");
     return json.access_token;
+  }
+
+  async verify(): Promise<CalendarHealth> {
+    try {
+      await this.accessToken();
+      return { ok: true, provider: "google", calendarId: env.GOOGLE_CALENDAR_ID };
+    } catch (err) {
+      return { ok: false, provider: "google", calendarId: env.GOOGLE_CALENDAR_ID, message: err instanceof Error ? err.message : "auth failed" };
+    }
   }
 
   async createEvent(e: CalendarEventData): Promise<{ externalId: string | null }> {
@@ -69,7 +92,7 @@ class GoogleCalendarProvider implements CalendarProvider {
       end: { dateTime: (e.endsAt ?? new Date(e.startsAt.getTime() + 3600_000)).toISOString() },
       attendees: e.attendees?.map((email) => ({ email })),
     };
-    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calId}/events`, {
+    const res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/calendars/${calId}/events`, {
       method: "POST",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
       body: JSON.stringify(body),

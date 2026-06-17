@@ -1,4 +1,4 @@
-import { env, githubWebhookConfigured } from "../../config/env.js";
+import { env, githubWebhookConfigured, githubOAuthConfigured } from "../../config/env.js";
 import { Errors } from "../../lib/errors.js";
 import { logger } from "../../lib/logger.js";
 import { effectiveScope } from "../../rbac/policy.js";
@@ -70,5 +70,6 @@ export function status() {
     provider: "GITHUB",
     webhookConfigured: githubWebhookConfigured,
     apiTokenConfigured: Boolean(env.GITHUB_API_TOKEN),
+    oauthConfigured: githubOAuthConfigured,
   };
 }

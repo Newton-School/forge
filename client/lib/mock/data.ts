@@ -112,6 +112,44 @@ export const USERS: MockUser[] = [
   { id: "us10", name: "Rohan Das", email: "rohan@nst.edu", role: "MENTEE", domainKey: "SDSE", team: "StreamLine Team", squad: "Gamma", status: "SUSPENDED", lastActive: "2026-06-05" },
 ];
 
+// ── Onboarding invitations (invite-only lifecycle) ───────────────────────────────
+export type InvitationStatus = "PENDING" | "SENT" | "OPENED" | "COMPLETED" | "EXPIRED";
+export interface MockInvitation {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  domainKey?: string;
+  team?: string;
+  status: InvitationStatus;
+  sentAt?: string;
+  openedAt?: string;
+  acceptedAt?: string;
+  expiresAt: string;
+}
+
+export const INVITATIONS: MockInvitation[] = [
+  { id: "inv1", name: "Sneha Iyer", email: "sneha@nst.edu", role: "MENTEE", domainKey: "AI", team: "AI Group 07", status: "COMPLETED", sentAt: "2026-06-08", openedAt: "2026-06-08", acceptedAt: "2026-06-09", expiresAt: "2026-06-22" },
+  { id: "inv2", name: "Aryan Sharma", email: "aryan@nst.edu", role: "MENTOR", domainKey: "AI", team: "AI Group 07", status: "COMPLETED", sentAt: "2026-06-07", openedAt: "2026-06-07", acceptedAt: "2026-06-07", expiresAt: "2026-06-21" },
+  { id: "inv3", name: "Kavya Reddy", email: "kavya@nst.edu", role: "MENTEE", domainKey: "ML", team: "ML Squad Beta", status: "OPENED", sentAt: "2026-06-14", openedAt: "2026-06-15", expiresAt: "2026-06-28" },
+  { id: "inv4", name: "Dev Malhotra", email: "dev.malhotra@nst.edu", role: "MENTEE", domainKey: "AI", team: "AI Group 03", status: "SENT", sentAt: "2026-06-16", expiresAt: "2026-06-30" },
+  { id: "inv5", name: "Ishita Bose", email: "ishita.bose@nst.edu", role: "MENTOR", domainKey: "SDSE", team: "Shipyard Team", status: "SENT", sentAt: "2026-06-16", expiresAt: "2026-06-30" },
+  { id: "inv6", name: "Nikhil Verma", email: "nikhil.verma@nst.edu", role: "MENTEE", domainKey: "SDSE", team: "StreamLine Team", status: "PENDING", expiresAt: "2026-07-01" },
+  { id: "inv7", name: "Tara Singh", email: "tara.singh@nst.edu", role: "MENTEE", domainKey: "ML", team: "ML Squad Beta", status: "EXPIRED", sentAt: "2026-05-20", openedAt: "2026-05-21", expiresAt: "2026-06-03" },
+];
+
+/** Preset reviewers for the email-testing module (Phase-1 validation recipients). */
+export const TEST_EMAIL_RECIPIENTS: string[] = [
+  "shaik.tajuddin2024@nst.rishihood.edu.in",
+  "abhinav.choudhary2024@nst.rishihood.edu.in",
+  "aniket.pathak2024@nst.rishihood.edu.in",
+  "anwesha.adhikari2024@nst.rishihood.edu.in",
+  "khushi.2024@nst.rishihood.edu.in",
+  "nikith.s2024@nst.rishihood.edu.in",
+  "kushagra.r@nst.rishihood.edu.in",
+  "nipun.g@nst.rishihood.edu.in",
+];
+
 export interface MockGithub { id: string; type: "COMMIT" | "PR" | "ISSUE" | "REVIEW"; title: string; author: string; repo: string; state: string; when: string; }
 export const GITHUB_ACTIVITY: MockGithub[] = [
   { id: "g1", type: "COMMIT", title: "feat: add engagement scorer agent", author: "Sneha Iyer", repo: "engageiq-ai", state: "main", when: "2026-06-14" },

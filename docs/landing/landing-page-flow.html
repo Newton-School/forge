@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Forge — Landing Page Storyboard</title>
+<style>
+  :root{
+    --bg:#fafafa;--card:#fff;--fg:#18181b;--mut:#52525b;--sub:#a1a1aa;--border:#e4e4e7;
+    --indigo:#4f46e5;--indigo-bg:#eef2ff;--indigo-bd:#c7d2fe;--green:#059669;--green-bg:#ecfdf5;
+    --amber:#d97706;--amber-bg:#fffbeb;--blue:#2563eb;--blue-bg:#eff6ff;--rose:#e11d48;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--fg);font-size:15px;line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+  a{color:var(--indigo);text-decoration:none}a:hover{text-decoration:underline}
+  code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86em}
+  code{background:#f4f4f5;border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:#be185d}
+
+  header{background:#fff;border-bottom:1px solid var(--border);padding:32px 0 24px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .logo{width:30px;height:30px;border-radius:8px;background:var(--indigo);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+  .wordmark{font-weight:700;font-size:17px;letter-spacing:-.01em}
+  h1{font-size:25px;margin:0 0 6px;letter-spacing:-.02em}
+  .lede{color:var(--mut);max-width:780px;margin:0}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--indigo-bg);color:#3730a3;border:1px solid var(--indigo-bd)}
+  .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;background:#f4f4f5;color:var(--mut);border:1px solid var(--border)}
+  .metabar{margin-top:18px;display:flex;flex-wrap:wrap;gap:10px;font-size:12.5px;color:var(--mut)}
+  .metabar .chip{background:#f8f8f9;border:1px solid var(--border);border-radius:7px;padding:6px 10px}
+  .metabar .chip b{color:var(--fg);font-weight:650}
+
+  nav.toc{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.93);backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
+  nav.toc .wrap{display:flex;gap:3px;flex-wrap:wrap;padding:8px 24px}
+  nav.toc a{font-size:12.5px;color:var(--mut);padding:5px 9px;border-radius:6px;white-space:nowrap}
+  nav.toc a:hover{background:#f4f4f5;text-decoration:none;color:var(--fg)}
+
+  main{padding:14px 0 0}
+  .frame{padding:26px 0;border-bottom:1px solid var(--border)}
+  .frame:last-of-type{border-bottom:0}
+  .fhead{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+  .num{flex:none;width:34px;height:34px;border-radius:9px;background:var(--indigo);color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;margin-top:2px}
+  .eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--indigo);margin:0 0 3px}
+  .ftitle{font-size:20px;margin:0;letter-spacing:-.01em}
+  .purpose{color:var(--mut);margin:2px 0 0;font-size:13.5px}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:0;overflow:hidden}
+  .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:0}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .visual{background:#fcfcfd;border-right:1px solid var(--border);padding:18px 18px;display:flex;flex-direction:column;gap:12px}
+  @media(max-width:760px){.visual{border-right:0;border-bottom:1px solid var(--border)}}
+  .detail{padding:18px 18px;display:flex;flex-direction:column;gap:14px}
+
+  .lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--sub);margin:0 0 5px}
+  .block .body{font-size:13.5px;color:var(--fg)}
+  .block .body.mut{color:var(--mut)}
+  .headline{font-size:16px;font-weight:650;letter-spacing:-.01em;margin:0 0 4px}
+  .gist{font-size:13.5px;color:var(--mut);margin:0}
+
+  .anim{background:var(--indigo-bg);border:1px solid var(--indigo-bd);border-left:3px solid var(--indigo);border-radius:8px;padding:9px 12px;font-size:12.5px;color:#3730a3}
+  .anim .t{font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#4338ca;margin-bottom:3px}
+
+  .kv{background:var(--green-bg);border:1px solid #a7f3d0;border-left:3px solid var(--green);border-radius:8px;padding:9px 12px;font-size:12.5px;color:#065f46}
+  .kv .t{font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+
+  .svgwrap{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;align-items:center;justify-content:center}
+  svg{display:block;max-width:100%;height:auto}
+  .cap{font-size:11.5px;color:var(--sub);text-align:center;margin-top:-4px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .ic{font-size:11.5px;background:#f4f4f5;border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--mut);font-weight:500}
+  .ic.on{background:var(--indigo-bg);border-color:var(--indigo-bd);color:#3730a3}
+
+  .tabsrow{display:flex;flex-wrap:wrap;gap:4px}
+  .tab{font-size:12px;border:1px solid var(--border);border-radius:7px;padding:5px 10px;background:#fff;color:var(--mut)}
+  .tab.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+
+  .roles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  @media(max-width:520px){.roles{grid-template-columns:1fr}}
+  .role{border:1px solid var(--border);border-radius:8px;padding:9px 10px;background:#fff}
+  .role b{display:block;font-size:12.5px;margin-bottom:2px}
+  .role span{font-size:11.5px;color:var(--mut)}
+
+  footer{padding:30px 0;color:var(--sub);font-size:13px;text-align:center}
+  footer .wrap{display:flex;flex-direction:column;gap:6px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo">F</div>
+      <span class="wordmark">Forge</span>
+      <span class="pill">Landing Page Storyboard</span>
+      <span class="tag">LCC · NST</span>
+    </div>
+    <h1>Forge marketing landing — section-by-section storyboard</h1>
+    <p class="lede">A scroll-through design reference for the public landing page. Each frame below maps one section of the page in order — its purpose, hero visual, copy gist, and on-scroll motion — so a stakeholder can grasp the whole narrative in one pass. Forge is the Profile Building Drive platform built by the <b>Learner Career Council</b> at <b>Newton School of Technology</b>: students build, mentors guide, teachers track, and learning becomes measurable through real GitHub contribution.</p>
+    <div class="metabar">
+      <span class="chip"><b>15</b> sections</span>
+      <span class="chip">Domains: <b>AI · ML · SDSE</b></span>
+      <span class="chip">Spine: <b>GitHub contribution</b></span>
+      <span class="chip">Integrations: <b>GitHub · Discord · Calendar · Email · Groq</b></span>
+      <span class="chip">Stack: <b>Next.js → Express → Postgres + Redis · AWS ECS</b></span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#f1">1 · Hero</a>
+  <a href="#f2">2 · Why Forge</a>
+  <a href="#f3">3 · Ecosystem</a>
+  <a href="#f4">4 · AI Workflow</a>
+  <a href="#f5">5 · Lifecycle</a>
+  <a href="#f6">6 · Mentor</a>
+  <a href="#f7">7 · Teacher</a>
+  <a href="#f8">8 · Mentee</a>
+  <a href="#f9">9 · Connected</a>
+  <a href="#f10">10 · Integrations</a>
+  <a href="#f11">11 · Learning</a>
+  <a href="#f12">12 · Analytics</a>
+  <a href="#f13">13 · Security</a>
+  <a href="#f14">14 · Architecture</a>
+  <a href="#f15">15 · CTA</a>
+</div></nav>
+
+<main class="wrap">
+
+<!-- 1 HERO -->
+<section class="frame" id="f1">
+  <div class="fhead">
+    <div class="num">1</div>
+    <div>
+      <p class="eyebrow">Above the fold · first impression</p>
+      <h2 class="ftitle">Hero</h2>
+      <p class="purpose">Land the promise in 3 seconds: a real drive where building is the proof.</p>
+    </div>
+  </div>
+  <div class="card"><div class="grid">
+    <div class="visual">
+      <p class="lbl">Key visual</p>
+      <div class="svgwrap">
+        <svg width="380" height="150" viewBox="0 0 380 150" role="img" aria-label="Animated contribution graph">
+          <g fill="#eef2ff" stroke="#c7d2fe" stroke-width="1">
+            <!-- contribution grid -->
+            <g id="cg"></g>
+          </g>
+          <text x="8" y="142" font-size="10" fill="#a1a1aa" font-family="ui-monospace,monospace">contribution graph · 52 weeks</text>
+        </svg>
+      </div>
+      <p class="cap">An animated GitHub-style contribution graph filling cell-by-cell behind the headline.</p>
+      <div class="chips">
+        <span class="ic on">Build</span><span class="ic on">Guide</span><span class="ic on">Track</span><span class="ic">Measure</span>
+      </div>
+    </div>
+    <div class="detail">
+      <div class="block"><p class="lbl">Content summary</p>
+        <p class="headline">Forge — where students build their profile, one contribution at a time.</p>
+        <p class="gist">The multi-domain Profile Building Drive by the LCC at NST. Real repos, real PRs, real mentor reviews — progress you can see. Two CTAs: <b>Enter Forge</b> (Google login) and <b>See how it works</b>.</p>
+      </div>
+      <div class="kv"><div class="t">Key visual</div>Animated contribution graph + Forge wordmark, "AI · ML · SDSE" domain badges, and a live-looking activity ticker.</div>
+      <div class="anim"><div class="t">Animation on scroll</div>Graph cells fill in a sweep on first paint; headline rises + fades in; domain badges stagger; CTA buttons settle last. Subtle parallax as the user begins scrolling.</div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 2 WHY -->
+<section class="frame" id="f2">
+  <div class="fhead">
+    <div class="num">2</div>
+    <div>
+      <p class="eyebrow">The problem → the shift</p>
+      <h2 class="ftitle">Why Forge exists</h2>
+      <p class="purpose">Name the gap: effort that nobody can see, and make the case for measurable building.</p>
+    </div>
+  </div>
+  <div class="card"><div class="grid">
+    <div class="visual">
+      <p class="lbl">Key visual</p>
+      <div class="svgwrap">
+        <svg width="360" height="140" viewBox="0 0 360 140" role="img" aria-label="Before and after split">
+          <line x1="180" y1="14" x2="180" y2="126" stroke="#e4e4e7" stroke-width="1" stroke-dasharray="3 3"/>
+          <text x="20" y="28" font-size="10" fill="#a1a1aa" font-family="ui-monospace,monospace">BEFORE</text>
+          <text x="232" y="28" font-size="10" fill="#4f46e5" font-family="ui-monospace,monospace">WITH FORGE</text>
+          <!-- scattered grey dots -->
+          <g fill="#e4e4e7"><circle cx="40" cy="60" r="4"/><circle cx="70" cy="95" r="4"/><circle cx="110" cy="55" r="4"/><circle cx="140" cy="100" r="4"/><circle cx="90" cy="75" r="4"/><circle cx="55" cy="115" r="4"/></g>
+          <!-- aligned indigo line -->
+          <polyline points="210,110 245,92 280,78 315,52 345,40" fill="none" stroke="#4f46e5" stroke-width="2"/>
+          <g fill="#4f46e5"><circle cx="210" cy="110" r="3.5"/><circle cx="245" cy="92" r="3.5"/><circle cx="280" cy="78" r="3.5"/><circle cx="315" cy="52" r="3.5"/><circle cx="345" cy="40" r="3.5"/></g>
+        </svg>
+      </div>
+      <p class="cap">Scattered, invisible effort (left) becomes a rising, attributable trendline (right).</p>
+    </div>
+    <div class="detail">
+      <div class="block"><p class="lbl">Content summary</p>
+        <p class="headline">Most learning is invisible. Forge makes it count.</p>
+        <p class="gist">Coursework ends, portfolios go stale, and real contribution is scattered across DMs and dead repos. Forge anchors the drive to GitHub so every commit, PR, and review becomes a visible, measurable signal.</p>
+      </div>
+      <div class="kv"><div class="t">Key visual</div>A "before → after" split: chaotic grey dots resolve into one clean indigo trendline.</div>
+      <div class="anim"><div class="t">Animation on scroll</div>Grey dots drift in first, then snap/align into the indigo trendline as the section enters viewport. The "WITH FORGE" label fades in on completion.</div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 3 ECOSYSTEM -->
+<section class="frame" id="f3">
+  <div class="fhead">
+    <div class="num">3</div>
+    <div>
+      <p class="eyebrow">The model · roles in motion</p>
+      <h2 class="ftitle">How the ecosystem works</h2>
+      <p class="purpose">Show the chain of people and artifacts that turns activity into learning.</p>
+    </div>
+  </div>
+  <div class="card"><div class="grid">
+    <div class="visual">
+      <p class="lbl">Key visual — node-link flow</p>
+      <div class="svgwrap">
+        <svg width="400" height="170" viewBox="0 0 400 170" role="img" aria-label="Ecosystem node map">
+          <defs>
+            <marker id="arr" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#c7d2fe"/></marker>
+          </defs>
+          <g stroke="#c7d2fe" stroke-width="1.4" fill="none" marker-end="url(#arr)">
+            <path d="M58,40 L120,40"/><path d="M170,40 L170,70"/>
+            <path d="M150,90 L60,120"/><path d="M190,90 L290,55"/>
+            <path d="M300,72 L300,100"/><path d="M280,120 L200,140"/>
+          </g>
+          <g font-family="-apple-system,sans-serif" font-size="10" font-weight="600" text-anchor="middle">
+            <g><rect x="16" y="28" width="44" height="24" rx="6" fill="#eef2ff" stroke="#c7d2fe"/><text x="38" y="44" fill="#3730a3">Teacher</text></g>
+            <g><rect x="124" y="28" width="50" height="24" rx="6" fill="#eef2ff" stroke="#c7d2fe"/><text x="149" y="44" fill="#3730a3">Mentors</text></g>
+            <g><rect x="140" y="70" width="44" height="24" rx="6" fill="#fff" stroke="#e4e4e7"/><text x="162" y="86" fill="#52525b">Teams</text></g>
+            <g><rect x="18" y="108" width="44" height="24" rx="6" fill="#fff" stroke="#e4e4e7"/><text x="40" y="124" fill="#52525b">Repos</text></g>
+            <g><rect x="270" y="44" width="44" height="24" rx="6" fill="#fff" stroke="#e4e4e7"/><text x="292" y="60" fill="#52525b">Issues</text></g>
+            <g><rect x="278" y="100" width="44" height="24" rx="6" fill="#fff" stroke="#e4e4e7"/><text x="300" y="116" fill="#52525b">PRs</text></g>
+            <g><rect x="150" y="132" width="56" height="24" rx="6" fill="#eef2ff" stroke="#c7d2fe"/><text x="178" y="148" fill="#3730a3">Reviews</text></g>
+            <g><rect x="40" y="138" width="62" height="24" rx="6" fill="#4f46e5"/><text x="71" y="154" fill="#fff">Learning</text></g>
+          </g>
+        </svg>
+      </div>
+      <p class="cap">Teacher → Mentors → Teams → Repos → Issues → PRs → Reviews → Learning.</p>
+    </div>
+    <div class="detail">
+      <div class="block"><p class="lbl">Content summary</p>
+        <p class="headline">One connected chain — from a teacher's intent to measurable learning.</p>
+        <p class="gist">Teachers set the drive, mentors lead teams, teams own repos, issues become PRs, mentors review, and reviewed work rolls up into learning. Every hop is captured, never re-typed.</p>
+      </div>
+      <div class="kv"><div class="t">Key visual</div>A node-link ecosystem map; the active link/node highlights indigo as the eye moves along the chain.</div>
+      <div class="anim"><div class="t">Animation on scroll</div>Connector paths "draw" left-to-right; each node pops in sequence as its arrow arrives. Pinned section so the chain completes before the page advances.</div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 4 AI WORKFLOW -->
+<section class="frame" id="f4">
+  <div class="fhead">
+    <div class="num">4</div>
+    <div>
+      <p class="eyebrow">Domain deep-dive · AI/ML/SDSE</p>
+      <h2 class="ftitle">AI domain workflow</h2>
+      <p class="purpose">Make the GitHub-org-to-progress pipeline concrete for a single domain.</p>
+    </div>
+  </div>
+  <div class="card"><div class="grid">
+    <div class="visual">
+      <p class="lbl">Key visual — workflow pipeline</p>
+      <div class="svgwrap">
+        <svg width="400" height="120" viewBox="0 0 400 120" role="img" aria-label="AI domain pipeline">
+          <g font-family="-apple-system,sans-serif" font-size="9" font-weight="600" text-anchor="middle">
+            <g id="pipe"></g>
+          </g>
+        </svg>
+      </div>
+      <p class="cap">GitHub Org → Teams → Repos → Issues → PRs → Mentor Reviews → Progress.</p>
+      <div class="chips"><span class="ic on">@lcc-ai-nst</span><span class="ic">installation token</span><span class="ic">webhooks</span></div>
+    </div>
+    <div class="detail">
+      <div class="block"><p class="lbl">Content summary</p>
+        <p class="headline">From a GitHub org to a progress score — automatically.</p>
+        <p class="gist">The domain's GitHub org spawns teams and repos; issues drive PRs; mentors review; signed webhooks stream every event into Forge, where it becomes attributed progress. No manual logging.</p>
+      </div>
+      <div class="kv"><div class="t">Key visual</div>A 7-stage horizontal pipeline; a packet/token animates along it to show data flowing org → progress.</div>
+      <div class="anim"><div class="t">Animation on scroll</div>Stages illuminate one-by-one as they scroll into view; a small indigo dot travels the rail end-to-end, "lighting up" the final Progress node.</div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 5 LIFECYCLE -->
+<section class="frame" id="f5">
+  <div class="fhead">
+    <div class="num">5</div>
+    <div>
+      <p class="eyebrow">A single unit of work</p>
+      <h2 class="ftitle">Project lifecycle</h2>
+      <p class="purpose">Walk one issue from open to merged so the day-to-day loop is unmistakable.</p>
+    </div>
+  </div>
+  <div class="card"><div class="grid">
+    <div class="visual">
+      <p class="lbl">Key visual — lifecycle pipeline</p>
+      <div class="svgwrap">
+        <svg width="400" height="160" viewBox="0 0 400 160" role="img" aria-label="Project lifecycle pipeline">
+          <g id="life"></g>
+          <text x="200" y="152" font-size="9" fill="#a1a1aa" text-anchor="middle" font-family="ui-monospace,monospace">Issue → Self-assign → Branch → Dev → PR → Review → Merge → Milestone</text>
+        </svg>
+      </div>
+      <p class="cap">Self-serve, GitHub-native loop — closed when the PR merges into a milestone.</p>
+    </div>
+    <div class="detail">
+      <div class="block"><p class="lbl">Content summary</p>
+        <p class="headline">Pick an issue. Ship a PR. Earn the merge.</p>
+        <p class="gist">A mentee self-assigns an issue, branches, builds, opens a PR, gets a mentor review, and merges — each merge advancing a milestone. The same loop, every week, building the profile.</p>
+      </div>
+      <div class="kv"><div class="t">Key visual</div>A vertical/zig-zag stepper of 8 stages with status dots that flip from grey to indigo "done".</div>
+      <div class="anim"><div class="t">Animation on scroll</div>Each step's connector grows and its dot fills as it reaches center; the "Merge" → "Milestone" handoff gets a brief glow to mark completion.</div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 6 MENTOR -->
+<section class="frame" id="f6">
+  <div class="fhead">
+    <div class="num">6</div>
+    <div>
+      <p class="eyebrow">Persona · the team lead</p>
+      <h2 class="ftitle">Mentor experience</h2>
+      <p class="purpose">Show the mentor as both reviewer and team lead — the spine of delivery.</p>
+    </div>
+  </div>
+  <div class="card"><div class="grid">
+    <div class="visual">
+      <p class="lbl">Key visual — review console</p>
+      <div class="svgwrap">
+        <svg width="380" height="140" viewBox="0 0 380 140" role="img" aria-label="Mentor review console mock">
+          <rect x="14" y="14" width="352" height="112" rx="8" fill="#fff" stroke="#e4e4e7"/>
+          <rect x="14" y="14" width="352" height="22" rx="8" fill="#fcfcfd" stroke="#e4e4e7"/>
+          <circle cx="28" cy="25" r="3" fill="#e4e4e7"/><circle cx="38" cy="25" r="3" fill="#e4e4e7"/>
+          <text x="56" y="29" font-size="9" fill="#a1a1aa" font-family="ui-monospace,monospace">PR #42 · review queue</text>
+          <rect x="28" y="48" width="150" height="10" rx="3" fill="#eef2ff"/>
+          <rect x="28" y="66" width="220" height="8" rx="3" fill="#f4f4f5"/>
+          <rect x="28" y="82" width="180" height="8" rx="3" fill="#f4f4f5"/>
+          <rect x="270" y="48" width="82" height="60" rx="6" fill="#eef2ff" stroke="#c7d2fe"/>
+          <text x="311" y="74" font-size="9" fill="#3730a3" text-anchor="middle" font-weight="600">Approve</text>
+          <text x="311" y="90" font-size="8" fill="#4338ca" text-anchor="middle">AI summary</text>
+        </svg>
+      </div>
+      <p class="cap">Review queue + Groq-drafted summary, team roster, and PR status.</p>
+    </div>
+    <div class="detail">
+      <div class="block"><p class="lbl">Content summary</p>
+        <p class="headline">Lead the team. Review the work. Move people forward.</p>
+        <p class="gist">The student mentor carries both mentorship and delivery — a single console for the review queue, team health, and AI-drafted feedback so reviews are fast and consistent.</p>
+      </div>
+      <div class="kv"><div class="t">Key visual</div>A mock review console UI card: PR queue, diff preview, AI-summary panel, one-click approve.</div>
+      <div class="anim"><div class="t">Animation on scroll</div>The console slides in from the side; a review row highlights and the AI-summary panel "types" a draft line; approve button pulses once.</div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 7 TEACHER -->
+<section class="frame" id="f7">
+  <div class="fhead">
+    <div class="num">7</div>
+    <div>
+      <p class="eyebrow">Persona · oversight</p>
+      <h2 class="ftitle">Teacher experience</h2>
+      <p class="purpose">Show cross-domain visibility without micromanagement.</p>
+    </div>
+  </div>
+  <div class="card"><div class="grid">
+    <div class="visual">
+      <p class="lbl">Key visual — oversight dashboard</p>
+      <div class="svgwrap">
+        <svg width="380" height="140" viewBox="0 0 380 140" role="img" aria-label="Teacher dashboard mock">
+          <rect x="14" y="16" width="108" height="50" rx="7" fill="#fff" stroke="#e4e4e7"/>
+          <rect x="136" y="16" width="108" height="50" rx="7" fill="#fff" stroke="#e4e4e7"/>
+          <rect x="258" y="16" width="108" height="50" rx="7" fill="#eef2ff" stroke="#c7d2fe"/>
+          <text x="26" y="34" font-size="8" fill="#a1a1aa">AI domain</text><text x="26" y="54" font-size="15" fill="#18181b" font-weight="700">86%</text>
+          <text x="148" y="34" font-size="8" fill="#a1a1aa">ML domain</text><text x="148" y="54" font-size="15" fill="#18181b" font-weight="700">73%</text>
+          <text x="270" y="34" font-size="8" fill="#4338ca">SDSE domain</text><text x="270" y="54" font-size="15" fill="#3730a3" font-weight="700">91%</text>
+          <rect x="14" y="78" width="352" height="46" rx="7" fill="#fff" stroke="#e4e4e7"/>
+          <polyline points="28,112 70,104 112,108 154,92 196,96 238,80 280,84 330,66" fill="none" stroke="#4f46e5" stroke-width="2"/>
+        </svg>
+      </div>
+      <p class="cap">Multi-domain rollup cards + an activity trendline across teams.</p>
+    </div>
+    <div class="detail">
+      <div class="block"><p class="lbl">Content summary</p>
+        <p class="headline">Track every domain, team, and learner — at a glance.</p>
+        <p class="gist">A teacher can span multiple domains and see real, scope-filtered progress: who's active, where teams stall, and which milestones are on track — drilling down only when needed.</p>
+      </div>
+      <div class="kv"><div class="t">Key visual</div>An analytics dashboard: per-domain rollup tiles and a cross-team trend chart.</div>
+      <div class="anim"><div class="t">Animation on scroll</div>Numbers count up to their value; the trendline draws left-to-right; domain tiles stagger-fade in.</div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 8 MENTEE -->
+<section class="frame" id="f8">
+  <div class="fhead">
+    <div class="num">8</div>
+    <div>
+      <p class="eyebrow">Persona · the builder</p>
+      <h2 class="ftitle">Mentee experience</h2>
+      <p class="purpose">Show the learner's growing, visible profile as the emotional payoff.</p>
+    </div>
+  </div>
+  <div class="card"><div class="grid">
+    <div class="visual">
+      <p class="lbl">Key visual — growing profile</p>
+      <div class="svgwrap">
+        <svg width="380" height="140" viewBox="0 0 380 140" role="img" aria-label="Mentee profile mock">
+          <circle cx="44" cy="44" r="20" fill="#eef2ff" stroke="#c7d2fe"/><text x="44" y="49" font-size="13" fill="#3730a3" text-anchor="middle" font-weight="700">M</text>
+          <rect x="78" y="30" width="120" height="9" rx="3" fill="#18181b" opacity=".8"/>
+          <rect x="78" y="46" width="80" height="7" rx="3" fill="#e4e4e7"/>
+          <g>
+            <rect x="230" y="24" width="40" height="18" rx="9" fill="#eef2ff" stroke="#c7d2fe"/><text x="250" y="37" font-size="8" fill="#3730a3" text-anchor="middle">12 PRs</text>
+            <rect x="278" y="24" width="60" height="18" rx="9" fill="#ecfdf5" stroke="#a7f3d0"/><text x="308" y="37" font-size="8" fill="#065f46" text-anchor="middle">8 merged</text>
+          </g>
+          <g id="mg"></g>
+        </svg>
+      </div>
+      <p class="cap">Profile header, contribution badges, and a filling activity strip.</p>
+    </div>
+    <div class="detail">
+      <div class="block"><p class="lbl">Content summary</p>
+        <p class="headline">Watch your profile become proof.</p>
+        <p class="gist">Every merged PR, review, and milestone stacks into a living profile a mentee actually owns — concrete evidence of skill across the drive, ready to share beyond NST.</p>
+      </div>
+      <div class="kv"><div class="t">Key visual</div>A growing profile card: avatar, contribution badges (PRs / merged / reviews), filling activity strip.</div>
+      <div class="anim"><div class="t">Animation on scroll</div>Badges pop in with a count-up; the activity strip fills like a progress bar; profile card lifts subtly on entry.</div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 9 CONNECTED -->
+<section class="frame" id="f9">
+  <div class="fhead">
+    <div class="num">9</div>
+    <div>
+      <p class="eyebrow">The glue · integrations as one system</p>
+      <h2 class="ftitle">The connected learning ecosystem</h2>
+      <p class="purpose">Show Forge at the center, with every tool a student already uses wired in.</p>
+    </div>
+  </div>
+  <div class="card"><div class="grid">
+    <div class="visual">
+      <p class="lbl">Key visual — connection map</p>
+      <div class="svgwrap">
+        <svg width="360" height="200" viewBox="0 0 360 200" role="img" aria-label="Integration connection map">
+          <g stroke="#c7d2fe" stroke-width="1.4">
+            <line x1="180" y1="100" x2="180" y2="40"/>
+            <line x1="180" y1="100" x2="300" y2="60"/>
+            <line x1="180" y1="100" x2="310" y2="150"/>
+            <line x1="180" y1="100" x2="60" y2="150"/>
+            <line x1="180" y1="100" x2="50" y2="60"/>
+          </g>
+          <g font-family="-apple-system,sans-serif" font-size="9" font-weight="600" text-anchor="middle">
+            <circle cx="180" cy="100" r="30" fill="#4f46e5"/><text x="180" y="104" font-size="11" fill="#fff">Forge</text>
+            <g><circle cx="180" cy="30" r="18" fill="#eef2ff" stroke="#c7d2fe"/><text x="180" y="33" fill="#3730a3">GitHub</text></g>
+            <g><circle cx="306" cy="54" r="18" fill="#eef2ff" stroke="#c7d2fe"/><text x="306" y="57" fill="#3730a3">Discord</text></g>
+            <g><circle cx="316" cy="156" r="18" fill="#eef2ff" stroke="#c7d2fe"/><text x="316" y="153" fill="#3730a3">Cal</text><text x="316" y="163" fill="#3730a3">endar</text></g>
+            <g><circle cx="54" cy="156" r="18" fill="#eef2ff" stroke="#c7d2fe"/><text x="54" y="159" fill="#3730a3">Email</text></g>
+            <g><circle cx="44" cy="54" r="18" fill="#eef2ff" stroke="#c7d2fe"/><text x="44" y="57" fill="#3730a3">Groq</text></g>
+          </g>
+        </svg>
+      </div>
+      <p class="cap">Forge at the hub; five integrations as orbiting nodes.</p>
+    </div>
+    <div class="detail">
+      <div class="block"><p class="lbl">Content summary</p>
+        <p class="headline">Forge connects the tools you already live in.</p>
+        <p class="gist">GitHub is the contribution spine; Discord carries communication; a shared Forge Drive calendar holds reviews and deadlines; email delivers notifications; Groq adds AI insight. One ecosystem, server-orchestrated.</p>
+      </div>
+      <div class="kv"><div class="t">Key visual</div>A radial connection map: a central Forge hub with five labeled integration nodes and signal lines.</div>
+      <div class="anim"><div class="t">Animation on scroll</div>Spokes draw outward from the hub; nodes pop on arrival; faint pulses travel inward along each line to imply live data.</div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 10 INTEGRATION SHOWCASE -->
+<section class="frame" id="f10">
+  <div class="fhead">
+    <div class="num">10</div>
+    <div>
+      <p class="eyebrow">Interactive · explore each integration</p>
+      <h2 class="ftitle">Interactive integration showcase</h2>
+      <p class="purpose">Let visitors click into each integration to see exactly what it does.</p>
+    </div>
+  </div>
+  <div class="card"><div class="grid">
+    <div class="visual">
+      <p class="lbl">Key visual — tabbed panel</p>
+      <div class="tabsrow">
+        <span class="tab active">GitHub</span><span class="tab">Discord</span><span class="tab">Calendar</span><span class="tab">Email</span><span class="tab">Groq</span>
+      </div>
+      <div class="svgwrap">
+        <svg width="360" height="110" viewBox="0 0 360 110" role="img" aria-label="GitHub tab panel mock">
+          <rect x="14" y="14" width="332" height="82" rx="8" fill="#fff" stroke="#e4e4e7"/>
+          <text x="30" y="38" font-size="10" fill="#18181b" font-weight="700">GitHub · contribution spine</text>
+          <text x="30" y="56" font-size="9" fill="#52525b" font-family="ui-monospace,monospace">org install token → commits · PRs · reviews · issues</text>
+          <rect x="30" y="68" width="80" height="16" rx="4" fill="#eef2ff"/><text x="70" y="80" font-size="8" fill="#3730a3" text-anchor="middle">webhook ✓ verified</text>
+          <rect x="120" y="68" width="92" height="16" rx="4" fill="#ecfdf5"/><text x="166" y="80" font-size="8" fill="#065f46" text-anchor="middle">HMAC signature</text>
+        </svg>
+      </div>
+      <p class="cap">Active tab swaps the panel; each shows scope, data flow, and a status line.</p>
+    </div>
+    <div class="detail">
+      <div class="block"><p class="lbl">Content summary</p>
+        <p class="headline">Click any integration. See exactly what it touches.</p>
+        <p class="gist">Five tabs — GitHub, Discord, Calendar, Email, Groq — each with its role, the data it reads/writes, and how it's secured. All logic runs on the server; the client only renders.</p>
+      </div>
+      <div class="kv"><div class="t">Key visual</div>A tabbed showcase; selecting a tab cross-fades to that integration's mini-panel (icon, one-liner, data flow, security note).</div>
+      <div class="anim"><div class="t">Animation on scroll</div>Tabs auto-rotate while idle in view (pausing on hover/click); panel content cross-fades and slides; active tab underline glides between tabs.</div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 11 LEARNING + BUILDING -->
+<section class="frame" id="f11">
+  <div class="fhead">
+    <div class="num">11</div>
+    <div>
+      <p class="eyebrow">The payoff · skill through shipping</p>
+      <h2 class="ftitle">Learning + building</h2>
+      <p class="purpose">Reframe building as the learning mechanism, not a side effect.</p>
+    </div>
+  </div>
+  <div class="card"><div class="grid">
+    <div class="visual">
+      <p class="lbl">Key visual — interlocking loop</p>
+      <div class="svgwrap">
+        <svg width="320" height="150" viewBox="0 0 320 150" role="img" aria-label="Build-learn loop">
+          <defs><marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#4f46e5"/></marker></defs>
+          <path d="M110,40 A55,55 0 1 1 110,110" fill="none" stroke="#c7d2fe" stroke-width="2" marker-end="url(#arr2)"/>
+          <path d="M210,110 A55,55 0 1 1 210,40" fill="none" stroke="#4f46e5" stroke-width="2" marker-end="url(#arr2)"/>
+          <text x="92" y="78" font-size="12" font-weight="700" fill="#3730a3" text-anchor="end">Build</text>
+          <text x="228" y="78" font-size="12" font-weight="700" fill="#3730a3" text-anchor="start">Learn</text>
+          <text x="160" y="20" font-size="9" fill="#a1a1aa" text-anchor="middle">ship work</text>
+          <text x="160" y="140" font-size="9" fill="#a1a1aa" text-anchor="middle">review &amp; reflect</text>
+        </svg>
+      </div>
+      <p class="cap">A two-arc loop: building feeds learning; learning sharpens the next build.</p>
+    </div>
+    <div class="detail">
+      <div class="block"><p class="lbl">Content summary</p>
+        <p class="headline">You don't learn then build. You learn by building.</p>
+        <p class="gist">Every issue is a lesson, every review is feedback, every merge is mastery made visible. Forge closes the loop so the work itself is the curriculum.</p>
+      </div>
+      <div class="kv"><div class="t">Key visual</div>An interlocking "Build ⇄ Learn" loop diagram with labeled hand-off arcs.</div>
+      <div class="anim"><div class="t">Animation on scroll</div>The two arcs draw in sequence to form a continuous loop; a dot orbits the loop once it closes to imply perpetual motion.</div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 12 ANALYTICS -->
+<section class="frame" id="f12">
+  <div class="fhead">
+    <div class="num">12</div>
+    <div>
+      <p class="eyebrow">Proof · numbers that matter</p>
+      <h2 class="ftitle">Analytics &amp; visibility</h2>
+      <p class="purpose">Show that progress is measured and surfaced to everyone, scoped to their role.</p>
+    </div>
+  </div>
+  <div class="card"><div class="grid">
+    <div class="visual">
+      <p class="lbl">Key visual — metrics board</p>
+      <div class="svgwrap">
+        <svg width="360" height="140" viewBox="0 0 360 140" role="img" aria-label="Analytics board mock">
+          <g>
+            <rect x="14" y="16" width="100" height="48" rx="7" fill="#fff" stroke="#e4e4e7"/><text x="26" y="34" font-size="8" fill="#a1a1aa">Merged PRs</text><text x="26" y="54" font-size="16" fill="#18181b" font-weight="700">1,284</text>
+            <rect x="128" y="16" width="100" height="48" rx="7" fill="#fff" stroke="#e4e4e7"/><text x="140" y="34" font-size="8" fill="#a1a1aa">Active builders</text><text x="140" y="54" font-size="16" fill="#18181b" font-weight="700">312</text>
+            <rect x="242" y="16" width="104" height="48" rx="7" fill="#eef2ff" stroke="#c7d2fe"/><text x="254" y="34" font-size="8" fill="#4338ca">Reviews / wk</text><text x="254" y="54" font-size="16" fill="#3730a3" font-weight="700">540</text>
+          </g>
+          <rect x="14" y="76" width="332" height="48" rx="7" fill="#fff" stroke="#e4e4e7"/>
+          <g fill="#eef2ff"><rect x="28" y="92" width="14" height="24"/><rect x="52" y="84" width="14" height="32"/><rect x="76" y="98" width="14" height="18"/><rect x="100" y="80" width="14" height="36"/><rect x="124" y="90" width="14" height="26"/><rect x="148" y="78" width="14" height="38"/></g>
+          <g fill="#4f46e5"><rect x="172" y="86" width="14" height="30"/><rect x="196" y="72" width="14" height="44"/><rect x="220" y="82" width="14" height="34"/><rect x="244" y="68" width="14" height="48"/></g>
+        </svg>
+      </div>
+      <p class="cap">KPI tiles + a build-volume bar chart trending up.</p>
+    </div>
+    <div class="detail">
+      <div class="block"><p class="lbl">Content summary</p>
+        <p class="headline">If it can be built, it can be measured.</p>
+        <p class="gist">Merged PRs, active builders, review throughput, milestone burn-down — surfaced per role and scope-filtered server-side. Visibility for teachers, momentum for mentees.</p>
+      </div>
+      <div class="kv"><div class="t">Key visual</div>A metrics board: KPI tiles + a bar/line chart of build volume over the drive.</div>
+      <div class="anim"><div class="t">Animation on scroll</div>KPI numbers count up; chart bars grow from the baseline in a quick stagger; the latest bars highlight indigo.</div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 13 SECURITY -->
+<section class="frame" id="f13">
+  <div class="fhead">
+    <div class="num">13</div>
+    <div>
+      <p class="eyebrow">Trust · it's an institution platform</p>
+      <h2 class="ftitle">Security &amp; governance</h2>
+      <p class="purpose">Reassure decision-makers: access is controlled, auditable, and isolated.</p>
+    </div>
+  </div>
+  <div class="card"><div class="grid">
+    <div class="visual">
+      <p class="lbl">Key visual — layered guard</p>
+      <div class="svgwrap">
+        <svg width="320" height="150" viewBox="0 0 320 150" role="img" aria-label="Security layers">
+          <g text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9" font-weight="600">
+            <rect x="40" y="18" width="240" height="22" rx="6" fill="#eef2ff" stroke="#c7d2fe"/><text x="160" y="33" fill="#3730a3">Google OAuth · hosted-domain only</text>
+            <rect x="60" y="48" width="200" height="22" rx="6" fill="#fff" stroke="#e4e4e7"/><text x="160" y="63" fill="#52525b">RBAC · role × scope · 3 layers</text>
+            <rect x="80" y="78" width="160" height="22" rx="6" fill="#fff" stroke="#e4e4e7"/><text x="160" y="93" fill="#52525b">Signed webhooks · Zod validation</text>
+            <rect x="100" y="108" width="120" height="22" rx="6" fill="#4f46e5"/><text x="160" y="123" fill="#fff">Immutable audit log</text>
+          </g>
+        </svg>
+      </div>
+      <p class="cap">Concentric guard layers from login down to the audit trail.</p>
+    </div>
+    <div class="detail">
+      <div class="block"><p class="lbl">Content summary</p>
+        <p class="headline">Built like institutional software — because it is.</p>
+        <p class="gist">Google-only login restricted to the NST hosted domain and an invite allowlist; server-side RBAC enforced at three layers; signed webhooks; an immutable audit log; and a dedicated, isolated AWS footprint.</p>
+      </div>
+      <div class="kv"><div class="t">Key visual</div>Nested security layers (auth → RBAC → validation → audit) shown as a shield/stack.</div>
+      <div class="anim"><div class="t">Animation on scroll</div>Layers assemble from outside in, each clicking into place; a small lock/check icon seals the stack at the end.</div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 14 ARCHITECTURE -->
+<section class="frame" id="f14">
+  <div class="fhead">
+    <div class="num">14</div>
+    <div>
+      <p class="eyebrow">Under the hood · for the technical reader</p>
+      <h2 class="ftitle">Platform architecture</h2>
+      <p class="purpose">Show the clean client → server → data topology on AWS.</p>
+    </div>
+  </div>
+  <div class="card"><div class="grid">
+    <div class="visual">
+      <p class="lbl">Key visual — topology diagram</p>
+      <div class="svgwrap">
+        <svg width="380" height="130" viewBox="0 0 380 130" role="img" aria-label="Architecture topology">
+          <defs><marker id="arr3" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#c7d2fe"/></marker></defs>
+          <g stroke="#c7d2fe" stroke-width="1.5" fill="none" marker-end="url(#arr3)">
+            <line x1="84" y1="55" x2="120" y2="55"/><line x1="210" y1="55" x2="246" y2="55"/>
+          </g>
+          <g text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9" font-weight="600">
+            <rect x="16" y="38" width="68" height="34" rx="7" fill="#eef2ff" stroke="#c7d2fe"/><text x="50" y="52" fill="#3730a3">Next.js</text><text x="50" y="64" fill="#4338ca" font-size="7" font-weight="400">UI only</text>
+            <rect x="122" y="38" width="86" height="34" rx="7" fill="#4f46e5"/><text x="165" y="52" fill="#fff">Express</text><text x="165" y="64" fill="#c7d2fe" font-size="7" font-weight="400">logic · integrations</text>
+            <rect x="248" y="22" width="116" height="30" rx="7" fill="#fff" stroke="#e4e4e7"/><text x="306" y="41" fill="#52525b">Postgres (RDS)</text>
+            <rect x="248" y="62" width="116" height="30" rx="7" fill="#fff" stroke="#e4e4e7"/><text x="306" y="81" fill="#52525b">Redis (sessions)</text>
+            <text x="190" y="112" font-size="8" fill="#a1a1aa" font-weight="400">AWS ECS Fargate · ALB routes /api/* → server</text>
+          </g>
+        </svg>
+      </div>
+      <p class="cap">Next.js client → Express server → Postgres + Redis on AWS ECS.</p>
+    </div>
+    <div class="detail">
+      <div class="block"><p class="lbl">Content summary</p>
+        <p class="headline">Thin client. Strong server. One clean boundary.</p>
+        <p class="gist">A Next.js UI talks only to an Express API that owns all logic, integrations, and webhooks, backed by Postgres + Redis. Runs on AWS ECS Fargate behind an ALB, isolated to its own VPC.</p>
+      </div>
+      <div class="kv"><div class="t">Key visual</div>A left-to-right topology diagram: client box → server box → data stores, with the ECS/ALB context noted.</div>
+      <div class="anim"><div class="t">Animation on scroll</div>Boxes appear in request order; connectors draw between them; a request "packet" animates client → server → DB and back to show the flow.</div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 15 CTA -->
+<section class="frame" id="f15">
+  <div class="fhead">
+    <div class="num">15</div>
+    <div>
+      <p class="eyebrow">The ask · close the loop</p>
+      <h2 class="ftitle">Call to action</h2>
+      <p class="purpose">Convert intent into a single, obvious next step.</p>
+    </div>
+  </div>
+  <div class="card"><div class="grid">
+    <div class="visual">
+      <p class="lbl">Key visual — closing banner</p>
+      <div class="svgwrap">
+        <svg width="360" height="120" viewBox="0 0 360 120" role="img" aria-label="CTA banner mock">
+          <rect x="14" y="16" width="332" height="88" rx="10" fill="#eef2ff" stroke="#c7d2fe"/>
+          <text x="180" y="48" font-size="13" fill="#3730a3" text-anchor="middle" font-weight="700">Start building your profile.</text>
+          <rect x="100" y="62" width="76" height="26" rx="7" fill="#4f46e5"/><text x="138" y="79" font-size="9" fill="#fff" text-anchor="middle">Enter Forge</text>
+          <rect x="184" y="62" width="76" height="26" rx="7" fill="#fff" stroke="#c7d2fe"/><text x="222" y="79" font-size="9" fill="#3730a3" text-anchor="middle">See it work</text>
+        </svg>
+      </div>
+      <p class="cap">Single indigo CTA, secondary outline action, LCC · NST sign-off.</p>
+    </div>
+    <div class="detail">
+      <div class="block"><p class="lbl">Content summary</p>
+        <p class="headline">Your profile is waiting to be built.</p>
+        <p class="gist">A focused closing banner: <b>Enter Forge</b> (Google login for NST accounts) with a secondary "See how it works." Signed off by the Learner Career Council at Newton School of Technology.</p>
+      </div>
+      <div class="kv"><div class="t">Key visual</div>A full-width indigo CTA banner with the Forge wordmark and a faint contribution-graph texture echoing the hero.</div>
+      <div class="anim"><div class="t">Animation on scroll</div>Banner scales/fades up into view; primary button has a gentle resting pulse; the hero's contribution-graph motif reappears faintly to bookend the page.</div>
+    </div>
+  </div></div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Forge · Landing Page Storyboard · 15 sections in narrative order</span>
+    <span>Learner Career Council (LCC) · Newton School of Technology (NST) · design reference, not production copy</span>
+  </div>
+</footer>
+
+<script>
+  // --- decorative SVG builders (kept tiny, no external deps) ---
+  // Hero contribution grid
+  (function(){
+    const g=document.getElementById('cg'); if(!g)return;
+    const cols=26, rows=7, size=11, gap=3, ox=8, oy=8;
+    const shades=['#eef2ff','#c7d2fe','#a5b4fc','#818cf8','#4f46e5'];
+    let s='';
+    for(let c=0;c<cols;c++)for(let r=0;r<rows;r++){
+      const x=ox+c*(size+gap), y=oy+r*(size+gap);
+      const lvl=Math.max(0,Math.floor(Math.random()*5)-(c<6?2:0));
+      s+=`<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="2" fill="${shades[lvl]}" stroke="#e4e4e7" stroke-width=".5"/>`;
+    }
+    g.innerHTML=s;
+  })();
+
+  // Frame 4 pipeline
+  (function(){
+    const g=document.getElementById('pipe'); if(!g)return;
+    const steps=['Org','Teams','Repos','Issues','PRs','Reviews','Progress'];
+    const n=steps.length, w=400, pad=16, gap=(w-2*pad)/(n-1), y=52;
+    let s='';
+    for(let i=0;i<n-1;i++){const x=pad+i*gap; s+=`<line x1="${x+22}" y1="${y}" x2="${pad+(i+1)*gap-22}" y2="${y}" stroke="#c7d2fe" stroke-width="1.4"/>`;}
+    steps.forEach((t,i)=>{const x=pad+i*gap; const last=i===n-1;
+      s+=`<circle cx="${x}" cy="${y}" r="16" fill="${last?'#4f46e5':'#eef2ff'}" stroke="${last?'#4f46e5':'#c7d2fe'}"/>`;
+      s+=`<text x="${x}" y="${y+3}" fill="${last?'#fff':'#3730a3'}" font-size="7.5">${t}</text>`;
+    });
+    g.innerHTML=s;
+  })();
+
+  // Frame 5 lifecycle stepper (zig-zag)
+  (function(){
+    const g=document.getElementById('life'); if(!g)return;
+    const steps=['Issue','Self-assign','Branch','Dev','PR','Review','Merge','Milestone'];
+    const n=steps.length, w=400, pad=24, gap=(w-2*pad)/(n-1);
+    let s='';
+    for(let i=0;i<n-1;i++){const x1=pad+i*gap,y1=i%2?96:44,x2=pad+(i+1)*gap,y2=(i+1)%2?96:44;
+      s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#c7d2fe" stroke-width="1.3"/>`;}
+    steps.forEach((t,i)=>{const x=pad+i*gap,y=i%2?96:44; const done=i<6;
+      s+=`<circle cx="${x}" cy="${y}" r="7" fill="${done?'#4f46e5':'#eef2ff'}" stroke="${done?'#4f46e5':'#c7d2fe'}"/>`;
+      s+=`<text x="${x}" y="${y<60?y-12:y+18}" font-size="7.5" fill="#52525b" text-anchor="middle">${t}</text>`;
+    });
+    g.innerHTML=s;
+  })();
+
+  // Frame 8 activity strip
+  (function(){
+    const g=document.getElementById('mg'); if(!g)return;
+    let s=''; const ox=78, oy=70, size=10, gap=3;
+    const shades=['#eef2ff','#c7d2fe','#818cf8','#4f46e5'];
+    for(let i=0;i<24;i++){const x=ox+i*(size+gap); const lvl=Math.min(3,Math.floor(Math.random()*4));
+      s+=`<rect x="${x}" y="${oy}" width="${size}" height="${size}" rx="2" fill="${shades[lvl]}" stroke="#e4e4e7" stroke-width=".5"/>`;}
+    g.innerHTML=s;
+  })();
+</script>
+</body>
+</html>

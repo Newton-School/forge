@@ -28,6 +28,12 @@ export const bulkSendSchema = z.object({
 });
 export type BulkSendInput = z.infer<typeof bulkSendSchema>;
 
+/** Send [TEST] onboarding previews to reviewers (capped, marked TEST). */
+export const testOnboardingSchema = z.object({
+  recipients: z.array(z.string().email().transform((s) => s.toLowerCase())).min(1).max(20),
+});
+export type TestOnboardingInput = z.infer<typeof testOnboardingSchema>;
+
 /** Announcement fanned out over in-app (and optionally email). */
 export const announcementSchema = z.object({
   title: z.string().min(1).max(200),

@@ -4,13 +4,24 @@ export const RoleEnum = z.enum(["ADMIN", "LCC", "TEACHER", "MENTOR", "MENTEE"]);
 export const ScopeTypeEnum = z.enum(["GLOBAL", "DOMAIN", "TEAM", "SELF"]);
 export const StatusEnum = z.enum(["INVITED", "ACTIVE", "SUSPENDED", "DEACTIVATED"]);
 
+/** An optional id field: treats "" (unselected dropdown) as absent. */
+const optionalId = z.preprocess(
+  (v) => (v === "" || v == null ? undefined : v),
+  z.string().min(1).optional(),
+);
+
 export const createUserSchema = z.object({
   email: z.string().email().transform((s) => s.toLowerCase()),
   fullName: z.string().min(1).max(120),
   role: RoleEnum,
-  scopeType: ScopeTypeEnum.default("SELF"),
-  scopeId: z.string().optional().nullable(),
   status: StatusEnum.default("INVITED"),
+  // Assignment — the UI sends these; the service derives the role's scope + team membership.
+  domainId: optionalId,
+  teamId: optionalId,
+  mentorId: optionalId,
+  // Explicit scope is still accepted (overrides derivation) for API / back-compat.
+  scopeType: ScopeTypeEnum.optional(),
+  scopeId: optionalId,
 });
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 

@@ -44,6 +44,7 @@ The ALB routes `/api/*` → server, everything else → client. Not Vercel. Not 
 - Roles: **Admin, LCC, Teacher, Mentor, Mentee** (five). The **Student Mentor leads the team** — there is no separate Team Lead role (the Mentor carries both mentorship and team delivery). *(If the team later confirms re-adding Team Lead, it's a small config change — until then, five roles.)*
 - Model is `role × scope`, scope ∈ `GLOBAL | DOMAIN | TEAM | SELF`. A **Teacher may span multiple domains**.
 - Enforce at **three layers** on every request: (1) route gate, (2) policy `can(user, action, resource)`, (3) **scope-filtered database query**. Domain isolation, team isolation, and resource-ownership checks are mandatory. Any permission logic in the frontend is a **UI hint only** and is never trusted.
+- **User onboarding is invite-only and restricted to Admin + LCC** (`user:create`, `user:update`, `invitation:send`, `invitation:read`). Creating a user provisions the allowlist entry and auto-sends a Google-OAuth onboarding invitation (tracked `Invitation` row: Pending → Sent → Opened → Completed/Expired). No self-signup. See `docs/auth-onboarding.md`.
 
 ## 6. AWS account isolation (the account also runs OTHER services)
 Forge must have **zero blast radius** into the other services sharing the AWS account:

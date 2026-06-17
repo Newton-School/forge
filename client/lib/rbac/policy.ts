@@ -29,8 +29,8 @@ function scopeCovers(scope: Scope, user: AuthUser, resource?: Resource): boolean
 }
 
 /**
- * The single authorization decision. Phase 1: used by the UI to show/hide.
- * Phase 3: also called server-side in every action + paired with scopeWhere().
+ * Authorization decision used by the UI to show/hide (a hint only — real enforcement
+ * is server-side). The server owns the equivalent policy + scope-filtered DB queries.
  */
 export function can(
   user: AuthUser | null | undefined,

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Forge — GitHub App + OAuth Setup</title>
+<title>Forge — GitHub Org Webhook Setup</title>
 <style>
   :root{
     --bg:#fafafa;--card:#fff;--fg:#18181b;--mut:#52525b;--sub:#a1a1aa;--border:#e4e4e7;
@@ -25,11 +25,12 @@
   h1{font-size:25px;margin:0 0 6px;letter-spacing:-.02em}
   .lede{color:var(--mut);max-width:760px;margin:0}
   .pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;background:#f4f4f5;color:var(--mut);border:1px solid var(--border)}
+  .pill.free{background:var(--green-bg);color:#065f46;border-color:#a7f3d0}
 
   .domainbar{margin-top:18px;background:var(--indigo-bg);border:1px solid #c7d2fe;border-radius:10px;padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
   .domainbar label{font-size:13px;font-weight:600;color:#3730a3}
-  .domainbar input{font-family:ui-monospace,monospace;font-size:13px;padding:7px 10px;border:1px solid #c7d2fe;border-radius:7px;min-width:240px;background:#fff;color:var(--fg)}
-  .domainbar .hint{font-size:12px;color:#4338ca}
+  .domainbar input{font-family:ui-monospace,monospace;font-size:13px;padding:7px 10px;border:1px solid #c7d2fe;border-radius:7px;min-width:200px;background:#fff;color:var(--fg)}
+  .domainbar .hint{font-size:12px;color:#4338ca;flex-basis:100%}
 
   section{padding:34px 0;border-bottom:1px solid var(--border)}
   h2{font-size:19px;margin:0 0 4px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
@@ -52,6 +53,7 @@
   .env .t{font-weight:700;color:#065f46;font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
   .env code{background:#fff;border-color:#a7f3d0;color:#065f46}
   .note{background:var(--amber-bg);border:1px solid #fcd34d;border-left:3px solid var(--amber);border-radius:8px;padding:10px 13px;font-size:13px;color:#92400e;margin:10px 0}
+  .note.blue{background:var(--blue-bg);border-color:#bfdbfe;border-left-color:var(--blue);color:#1e40af}
   .scopes{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
   .scope{font-family:ui-monospace,monospace;font-size:11.5px;background:#f4f4f5;border:1px solid var(--border);border-radius:5px;padding:2px 7px;color:var(--mut)}
   table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0;background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden}
@@ -59,83 +61,221 @@
   th{background:#f8f8f9;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--sub)}
   tr:last-child td{border-bottom:0}
   footer{padding:28px 0;color:var(--sub);font-size:13px;text-align:center}
+  .ghacct{font-family:ui-monospace,monospace;color:#4338ca;font-size:.92em}
   .req{color:var(--rose);font-weight:700}
+  .opt{color:var(--sub);font-weight:700}
 </style>
 </head>
 <body>
 <header>
   <div class="wrap">
-    <div class="brand"><div class="logo">F</div><strong>Forge</strong><span class="pill">GitHub App + OAuth Setup</span></div>
-    <h1>GitHub — org App, webhooks &amp; per-user connect</h1>
-    <p class="lede">Set up the <b>org-owned GitHub App</b> for <code>@lcc-ai-nst</code>: one installation reads all repo activity, and a lightweight per-user OAuth links each Forge user to their GitHub identity. Every callback &amp; webhook points at the <b>server</b> (Express), never the client. Enter your production domain and the URLs update automatically. <a href="integration-setup.html">← back to all integrations</a></p>
+    <div class="brand"><div class="logo">F</div><strong>Forge</strong><span class="pill">GitHub Org Webhook Setup</span><span class="pill free">Free org · owner only</span></div>
+    <h1>GitHub — organization webhook &amp; activity sync</h1>
+    <p class="lede">Connect GitHub to Forge with <b>no GitHub App and no paid plan</b>. The <b>AI</b> domain uses a single <b>org-level webhook</b> (covers every AI repo); <b>ML &amp; SDSE</b> have no org, so each team adds a <b>per-repo webhook</b> — both share <b>one</b> HMAC secret. An optional <b>read-only token</b> lets the server pull extra detail on demand. Everything points at the <b>Express server</b>, never the client. Enter your org and domain and the URLs below update automatically. <a href="integration-setup.html">← back to all integrations</a></p>
     <div class="domainbar">
-      <label for="dom">Your production domain</label>
+      <label for="org">Domain org (this one)</label>
+      <input id="org" value="newton-school-ai" spellcheck="false" />
+      <label for="dom">Production domain</label>
       <input id="dom" value="app.example.com" spellcheck="false" />
-      <span class="hint">Local dev always uses <code>http://localhost:4000</code> (server). Prod becomes <span class="mono">https://<span class="ph">app.example.com</span></span>.</span>
+      <span class="hint"><b>AI</b> is the only domain on a GitHub <b>org</b> (<b class="org">newton-school-ai</b>) — Steps 0–3. <b>ML &amp; SDSE</b> run the native Forge workflow and connect <b>individual repos</b> (Steps 4–5); they have no org. You must be an <b>owner</b> of the AI org. Local dev uses <code>http://localhost:4000</code> (server); prod becomes <span class="mono">https://<span class="ph">app.example.com</span></span>.</span>
     </div>
   </div>
 </header>
 
-<!-- GITHUB -->
-<section id="github"><div class="wrap">
-  <h2><span class="ic" style="background:#24292e">⌥</span> GitHub — App + webhooks</h2>
-  <p class="sub">Use a <b>GitHub App</b> (org-level, fine-grained, higher rate limits) to read repo activity and receive webhooks.</p>
-  <div class="note"><b>Two-token model.</b> The App is <b>installed once on the <code>@lcc-ai-nst</code> org</b> → its <b>installation token</b> reads <i>all</i> org repo activity (commits, PRs, reviews, issues). Each person's <b>“Connect GitHub”</b> is only a per-user OAuth to learn their GitHub id + username, so org activity can be attributed to the right Forge user. You do <b>not</b> store a token per user — the org install does the data fetching.</div>
-  <ol class="steps">
-    <li><b>Create the App under the organization</b> (so it's owned by the org, not your personal account) — you must be an <b>org owner</b>: open <a href="https://github.com/organizations/lcc-ai-nst/settings/apps/new" target="_blank">github.com/organizations/<b>lcc-ai-nst</b>/settings/apps/new</a>. <b>GitHub App name</b>: <code>forge-dev</code> (dev) / <code>forge</code> (prod) — names are globally unique.</li>
-    <li><b>Homepage URL</b> — this is the client/UI (the only field that points at the client, not the server):
-      <div class="row"><span class="lbl">Production</span><span class="copy"><span class="mono">https://<span class="ph">app.example.com</span></span><button>copy</button></span></div>
-      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:3001</span><button>copy</button></span></div>
-    </li>
-    <li><b>Callback URL</b> (server OAuth callback — for per-user repo linking):
-      <div class="row"><span class="lbl">Production</span><span class="copy"><span class="u" data-tmpl="https://{host}/api/integrations/github/callback"></span><button>copy</button></span></div>
-      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:4000/api/integrations/github/callback</span><button>copy</button></span></div>
-      Leave <b>Setup URL</b> blank. Keep <b>Expire user authorization tokens</b> on (gives a <code>refresh_token</code>). Leave <b>Device Flow</b> off; check <b>Request user authorization (OAuth) during installation</b> only if you want the per-user link flow.
-    </li>
-    <li><b>Webhook</b> → keep <b>Active</b>. Generate a strong <b>Webhook secret</b> with <code>openssl rand -hex 32</code> and paste the same value into <code>GITHUB_WEBHOOK_SECRET</code>.
-      <div class="row"><span class="lbl">Production</span><span class="copy"><span class="u" data-tmpl="https://{host}/api/webhooks/github"></span><button>copy</button></span></div>
-      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>https://smee.io/&lt;your-channel&gt;</span><button>copy</button></span></div>
-      <div class="note"><b>GitHub can't reach <code>localhost</code></b> — webhooks POST from the public internet. For local dev, create a channel at <a href="https://smee.io/new" target="_blank">smee.io/new</a>, use that URL as the Webhook URL, and forward it to your server:<br>
-        <span class="copy" style="margin-top:6px"><span>npx smee-client --url https://smee.io/&lt;your-channel&gt; --target http://localhost:4000/api/webhooks/github</span><button>copy</button></span><br>
-        (ngrok works too: <code>ngrok http 4000</code> → <span class="mono">https://&lt;id&gt;.ngrok.io/api/webhooks/github</span>.)
-      </div>
-    </li>
-    <li><b>Repository permissions</b>:
-      <table><tr><th>Permission</th><th>Access</th></tr>
-        <tr><td>Contents</td><td>Read-only</td></tr>
-        <tr><td>Issues</td><td>Read-only</td></tr>
-        <tr><td>Pull requests</td><td>Read-only</td></tr>
-        <tr><td>Metadata</td><td>Read-only</td></tr>
-      </table>
-      <b>Organization permissions</b>: Members → Read-only.
-    </li>
-    <li><b>Subscribe to events</b>: <span class="scopes"><span class="scope">push</span><span class="scope">pull_request</span><span class="scope">pull_request_review</span><span class="scope">issues</span><span class="scope">milestone</span></span> <span class="mono">(the auto-suggested Installation target / Meta / Security advisory events aren't needed)</span></li>
-    <li><b>Where can this GitHub App be installed?</b> → <b>Only on this account</b> (<code>@lcc-ai-nst</code>). It's an internal org app — there's no reason to let other orgs install it. (<b>Any account</b> is only for public/marketplace apps; don't pick it.)</li>
-    <li>Create the App → <b>Generate a private key</b> (downloads a <code>.pem</code>) → note the <b>App ID</b>.</li>
-    <li><b>Install the App on the organization</b> (this is what produces the installation token used to read all org activity):
-      <ol style="margin:6px 0 0;padding-left:18px;list-style:disc">
-        <li>On the App's page → <b>Install App</b> → choose <b>@lcc-ai-nst</b> → <b>Install</b>.</li>
-        <li><b>Repository access</b>: pick <b>All repositories</b> (recommended — new team repos are covered automatically) or <b>Only select repositories</b>.</li>
-        <li>After installing, the URL is <span class="mono">…/installations/<b>&lt;installation-id&gt;</b></span> → copy that <b>Installation ID</b>.</li>
-      </ol>
-    </li>
-    <li><b>Allow it org-wide</b>: in <a href="https://github.com/organizations/lcc-ai-nst/settings/oauth_application_policy" target="_blank">Org → Settings → Third-party access</a>, make sure OAuth app access isn't blocking your app, so members can complete the per-user “Connect GitHub” step. Org owners may need to approve it once.</li>
-  </ol>
-  <div class="env"><div class="t">Env you get → server/.env</div>
-    <code>GITHUB_APP_ID</code> · <code>GITHUB_APP_PRIVATE_KEY</code> · <code>GITHUB_APP_INSTALLATION_ID</code> · <code>GITHUB_WEBHOOK_SECRET</code>
-  </div>
-  <div class="note">The server verifies every webhook with the <code>X-Hub-Signature-256</code> HMAC against <code>GITHUB_WEBHOOK_SECRET</code> — required, don't skip it.</div>
+<!-- HOW IT WORKS -->
+<section id="model"><div class="wrap">
+  <h2><span class="ic" style="background:#24292e">⌥</span> What you set up via GitHub</h2>
+  <p class="sub">Forge has <b>one</b> GitHub-driven domain (<b>AI</b>, on a GitHub org) and two that connect repos individually (<b>ML · SDSE</b>, no org). Everything below targets the <b>Express server</b> and shares <b>one</b> webhook secret + <b>one</b> read token. <b>No GitHub App, no paid plan, no per-user tokens.</b></p>
+  <table>
+    <tr><th>Piece</th><th>Scope</th><th>Why</th><th>Env</th></tr>
+    <tr><td><b>Org webhook</b></td><td><b>AI</b> org</td><td>One webhook on the org streams push / PR / review / issue events for <i>every</i> AI repo. <span class="req">required for AI</span></td><td><code>GITHUB_WEBHOOK_SECRET</code></td></tr>
+    <tr><td><b>Repo webhook</b></td><td><b>ML · SDSE</b> repos</td><td>No org → add <b>one webhook per team repo</b> (same URL, <b>same secret</b>, same events). Attributed identically. <span class="req">required for ML/SDSE sync</span></td><td><code>GITHUB_WEBHOOK_SECRET</code></td></tr>
+    <tr><td><b>Read token</b></td><td>AI org + public repos</td><td>Lets the server read structure — repos, issues, PRs, reviews, milestones, AI Teams — the dashboards render. <span class="req">required for dashboards</span></td><td><code>GITHUB_API_TOKEN</code> · <code>GITHUB_ORG</code></td></tr>
+    <tr><td><b>OAuth App</b> <span class="mono">(one, owned by <span class="ghacct">lcc-ai-nst</span>)</span></td><td>every user</td><td>Powers the <b>Connect with GitHub</b> button: verifies each user's <b>username</b>, and lets a mentor's <b>one click auto-create</b> the ML/SDSE repo webhook (no manual paste). <span class="req">required for one-click connect</span></td><td><code>GITHUB_OAUTH_CLIENT_ID</code> · <code>…_SECRET</code> · <code>…_REDIRECT_URI</code></td></tr>
+  </table>
+  <div class="note blue"><b>Six env values, total — and they serve all three domains.</b> The three core values (<code>GITHUB_ORG</code> · <code>GITHUB_API_TOKEN</code> · <code>GITHUB_WEBHOOK_SECRET</code>) plus the three OAuth-App values (<code>GITHUB_OAUTH_CLIENT_ID/SECRET/REDIRECT_URI</code>) that back the one-click connect. ML/SDSE repo webhooks reuse the <b>same</b> secret (no new value) and keep repos <b>public</b> for reads; a private repo just adds the <span class="ghacct">lcc-ai-nst</span> reader as a read collaborator.</div>
+
+  <h2 style="margin-top:26px"><span class="ic" style="background:#4f46e5">⌖</span> The two connection models</h2>
+  <table>
+    <tr><th>Domain</th><th>How work is tracked</th><th>GitHub setup</th><th>Who sets it up</th></tr>
+    <tr><td><b>AI</b></td><td>GitHub <b>is</b> the source of truth: org → Teams → repos → issues → PRs → reviews.</td><td><b>Org</b> webhook + read token + GitHub Teams. <span class="mono">(Steps 0–3 below.)</span></td><td>Org owner, once.</td></tr>
+    <tr><td><b>ML · SDSE</b></td><td><b>Native Forge workflow</b> (bi-daily updates, L1–L4 reviews, deliverables, milestones) — <b>plus</b> optional GitHub activity.</td><td><b>Per-repo</b> webhook on each team's repo (no org). <span class="mono">(Steps 4–5 below.)</span></td><td>Team mentor / lead, per team.</td></tr>
+  </table>
+  <p class="sub" style="margin-top:10px">Read access by role is enforced by the <b>server</b>, never GitHub: <b>Admin/LCC</b> see every domain &amp; team, <b>Teacher</b> their domain(s), <b>Mentor</b> their team, <b>Mentee</b> their own activity — nothing to configure on GitHub.</p>
 </div></section>
 
-<footer class="wrap">Forge · GitHub App + OAuth Setup · all callbacks/webhooks target the Express server · secrets live server-side / in AWS Secrets Manager · <a href="integration-setup.html">all integrations</a></footer>
+<!-- STRUCTURE -->
+<section id="structure"><div class="wrap">
+  <h2><span class="ic" style="background:#4f46e5">0</span> Set up the AI org structure <span class="pill">AI domain</span> <span class="req">do this first</span></h2>
+  <p class="sub"><b>Steps 0–3 are the AI domain only</b> (the GitHub-driven one). The AI dashboards are built around GitHub <b>Teams</b> (a mentor + their students, mapped to a repo). Create that structure once — it's all free-tier. <span class="mono">ML/SDSE skip to Steps 4–5.</span></p>
+  <ol class="steps">
+    <li><b>You have the org</b> <b class="org">newton-school-ai</b> (free tier is fine — it supports Teams, webhooks and fine-grained-token policies).</li>
+    <li><b>Create one GitHub Team per student team</b>: <a data-href="https://github.com/orgs/{org}/new-team" target="_blank">Org → Teams → New team</a> — e.g. <code>team-alpha</code>, <code>team-beta</code>, <code>team-gamma</code>. Add the <b>mentor + the students</b> as members of each.</li>
+    <li><b>Create a repository per team</b> and grant that team access (Team → Repositories → Add repository → <b>Write</b>). The repo URL is how Forge maps activity back to the team.</li>
+    <li><b>Each member sets their GitHub username</b> on their Forge profile so commits/PRs attribute to the right person.</li>
+  </ol>
+  <div class="note">Forge reads this structure through the <b>org Teams API</b> (needs the token's <b>Members: Read-only</b> permission, below). No GitHub Teams yet? The server can still read repos/issues/PRs, but team grouping &amp; mentor attribution won't populate until Teams exist.</div>
+</div></section>
+
+<!-- WEBHOOK -->
+<section id="webhook"><div class="wrap">
+  <h2><span class="ic" style="background:#24292e">1</span> AI organization webhook <span class="pill">AI domain</span> <span class="req">required</span></h2>
+  <p class="sub">One webhook at the <b>org</b> level covers every current and future AI repo — you don't add a webhook per repo. <span class="mono">(ML/SDSE do the per-repo version in Step 5.)</span></p>
+  <ol class="steps">
+    <li><b>Open your org's webhook settings</b> (owner only): <a data-href="https://github.com/organizations/{org}/settings/hooks/new" target="_blank">github.com/organizations/<b class="org">your-org</b>/settings/hooks/new</a> — i.e. <b>Org → Settings → Webhooks → Add webhook</b>. (On a free org this lives under the <i>organization</i> settings, not a repo.)</li>
+    <li><b>Payload URL</b> — the server's webhook endpoint:
+      <div class="row"><span class="lbl">Production</span><span class="copy"><span class="u" data-tmpl="https://{host}/api/integrations/github/webhook"></span><button>copy</button></span></div>
+      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>https://smee.io/&lt;your-channel&gt;</span><button>copy</button></span></div>
+      <div class="note"><b>GitHub can't reach <code>localhost</code></b> — webhooks POST from the public internet. For local dev, create a channel at <a href="https://smee.io/new" target="_blank">smee.io/new</a>, use that URL as the Payload URL, and forward it to your server:<br>
+        <span class="copy" style="margin-top:6px"><span>npx smee-client --url https://smee.io/&lt;your-channel&gt; --target http://localhost:4000/api/integrations/github/webhook</span><button>copy</button></span><br>
+        (ngrok works too: <code>ngrok http 4000</code> → <span class="mono">https://&lt;id&gt;.ngrok.io/api/integrations/github/webhook</span>.)
+      </div>
+    </li>
+    <li><b>Content type</b> → <code>application/json</code> <span class="mono">(required — the server reads JSON and verifies the raw body; <code>x-www-form-urlencoded</code> will not work).</span></li>
+    <li><b>Secret</b> — generate one and paste the <b>same value</b> into the webhook field and <code>GITHUB_WEBHOOK_SECRET</code> in <code>server/.env</code>:
+      <div class="row"><span class="lbl">Generate</span><span class="copy"><span>openssl rand -hex 32</span><button>copy</button></span></div>
+      The server checks the <code>X-Hub-Signature-256</code> HMAC on every delivery — without a matching secret it returns <code>403</code>.
+    </li>
+    <li><b>SSL verification</b> → <b>Enable</b> (production is HTTPS via the ALB). Leave disabled only for a plain-HTTP local tunnel.</li>
+    <li><b>Which events would you like to trigger this webhook?</b> → pick <b>“Send me everything.”</b> — the simplest choice. The server verifies the HMAC on <i>every</i> delivery and acts only on the four it understands (<span class="mono">push · pull_request · pull_request_review · issues</span>); any other event safely no-ops and returns <code>200</code>. The only cost is slightly more inbound traffic.
+      <div class="note">Prefer a leaner feed? Choose <b>“Let me select individual events”</b> instead and tick exactly: <span class="scopes" style="display:inline-flex;vertical-align:middle"><span class="scope">Pushes</span><span class="scope">Pull requests</span><span class="scope">Pull request reviews</span><span class="scope">Issues</span></span> (untick the default “Just the push event”). Same result, fewer deliveries.</div>
+    </li>
+    <li>Keep <b>Active</b> checked → <b>Add webhook</b>. GitHub immediately sends a <code>ping</code>; the server replies <code>200</code> and ignores it. Open <b>Recent Deliveries</b> and confirm a green <b>✓ 200</b> (re-deliver if you fix the secret).</li>
+    <li><b>ML &amp; SDSE don't repeat this.</b> They have no org — instead they add a <b>per-repo</b> webhook (same URL, same secret) in <b>Step 5</b> below — one click via the OAuth App (Step 4).</li>
+  </ol>
+  <div class="env"><div class="t">Env you get → server/.env</div>
+    <code>GITHUB_WEBHOOK_SECRET</code> <span class="req">required</span> <span class="mono">— one value, shared by the AI org webhook AND every ML/SDSE repo webhook</span>
+  </div>
+</div></section>
+
+<!-- TOKEN -->
+<section id="token"><div class="wrap">
+  <h2><span class="ic" style="background:#24292e">2</span> Read-only API token <span class="req">required for the AI dashboards</span></h2>
+  <p class="sub">The server reads your org structure (repos, issues, PRs, reviews, milestones, <b>Teams</b>) through <b>one</b> <code>GITHUB_API_TOKEN</code>. A <b>fine-grained</b> token scoped to your org <b class="org">your-org</b> is the right choice for a single org. <span class="mono">(Free-tier orgs support all of this.)</span></p>
+
+  <div class="note amberwarn" style="background:var(--amber-bg);border:1px solid #fcd34d;border-left:3px solid var(--amber);color:#92400e">
+    <b>Three real gotchas — get these right or you'll see a 403:</b>
+    <ol style="margin:6px 0 0;padding-left:18px">
+      <li><b>Token lifetime must be ≤ 366 days.</b> Many orgs (incl. this one) <b>forbid fine-grained tokens with a longer lifetime</b> — a 1-year+/no-expiry token is rejected with <code>403</code>. Pick e.g. <b>90 days</b>.</li>
+      <li><b>Resource owner must be the org</b> (not your personal account), which usually creates a <b>pending approval</b> an org owner must accept.</li>
+      <li><b>Teams need Org → Members: Read-only.</b> Without it, <code>/orgs/&lt;org&gt;/teams</code> returns <i>"Resource not accessible"</i> and team grouping won't sync.</li>
+    </ol>
+  </div>
+
+  <p style="font-weight:650;margin:16px 0 4px">Create the token (single org — recommended)</p>
+  <ol class="steps">
+    <li><b>New fine-grained token</b>: <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">github.com/settings/personal-access-tokens/new</a>.</li>
+    <li><b>Expiration</b> → <b>≤ 366 days</b> (e.g. 90 days). <span class="mono">This is the #1 cause of a 403 — don't pick "No expiration".</span></li>
+    <li><b>Resource owner</b> → <b class="org">your-org</b> (the organization, <i>not</i> your user). If it shows <b>“request will require approval”</b>, an org owner approves it under <a data-href="https://github.com/organizations/{org}/settings/personal-access-tokens" target="_blank">Org → Settings → Personal access tokens → Pending requests</a>.</li>
+    <li><b>Repository access</b> → <b>All repositories</b> (covers new team repos automatically).</li>
+    <li><b>Repository permissions</b> — all <b>Read-only</b>:
+      <table><tr><th>Permission</th><th>Access</th></tr>
+        <tr><td>Contents</td><td>Read-only</td></tr>
+        <tr><td>Metadata</td><td>Read-only <span class="mono">(auto-selected)</span></td></tr>
+        <tr><td>Issues</td><td>Read-only</td></tr>
+        <tr><td>Pull requests</td><td>Read-only</td></tr>
+      </table>
+    </li>
+    <li><b>Organization permissions</b> → <b>Members: Read-only</b>. <span class="req">Required</span> to read GitHub <b>Teams</b> (mentor + students per repo).</li>
+    <li><b>Generate token</b> → copy the <code>github_pat_…</code> value into <code>server/.env</code> as <code>GITHUB_API_TOKEN</code>, and set <code>GITHUB_ORG</code> to your org slug <b class="org">your-org</b>.</li>
+  </ol>
+
+  <div class="env"><div class="t">Verify (no server needed)</div>
+    <span class="copy" style="margin-top:4px"><span>node --env-file=.env -e 'fetch(`https://api.github.com/orgs/${process.env.GITHUB_ORG}`,{headers:{Authorization:`Bearer ${process.env.GITHUB_API_TOKEN}`,"User-Agent":"forge"}}).then(r=&gt;r.json()).then(o=&gt;console.log(o.login||o.message))'</span><button>copy</button></span><br>
+    <span class="mono" style="font-size:12px;color:#52525b">Run it in <code>portal/server</code>. It should print your <b>org login</b> — if it prints a <code>403</code> message about token lifetime, fix the expiration (gotcha #1).</span>
+  </div>
+
+  <div class="note"><b>One org, one token.</b> Only the <b>AI</b> domain has a GitHub org (<b class="org">newton-school-ai</b>); ML/SDSE connect <b>individual repos</b> (Step 5) and read them as <b>public</b> repos, so this single fine-grained token covers everything. <span class="mono">(If a domain ever gets its own GitHub org, a GitHub App is the multi-org path — not needed today.)</span></div>
+
+  <div class="env"><div class="t">Env you get → server/.env</div>
+    <code>GITHUB_API_TOKEN</code> <span class="req">required</span> · <code>GITHUB_ORG</code> <span class="mono">= your org slug</span>
+  </div>
+</div></section>
+
+
+<!-- PER-USER -->
+<section id="connect"><div class="wrap">
+  <h2><span class="ic" style="background:#24292e">3</span> Link members to their GitHub <span class="pill">all domains</span></h2>
+  <p class="sub">So activity shows up against the right person in Forge — applies to AI, ML and SDSE alike.</p>
+  <ol class="steps">
+    <li>Each member clicks <b>Connect with GitHub</b> in the <b>Connections</b> tab. The OAuth App (Step 4) returns their <b>verified username</b> — read from GitHub, not typed, so no one can claim someone else's handle. <b>No per-user token is stored.</b></li>
+    <li><b>AI:</b> the same handle is a <b>member of the org</b>, so their commits/PRs flow through the org webhook. <b>ML/SDSE:</b> their commits/PRs flow through their team's <b>repo webhook</b> (Step 5) — no org membership needed.</li>
+    <li>Forge resolves each event's author by username and attributes it to that user and their team (matched by the team's repo). Unmatched activity is still recorded against the team.</li>
+  </ol>
+  <div class="note blue">One <b>OAuth App</b> backs the Connect button — but <b>no GitHub App, no installation id, no private-key <code>.pem</code>, and no per-user tokens kept on the server</b> (the mentor's token is used once to create a webhook, then discarded). One webhook secret + one read-only token + the OAuth App is the whole integration.</div>
+</div></section>
+
+<!-- OAUTH APP -->
+<section id="oauth"><div class="wrap">
+  <h2><span class="ic" style="background:#059669">4</span> One-click connect — the OAuth App <span class="pill">all domains</span> <span class="mono">(register once)</span></h2>
+  <p class="sub">A single <b>GitHub OAuth App</b>, owned by your dedicated <span class="ghacct">lcc-ai-nst</span> account, powers the <b>Connect with GitHub</b> button everywhere — it verifies usernames <i>and</i> lets a mentor's one click <b>auto-create</b> the ML/SDSE repo webhook (no manual <i>Settings → Webhooks</i>). <span class="mono">An OAuth App ≠ the org GitHub App we don't use — it's just "Sign in with GitHub", no private key, no installation.</span></p>
+  <ol class="steps">
+    <li><b>Sign in as <span class="ghacct">lcc-ai-nst</span></b> → <a href="https://github.com/settings/developers" target="_blank">Settings → Developer settings → <b>OAuth Apps</b> → New OAuth App</a>.</li>
+    <li><b>Application name</b> → <code>Forge</code>. <b>Homepage URL</b> → <span class="mono">https://<span class="ph">app.example.com</span></span>.</li>
+    <li><b>Authorization callback URL</b> — the server's callback:
+      <div class="row"><span class="lbl">Production</span><span class="copy"><span class="u" data-tmpl="https://{host}/api/integrations/github/oauth/callback"></span><button>copy</button></span></div>
+      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:4000/api/integrations/github/oauth/callback</span><button>copy</button></span></div>
+    </li>
+    <li><b>Register</b> → copy the <b>Client ID</b>, then <b>Generate a new client secret</b> and copy it. These go in <code>server/.env</code> (below). <b>The secret is shown once</b> — store it now.</li>
+  </ol>
+  <div class="env"><div class="t">Env you get → server/.env</div>
+    <code>GITHUB_OAUTH_CLIENT_ID</code> · <code>GITHUB_OAUTH_CLIENT_SECRET</code> · <code>GITHUB_OAUTH_REDIRECT_URI</code> <span class="req">required for one-click connect</span>
+  </div>
+  <div class="note blue"><b>Scopes Forge requests at consent</b> (the user sees &amp; approves them): <span class="scopes" style="display:inline-flex;vertical-align:middle"><span class="scope">read:user</span><span class="scope">admin:repo_hook</span><span class="scope">public_repo</span></span> — <code>read:user</code> verifies the handle, <code>admin:repo_hook</code> lets the server create the webhook on a repo the user admins, <code>public_repo</code> (or <code>repo</code> for private) reads it. The mentor's token is used <b>once</b> to create the hook, then discarded — nothing long-lived is stored.</div>
+</div></section>
+
+<!-- ML / SDSE PER-REPO -->
+<section id="repo"><div class="wrap">
+  <h2><span class="ic" style="background:#059669">5</span> ML &amp; SDSE — connect a repo <span class="pill" style="background:var(--green-bg);color:#065f46;border-color:#a7f3d0">ML · SDSE</span> <span class="mono">(no org needed)</span></h2>
+  <p class="sub">ML and SDSE run the <b>native Forge workflow</b> and have <b>no GitHub org</b>. With the OAuth App registered (Step 4), connecting a team's repo is <b>one click + a URL</b> — done by the team's <b>mentor / lead</b> from the <b>Connections</b> tab. Students just link their username.</p>
+  <ol class="steps">
+    <li><b>Every member</b> → Forge → <b>Connections</b> → <b>Connect with GitHub</b>. Verifies their <b>username</b> (attributes their commits/PRs). That's all students do.</li>
+    <li><b>The mentor</b> → same <b>Connect with GitHub</b>, then <b>paste the team repo URL</b> (<code>https://github.com/owner/repo</code> or <code>owner/repo</code>) → <b>Submit</b>.</li>
+    <li><b>Forge does the rest</b> — using the mentor's authorization it <b>creates the webhook on that repo automatically</b> (<span class="mono">POST /repos/{owner}/{repo}/hooks</span> with the payload URL, the shared <code>GITHUB_WEBHOOK_SECRET</code>, and events <span class="scope">push</span> <span class="scope">pull_request</span> <span class="scope">pull_request_review</span> <span class="scope">issues</span>), stores the repo against the team, and confirms a green <b>✓</b>. No <i>Settings → Webhooks</i>, no copy-pasting the secret.</li>
+    <li><b>Reads</b> — keep the repo <b>public</b> and the read token sees it with nothing extra; for a <b>private</b> repo, add <span class="ghacct">lcc-ai-nst</span> as a <b>read-only collaborator</b> so dashboards can pull detail.</li>
+  </ol>
+  <div class="note">Forge needs <b>admin on the repo</b> to create the webhook — the <b>mentor has it</b>, so their one-time authorization is enough. If a mentor would rather not grant <code>admin:repo_hook</code>, they can still add the webhook by hand: <b>repo → Settings → Webhooks → Add webhook</b> with the same payload URL, <code>application/json</code>, the shared secret, and the four events.</div>
+  <div class="note blue"><b>Why this works without an org.</b> The server verifies every delivery against the one <code>GITHUB_WEBHOOK_SECRET</code> and attributes each event by <b>repo URL + author username</b> — it never needs an org. A repo webhook is just the org webhook scoped to a single repo.</div>
+</div></section>
+
+<!-- ENV SUMMARY -->
+<section id="env"><div class="wrap">
+  <h2><span class="ic" style="background:#059669">✓</span> Everything that goes in <code>server/.env</code></h2>
+  <p class="sub"><b>Six GitHub values — they cover all three domains.</b> Three core (org webhook + read token) and three for the <span class="ghacct">lcc-ai-nst</span> OAuth App that powers one-click connect. No GitHub App, no per-user tokens.</p>
+  <div class="copy" style="display:block;white-space:pre;line-height:1.7"><button style="float:right">copy</button># GitHub — AI runs on an org; ML/SDSE connect individual repos.
+# One secret + one token serve every domain. See docs/github-setup.html.
+GITHUB_ORG=<span class="org">newton-school-ai</span>          # AI org slug (the only GitHub-driven domain)
+GITHUB_API_TOKEN=               # fine-grained PAT, Read-only on the AI org (Step 2)
+GITHUB_WEBHOOK_SECRET=          # HMAC secret — AI org webhook + every ML/SDSE repo webhook
+
+# One-click "Connect with GitHub" — OAuth App owned by lcc-ai-nst (Step 4)
+GITHUB_OAUTH_CLIENT_ID=         # OAuth App client id
+GITHUB_OAUTH_CLIENT_SECRET=     # OAuth App client secret (shown once)
+GITHUB_OAUTH_REDIRECT_URI=http://localhost:4000/api/integrations/github/oauth/callback</div>
+  <table style="margin-top:14px">
+    <tr><th>Var</th><th>Set up in</th><th>Used for</th></tr>
+    <tr><td><code>GITHUB_ORG</code></td><td>Step 0</td><td>The AI organization slug the read token + dashboards target.</td></tr>
+    <tr><td><code>GITHUB_API_TOKEN</code></td><td>Step 2</td><td>Read-only API access to the AI org + public ML/SDSE repos.</td></tr>
+    <tr><td><code>GITHUB_WEBHOOK_SECRET</code></td><td>Step 1 / 5</td><td>HMAC the server checks on <i>every</i> delivery — AI org webhook and each ML/SDSE repo webhook.</td></tr>
+    <tr><td><code>GITHUB_OAUTH_CLIENT_ID</code> · <code>…_SECRET</code></td><td>Step 4</td><td>The <span class="ghacct">lcc-ai-nst</span> OAuth App behind the Connect button (verify username + auto-create repo webhook).</td></tr>
+    <tr><td><code>GITHUB_OAUTH_REDIRECT_URI</code></td><td>Step 4</td><td>Where GitHub returns after consent → <code>/api/integrations/github/oauth/callback</code> on the server.</td></tr>
+  </table>
+  <div class="note">Nothing per-user goes in <code>.env</code> — GitHub <b>usernames</b> are linked in-app (Step 3) and stored against each Forge user, not in environment config. In production these values come from <b>AWS Secrets Manager</b> (<code>/forge/&lt;env&gt;/*</code>), never committed.</div>
+</div></section>
+
+<footer class="wrap">Forge · GitHub Setup · AI org webhook + ML/SDSE repo webhooks + one read token, all targeting the Express server · secrets live in <code>server/.env</code> / AWS Secrets Manager · <a href="integration-setup.html">all integrations</a></footer>
 
 <script>
   function apply(){
     const host = (document.getElementById('dom').value || 'app.example.com').trim().replace(/^https?:\/\//,'').replace(/\/$/,'');
+    const org = (document.getElementById('org').value || 'your-org').trim().replace(/^@/,'').replace(/\s+/g,'-');
     document.querySelectorAll('.ph').forEach(e => e.textContent = host);
-    document.querySelectorAll('.u[data-tmpl]').forEach(e => e.textContent = e.dataset.tmpl.replace('{host}', host));
+    document.querySelectorAll('.org').forEach(e => e.textContent = org);
+    document.querySelectorAll('.u[data-tmpl]').forEach(e => e.textContent = e.dataset.tmpl.replace('{host}', host).replace('{org}', org));
+    document.querySelectorAll('a[data-href]').forEach(a => a.href = a.dataset.href.replace('{org}', org).replace('{host}', host));
   }
   document.getElementById('dom').addEventListener('input', apply);
+  document.getElementById('org').addEventListener('input', apply);
   // copy buttons
   document.addEventListener('click', (ev) => {
     const b = ev.target.closest('.copy button'); if(!b) return;

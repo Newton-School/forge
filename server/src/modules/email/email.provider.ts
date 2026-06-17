@@ -7,6 +7,8 @@ export interface EmailMessage {
   subject: string;
   html: string;
   cc?: string[];
+  text?: string; // plain-text alternative (multipart/alternative)
+  from?: string; // override the default From (e.g. the LCC onboarding sender)
 }
 
 /**
@@ -55,11 +57,12 @@ class SmtpEmailProvider implements EmailProvider {
   async send(msg: EmailMessage): Promise<{ id?: string }> {
     const transport = await this.getTransport();
     const info = await transport.sendMail({
-      from: env.SMTP_FROM ?? env.SMTP_USER,
+      from: msg.from ?? env.SMTP_FROM ?? env.SMTP_USER,
       to: msg.to,
       cc: msg.cc,
       subject: msg.subject,
       html: msg.html,
+      text: msg.text,
     });
     return { id: info?.messageId };
   }

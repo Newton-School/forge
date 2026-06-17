@@ -5,6 +5,7 @@ import { SectionCard } from "@/components/dashboard/section-card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DomainFilter } from "@/components/dashboard/domain-filter";
+import { CreateUserButton } from "@/components/onboarding/create-user-button";
 import { parseDomains, inDomains } from "@/lib/domains";
 import { USERS } from "@/lib/api";
 import { shortDate } from "@/lib/utils";
@@ -41,7 +42,7 @@ export default async function OnboardingPage({
       <PageHeader
         title="Onboarding"
         description="Account activation and Discord linking status"
-        actions={<DomainFilter />}
+        actions={<><DomainFilter /><CreateUserButton label="Invite user" /></>}
       />
 
       <StatGrid className="lg:grid-cols-3">

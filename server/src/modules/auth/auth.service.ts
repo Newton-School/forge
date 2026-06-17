@@ -3,6 +3,7 @@ import { env } from "../../config/env.js";
 import { Errors } from "../../lib/errors.js";
 import type { AuthContext, RoleGrant, RoleKey, ScopeType } from "../../rbac/types.js";
 import { hostedDomainAllowed } from "./auth.gate.js";
+import { completeForUser } from "../invitations/invitations.service.js";
 
 export { hostedDomainAllowed };
 
@@ -28,15 +29,18 @@ export async function resolveGoogleLogin(p: GoogleProfileLite): Promise<string> 
   if (user.status === "SUSPENDED" || user.status === "DEACTIVATED") {
     throw Errors.forbidden("Account is not active");
   }
+  const wasInvited = user.status === "INVITED";
   const updated = await prisma.user.update({
     where: { id: user.id },
     data: {
       googleSub: user.googleSub ?? p.sub,
       avatarUrl: p.picture ?? user.avatarUrl,
-      status: user.status === "INVITED" ? "ACTIVE" : user.status,
+      status: wasInvited ? "ACTIVE" : user.status,
       lastLoginAt: new Date(),
     },
   });
+  // First successful sign-in completes the onboarding invitation (best-effort).
+  if (wasInvited) await completeForUser(updated.id).catch(() => undefined);
   return updated.id;
 }
 

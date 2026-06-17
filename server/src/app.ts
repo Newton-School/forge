@@ -25,7 +25,8 @@ import { configRouter } from "./modules/config/config.routes.js";
 import { auditRouter } from "./modules/audit/audit.routes.js";
 import { analyticsRouter } from "./modules/analytics/analytics.routes.js";
 import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
-import { emailRouter } from "./modules/email/email.routes.js";
+import { emailRouter, emailTrackRouter } from "./modules/email/email.routes.js";
+import { invitationsRouter } from "./modules/invitations/invitations.routes.js";
 import { githubRouter, githubWebhookRouter } from "./modules/github/github.routes.js";
 import { discordRouter, discordWebhookRouter } from "./modules/discord/discord.routes.js";
 import { calendarRouter } from "./modules/calendar/calendar.routes.js";
@@ -50,6 +51,8 @@ export function buildApp(): Express {
   // Webhooks authenticate by signature, not cookies — mount BEFORE session/CSRF/auth.
   app.use("/api/integrations/github/webhook", githubWebhookRouter);
   app.use("/api/integrations/discord/interactions", discordWebhookRouter);
+  // Email open-tracking pixel is public (mail clients fetch it with no cookie).
+  app.use("/api/email/track", emailTrackRouter);
 
   app.use(attachAuth); // loads the fresh AuthContext onto req.auth
   app.use(csrf); // double-submit CSRF for state-changing requests
@@ -64,6 +67,7 @@ export function buildApp(): Express {
   // Feature routers
   app.use("/api/auth", authRouter);
   app.use("/api/users", requireAuth, usersRouter);
+  app.use("/api/invitations", requireAuth, invitationsRouter);
   app.use("/api/org", requireAuth, orgRouter);
   app.use("/api/concerns", requireAuth, concernsRouter);
   app.use("/api/reviews", requireAuth, reviewsRouter);

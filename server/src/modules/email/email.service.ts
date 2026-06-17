@@ -1,11 +1,13 @@
 import { Errors } from "../../lib/errors.js";
 import { audit } from "../../lib/audit.js";
 import { logger } from "../../lib/logger.js";
+import { env } from "../../config/env.js";
 import type { AuthContext } from "../../rbac/types.js";
 import { emailRepo } from "./email.repository.js";
 import { emailProvider } from "./email.provider.js";
+import { buildOnboardingEmail } from "./onboarding.js";
 import { emitNotification } from "../notifications/notifications.service.js";
-import type { AnnouncementInput, BulkSendInput, SendEmailInput, TargetInput } from "./email.schema.js";
+import type { AnnouncementInput, BulkSendInput, SendEmailInput, TargetInput, TestOnboardingInput } from "./email.schema.js";
 
 // Caps keep a single request from blasting the whole user base (CLAUDE.md: capped + rate-limited).
 const SINGLE_CAP = 200;
@@ -96,4 +98,52 @@ export async function sendAnnouncement(ctx: AuthContext, input: AnnouncementInpu
 
 export async function listTemplates(_ctx: AuthContext) {
   return { items: await emailRepo.listTemplates() };
+}
+
+/** "abhinav.choudhary2024" → "Abhinav Choudhary" — a friendly name for previews. */
+function nameFromEmail(email: string): string {
+  return (
+    email.split("@")[0]!
+      .replace(/[0-9]+/g, " ")
+      .split(/[._]+/)
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ")
+      .trim() || "there"
+  );
+}
+
+/**
+ * Send the [TEST] onboarding email to reviewers. Identical to the production email
+ * except the TEST banner + `[TEST]` subject, and no tracking pixel. Sent individually
+ * (no recipient sees the others). Best-effort per recipient; reports the results.
+ */
+export async function sendTestOnboarding(ctx: AuthContext, input: TestOnboardingInput, ip?: string) {
+  const provider = emailProvider();
+  const results: { to: string; ok: boolean; error?: string }[] = [];
+  for (const to of input.recipients) {
+    const mail = buildOnboardingEmail({
+      fullName: nameFromEmail(to), role: "Mentee", domain: "AI", team: "AI · Team Alpha",
+      portalUrl: env.APP_BASE_URL, test: true,
+    });
+    try {
+      await provider.send({ to: [to], subject: mail.subject, html: mail.html, text: mail.text, from: mail.from });
+      results.push({ to, ok: true });
+    } catch (err) {
+      results.push({ to, ok: false, error: err instanceof Error ? err.message : "send failed" });
+    }
+  }
+  const sent = results.filter((r) => r.ok).length;
+  await audit(ctx, { action: "email:testOnboarding", entityType: "Email", after: { recipients: input.recipients.length, sent }, ip });
+  return { sent, failed: results.length - sent, results };
+}
+
+/** Public open-tracking pixel — marks the invitation OPENED, then returns a 1×1 transparent PNG. */
+export async function trackOpen(token: string): Promise<Buffer> {
+  const { markOpenedByToken } = await import("../invitations/invitations.service.js");
+  await markOpenedByToken(token).catch(() => undefined);
+  return Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+    "base64",
+  );
 }
