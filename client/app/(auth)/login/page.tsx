@@ -1,4 +1,5 @@
-import { ShieldX } from "lucide-react";
+import Image from "next/image";
+import { ShieldX, Lock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -11,9 +12,11 @@ const ERRORS: Record<string, string> = {
 
 function GoogleButton({ label = "Continue with Google" }: { label?: string }) {
   return (
-    <Button asChild className="w-full gap-2">
+    <Button asChild className="h-11 w-full gap-2.5 text-[15px]">
       <a href={`${API}/auth/google`}>
-        <span className="flex size-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-[#4285F4]">G</span>
+        <span className="flex size-5 items-center justify-center rounded-full bg-white">
+          <Image src="/google.webp" alt="" width={15} height={15} className="object-contain" />
+        </span>
         {label}
       </a>
     </Button>
@@ -59,12 +62,14 @@ export default async function LoginPage({
 
   const message = error ? ERRORS[error] ?? "Sign-in failed. Please try again." : null;
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle className="text-base">Sign in to Forge</CardTitle>
-        <CardDescription>Use your institute Google account. Access is invite-only.</CardDescription>
+    <Card className="w-full max-w-sm shadow-sm">
+      <CardHeader className="space-y-1.5">
+        <CardTitle className="text-lg tracking-tight">Welcome to Forge</CardTitle>
+        <CardDescription>
+          Sign in with your institute Google account. No password, no signup — access is invite-only.
+        </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid gap-5">
         {message ? (
           <p className="rounded-md border border-danger/30 bg-danger-bg px-3 py-2 text-sm text-danger">{message}</p>
         ) : null}
@@ -73,9 +78,10 @@ export default async function LoginPage({
             Google OIDC flow and creates the session. No password, no signup. */}
         <GoogleButton />
 
-        <p className="text-center text-xs text-subtle-foreground">
-          Only pre-provisioned institute emails can sign in.
-        </p>
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-subtle-foreground">
+          <Lock className="size-3" />
+          Secured by Google · Only pre-provisioned institute emails
+        </div>
       </CardContent>
     </Card>
   );
