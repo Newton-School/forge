@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { FormDialog, Field } from "@/components/ui/form-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { EMAIL_TEMPLATES } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { MockTemplate } from "@/lib/api";
 import { shortDate } from "@/lib/utils";
 
@@ -48,7 +48,8 @@ Open the concern to acknowledge and assign an owner.
 
 — Forge`;
 
-export default function AdminEmailTemplatesPage() {
+export default async function AdminEmailTemplatesPage() {
+  const EMAIL_TEMPLATES = await api.emailTemplates();
   return (
     <div className="flex flex-col gap-6">
       <PageHeader

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import type { BadgeTone } from "@/lib/labels";
-import { CALENDAR } from "@/lib/api";
+import { api } from "@/lib/api";
 
 const TYPE: Record<string, { label: string; tone: BadgeTone }> = {
   REVIEW: { label: "Review", tone: "info" },
@@ -28,7 +28,8 @@ function fmtDay(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", { weekday: "long", day: "2-digit", month: "long" });
 }
 
-export default function CalendarPage() {
+export default async function CalendarPage() {
+  const CALENDAR = await api.calendar();
   const events = [...CALENDAR].sort((a, b) => (a.when + a.time).localeCompare(b.when + b.time));
   const driveCount = events.filter((e) => e.scope === "DRIVE").length;
   const reviewCount = events.filter((e) => e.type === "REVIEW" || e.type === "MENTOR_MEETING").length;

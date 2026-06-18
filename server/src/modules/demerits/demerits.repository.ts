@@ -9,8 +9,19 @@ export const demeritsRepo = {
       orderBy: { createdAt: "desc" },
       take,
       skip,
-      include: { user: { select: { id: true, fullName: true, email: true } } },
+      include: {
+        user: {
+          select: {
+            id: true, fullName: true, email: true,
+            teamMemberships: { take: 1, select: { team: { select: { domain: { select: { key: true } } } } } },
+          },
+        },
+      },
     }),
+
+  /** Display names for the bare issuedById column. */
+  userNames: (ids: string[]) =>
+    prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, fullName: true } }),
 
   /** Find one demerit constrained by the caller's scope (out-of-scope → null). */
   findInScope: (where: Record<string, unknown>) => prisma.demerit.findFirst({ where }),

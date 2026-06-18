@@ -9,16 +9,20 @@ import { Progress } from "@/components/ui/progress";
 import { WorkBadge } from "@/components/dashboard/status-badge";
 import { SubmitUpdateDialog } from "@/components/reviews/submit-update-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MILESTONES, TASKS, CALENDAR, GITHUB_ACTIVITY, NOTIFICATIONS } from "@/lib/api";
+import { api } from "@/lib/api";
+import { getCurrentUser } from "@/lib/session";
 import { shortDate } from "@/lib/utils";
 
-export default function MenteeDashboard() {
-  const myTasks = TASKS.filter((t) => t.assignee === "Sneha Iyer");
+export default async function MenteeDashboard() {
+  const [user, MILESTONES, TASKS, CALENDAR, GITHUB_ACTIVITY, NOTIFICATIONS] = await Promise.all([
+    getCurrentUser(), api.milestones(), api.tasks(), api.calendar(), api.githubActivity(), api.notifications(),
+  ]);
+  const myTasks = TASKS; // the server already scopes tasks to the signed-in mentee
   const upcoming = CALENDAR.slice(0, 3);
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Welcome back, Sneha"
+        title={`Welcome back, ${user.fullName.split(" ")[0]}`}
         description="Your profile-building progress at a glance."
         actions={
           <SubmitUpdateDialog trigger={<Button size="sm" className="gap-1.5"><Send className="size-3.5" /> Submit Update</Button>} />

@@ -1,5 +1,5 @@
 import { getActiveDomain } from "@/lib/session";
-import { MenteeMilestones as RepoView } from "@/components/github/repo/views";
+import { MenteeMilestonesView as RepoView } from "@/components/github/repo/views";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { MilestoneBar } from "@/components/github/milestone-bar";

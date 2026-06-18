@@ -40,6 +40,18 @@ export const invitationsRepo = {
       orderBy: { createdAt: "desc" },
       take,
       skip,
-      include: { user: { select: { fullName: true, email: true } } },
+      include: {
+        user: {
+          select: {
+            fullName: true,
+            email: true,
+            roles: { select: { role: true }, orderBy: { createdAt: "asc" }, take: 1 },
+            teamMemberships: {
+              take: 1,
+              select: { team: { select: { name: true, domain: { select: { key: true } } } } },
+            },
+          },
+        },
+      },
     }),
 };

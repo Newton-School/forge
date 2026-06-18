@@ -1,6 +1,7 @@
-import { ArrowRight, GitBranch, Sparkles } from "lucide-react";
+import { ArrowRight, GitBranch } from "lucide-react";
 import { BRAND, HERO_STATS } from "@/lib/landing";
 import { EcosystemCanvas } from "./ecosystem-canvas";
+import { ForgeLogo } from "@/components/brand/forge-logo";
 import { Reveal } from "./reveal";
 
 export function Hero() {
@@ -17,7 +18,7 @@ export function Hero() {
       <div className="relative mx-auto max-w-4xl text-center">
         <Reveal>
           <span className="inline-flex items-center gap-2 rounded-full border border-border bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-muted-foreground backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <ForgeLogo size={16} className="h-4 w-4" />
             Profile Building Drive · {BRAND.orgShort} · {BRAND.schoolShort}
           </span>
         </Reveal>

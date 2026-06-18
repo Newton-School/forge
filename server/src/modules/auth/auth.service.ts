@@ -1,3 +1,4 @@
+import { OAuth2Client } from "google-auth-library";
 import { prisma } from "../../lib/db.js";
 import { env } from "../../config/env.js";
 import { Errors } from "../../lib/errors.js";
@@ -13,6 +14,27 @@ export interface GoogleProfileLite {
   name: string;
   picture?: string;
   hd?: string;
+}
+
+let _googleClient: OAuth2Client | null = null;
+const googleClient = () => (_googleClient ??= new OAuth2Client(env.GOOGLE_OAUTH_CLIENT_ID));
+
+/**
+ * Cryptographically verify a Google ID token against Google's JWKS — checks the signature,
+ * `iss` (accounts.google.com), `aud` (our client id) and `exp`, then enforces a verified
+ * email. This is the real authentication: we trust the signed token, NOT the userinfo profile.
+ */
+export async function verifyGoogleIdToken(idToken: string): Promise<GoogleProfileLite> {
+  let payload;
+  try {
+    const ticket = await googleClient().verifyIdToken({ idToken, audience: env.GOOGLE_OAUTH_CLIENT_ID! });
+    payload = ticket.getPayload();
+  } catch {
+    throw Errors.forbidden("Invalid Google ID token");
+  }
+  if (!payload?.email) throw Errors.forbidden("Invalid Google ID token");
+  if (payload.email_verified === false) throw Errors.forbidden("Google email is not verified");
+  return { sub: payload.sub, email: payload.email, name: payload.name ?? payload.email, picture: payload.picture, hd: payload.hd };
 }
 
 /**

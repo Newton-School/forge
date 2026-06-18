@@ -26,6 +26,34 @@ export interface DomainRollup extends DomainRef {
   mentors: number;
 }
 
+export interface MilestoneStat {
+  completionPct: number;
+  project: { teamId: string | null; team: { domainId: string } | null } | null;
+}
+
+/** Average completion (rounded %, 0 when empty) grouped by a key extractor. */
+export function avgCompletionBy<K>(rows: MilestoneStat[], key: (m: MilestoneStat) => K | null | undefined): Map<K, number> {
+  const acc = new Map<K, { sum: number; n: number }>();
+  for (const m of rows) {
+    const k = key(m);
+    if (k == null) continue;
+    const a = acc.get(k) ?? { sum: 0, n: 0 };
+    a.sum += m.completionPct;
+    a.n += 1;
+    acc.set(k, a);
+  }
+  const out = new Map<K, number>();
+  for (const [k, a] of acc) out.set(k, Math.round(a.sum / a.n));
+  return out;
+}
+
+/** Derive a health status from a completion %. */
+export function statusFromCompletion(pct: number): "ON_TRACK" | "NEEDS_DISCUSSION" | "AT_RISK" {
+  if (pct >= 75) return "ON_TRACK";
+  if (pct >= 60) return "NEEDS_DISCUSSION";
+  return "AT_RISK";
+}
+
 /** Roll a flat list of teams up into per-domain team/student/mentor counts. */
 export function rollupDomains(domains: DomainRef[], teams: TeamRow[]): DomainRollup[] {
   return domains.map((d) => {

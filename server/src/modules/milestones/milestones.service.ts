@@ -19,7 +19,17 @@ function milestoneScope(ctx: AuthContext): Record<string, unknown> {
 
 export async function listMilestones(ctx: AuthContext, q: ListMilestonesQuery) {
   const where = { ...milestoneScope(ctx), ...(q.projectId ? { projectId: q.projectId } : {}) };
-  const items = await milestonesRepo.list(where, q.take, q.skip);
+  const rows = await milestonesRepo.list(where, q.take, q.skip);
+  const items = rows.map((m) => ({
+    id: m.id,
+    name: m.name,
+    sequence: m.sequence,
+    phase: m.phase?.name ?? "—",
+    status: m.status,
+    completion: m.completionPct,
+    due: m.dueAt,
+    keyOutput: m.keyOutput,
+  }));
   return { items };
 }
 

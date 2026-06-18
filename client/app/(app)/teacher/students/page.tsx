@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { DomainFilter } from "@/components/dashboard/domain-filter";
 import { parseDomains } from "@/lib/domains";
 import { getCurrentUser } from "@/lib/session";
-import { MENTEES } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export default async function TeacherStudentsPage({
   searchParams,
@@ -21,7 +21,8 @@ export default async function TeacherStudentsPage({
   const picked = parseDomains(sp.domain);
   const active = picked.length ? picked.filter((d) => myDomains.includes(d)) : myDomains;
 
-  const students = MENTEES.filter((m) => active.includes(m.domainKey));
+  // Server returns the teacher's domain-scoped mentees; filter to the active domain selection.
+  const students = (await api.mentees()).filter((m) => active.includes(m.domainKey));
   const single = active.length === 1;
   const scope = single ? `${active[0]} domain teams` : `${active.join(", ")} teams`;
 

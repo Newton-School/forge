@@ -2,22 +2,30 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { MarketingNav } from "@/components/landing/marketing-nav";
 import { MarketingFooter } from "@/components/landing/marketing-footer";
+import { SITE, LANDING_URL, structuredData } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Forge · Build. Learn. Contribute.",
-  description:
-    "Forge is the Profile Building Drive platform by the Learner Career Council at Newton School of Technology, where students build on real repositories, mentors guide and review, teachers track progress, and learning becomes measurable.",
+  title: { absolute: SITE.title },
+  description: SITE.description,
+  alternates: { canonical: SITE.landingPath },
   openGraph: {
-    title: "Forge · Build. Learn. Contribute.",
-    description:
-      "A complete learning, contribution, mentoring, and evaluation ecosystem for the NST Profile Building Drive.",
     type: "website",
+    siteName: SITE.name,
+    url: LANDING_URL,
+    title: SITE.title,
+    description: SITE.description,
   },
+  twitter: { card: "summary_large_image", title: SITE.title, description: SITE.description },
 };
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
     <div id="top" className="mkt min-h-screen">
+      {/* Structured data for search engines + AI crawlers (Organization · WebSite · App). */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData()) }}
+      />
       <MarketingNav />
       <main>{children}</main>
       <MarketingFooter />

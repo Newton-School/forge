@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CreateUserButton } from "./create-user-button";
 import type { BadgeTone } from "@/lib/labels";
-import type { InvitationStatus, MockInvitation } from "@/lib/api";
+import type { InvitationStatus, MockInvitation, MockDomain, MockTeam, MockUser } from "@/lib/api";
 import { submit } from "@/lib/api";
 import { shortDate } from "@/lib/utils";
 
@@ -22,7 +22,17 @@ const STATUS: Record<InvitationStatus, { label: string; tone: BadgeTone }> = {
 };
 
 /** Invitation status board (Admin + LCC) — track, resend, revoke. Presentation-safe. */
-export function InvitationsView({ invitations }: { invitations: MockInvitation[] }) {
+export function InvitationsView({
+  invitations,
+  domains,
+  teams,
+  mentors,
+}: {
+  invitations: MockInvitation[];
+  domains: MockDomain[];
+  teams: MockTeam[];
+  mentors: MockUser[];
+}) {
   const [rows, setRows] = useState(invitations);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -54,7 +64,7 @@ export function InvitationsView({ invitations }: { invitations: MockInvitation[]
       <PageHeader
         title="Invitations"
         description="Onboarding invitation status — invite-only, Google sign-in."
-        actions={<CreateUserButton label="Invite user" />}
+        actions={<CreateUserButton label="Invite user" domains={domains} teams={teams} mentors={mentors} />}
       />
 
       <StatGrid className="lg:grid-cols-4">

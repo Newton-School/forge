@@ -1,8 +1,8 @@
 import passport from "passport";
-import { Strategy as GoogleStrategy, type Profile } from "passport-google-oauth20";
+import { Strategy as GoogleStrategy, type Profile, type VerifyCallback } from "passport-google-oauth20";
 import { env, googleConfigured } from "../config/env.js";
 import { logger } from "../lib/logger.js";
-import { resolveGoogleLogin } from "../modules/auth/auth.service.js";
+import { resolveGoogleLogin, verifyGoogleIdToken } from "../modules/auth/auth.service.js";
 
 /** Wire passport + the Google OAuth strategy. Session stores only the user id. */
 export function configurePassport(): void {
@@ -22,21 +22,17 @@ export function configurePassport(): void {
         callbackURL: env.GOOGLE_OAUTH_REDIRECT_URI,
         scope: ["openid", "email", "profile"],
       },
-      async (_accessToken: string, _refreshToken: string, profile: Profile, done) => {
+      // 5-arg verify → `params` carries the OAuth token response (incl. the signed id_token).
+      // We authenticate from the CRYPTOGRAPHICALLY VERIFIED id_token, not the userinfo profile.
+      async (_accessToken: string, _refreshToken: string, params: { id_token?: string }, _profile: Profile, done: VerifyCallback) => {
         try {
-          const email = profile.emails?.[0]?.value;
-          if (!email) return done(null, false);
-          const hd = (profile._json as { hd?: string } | undefined)?.hd;
-          const userId = await resolveGoogleLogin({
-            sub: profile.id,
-            email,
-            name: profile.displayName ?? email,
-            picture: profile.photos?.[0]?.value,
-            hd,
-          });
+          const idToken = params?.id_token;
+          if (!idToken) return done(null, false); // openid scope always returns one — fail closed
+          const verified = await verifyGoogleIdToken(idToken); // JWKS signature + iss + aud + exp
+          const userId = await resolveGoogleLogin(verified); // hosted-domain + allowlist gate
           return done(null, { id: userId });
         } catch {
-          // Rejected by the domain/allowlist gate → treat as auth failure (redirect).
+          // Rejected by token verification or the domain/allowlist gate → auth failure (redirect).
           return done(null, false);
         }
       },

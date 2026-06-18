@@ -4,7 +4,7 @@ import { SectionCard } from "@/components/dashboard/section-card";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DomainDialog } from "@/components/org/domain-dialog";
-import { DOMAINS } from "@/lib/api";
+import { api } from "@/lib/api";
 import { parseDomains, inDomains } from "@/lib/domains";
 
 export default async function AdminDomainsPage({
@@ -14,7 +14,9 @@ export default async function AdminDomainsPage({
 }) {
   const sp = await searchParams;
   const selected = parseDomains(sp.domain);
-  const domains = DOMAINS.filter((d) => inDomains(d.key, selected));
+  const [allDomains, allUsers] = await Promise.all([api.domains(), api.users()]);
+  const teachers = allUsers.filter((u) => u.role === "TEACHER");
+  const domains = allDomains.filter((d) => inDomains(d.key, selected));
 
   return (
     <div className="flex flex-col gap-6">
@@ -24,7 +26,7 @@ export default async function AdminDomainsPage({
         actions={
           <>
             <DomainFilter />
-            <DomainDialog />
+            <DomainDialog teachers={teachers} />
           </>
         }
       />
@@ -59,7 +61,7 @@ export default async function AdminDomainsPage({
                   </div>
                 </TableCell>
                 <TableCell className="pr-4 text-right">
-                  <DomainDialog domain={d} />
+                  <DomainDialog domain={d} teachers={teachers} />
                 </TableCell>
               </TableRow>
             ))}

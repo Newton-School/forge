@@ -16,6 +16,24 @@ function taskScope(ctx: AuthContext): Record<string, unknown> {
   return or.length ? (or.length === 1 ? or[0]! : { OR: or }) : { id: "__never__" };
 }
 
+/** Display-ready task DTO — joins project + assignee/assignedBy names for the UI. */
+function toTaskDto(
+  t: Awaited<ReturnType<typeof tasksRepo.list>>[number],
+  names: Map<string, string>,
+) {
+  return {
+    id: t.id,
+    title: t.title,
+    project: t.project?.name ?? "—",
+    assignee: t.assigneeId ? names.get(t.assigneeId) ?? "—" : "—",
+    assignedBy: t.assignedById ? names.get(t.assignedById) ?? "—" : "—",
+    status: t.status,
+    progress: t.progressPct,
+    due: t.dueAt,
+    milestoneId: t.milestoneId,
+  };
+}
+
 export async function listTasks(ctx: AuthContext, q: ListTasksQuery) {
   const where = {
     ...taskScope(ctx),
@@ -24,7 +42,9 @@ export async function listTasks(ctx: AuthContext, q: ListTasksQuery) {
     ...(q.status ? { status: q.status } : {}),
   };
   const items = await tasksRepo.list(where, q.take, q.skip);
-  return { items };
+  const ids = [...new Set(items.flatMap((t) => [t.assigneeId, t.assignedById]).filter(Boolean) as string[])];
+  const names = new Map((await tasksRepo.userNames(ids)).map((u) => [u.id, u.fullName]));
+  return { items: items.map((t) => toTaskDto(t, names)) };
 }
 
 export async function assignTask(ctx: AuthContext, input: CreateTaskInput, ip?: string) {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ArrowLeft, OctagonAlert, Paperclip } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { SectionCard } from "@/components/dashboard/section-card";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { FormDialog, ConfirmDialog, Field } from "@/components/ui/form-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { CONCERNS, CONCERN_CATEGORIES } from "@/lib/api";
+import { api, CONCERN_CATEGORIES, type MockConcern } from "@/lib/api";
 import { shortDate } from "@/lib/utils";
 import type { ConcernStatus } from "@/lib/types";
 
@@ -18,7 +19,7 @@ function addDays(iso: string, n: number) {
   return d.toISOString().slice(0, 10);
 }
 
-function buildTimeline(c: (typeof CONCERNS)[number]): TimelineEvent[] {
+function buildTimeline(c: MockConcern): TimelineEvent[] {
   const events: TimelineEvent[] = [
     { status: "OPEN", actor: c.raisedBy, note: "Concern raised and routed to the assigned owner.", at: shortDate(c.createdAt) },
     { status: "ACKNOWLEDGED", actor: c.assignedTo, note: "Acknowledged; triaged for review.", at: shortDate(addDays(c.createdAt, 1)) },
@@ -41,7 +42,9 @@ function buildTimeline(c: (typeof CONCERNS)[number]): TimelineEvent[] {
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const concern = CONCERNS.find((c) => c.id === id || c.ref === id) ?? CONCERNS[0];
+  const concerns = await api.concerns();
+  const concern = concerns.find((c) => c.id === id || c.ref === id) ?? concerns[0];
+  if (!concern) notFound();
   const categoryLabel = CONCERN_CATEGORIES.find((c) => c.value === concern.category)?.label ?? concern.category;
   const events = buildTimeline(concern);
   const isOpen = !["RESOLVED", "CLOSED"].includes(concern.status);

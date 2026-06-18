@@ -1,5 +1,5 @@
 import { getActiveDomain } from "@/lib/session";
-import { TeacherStudents as RepoView } from "@/components/github/repo/views";
+import { RepoDomainStudents as RepoView } from "@/components/github/repo/views";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { StudentTable } from "@/components/github/student-table";
@@ -7,7 +7,7 @@ import { GH_TEAMS, studentAnalytics } from "@/lib/api";
 
 export default async function TeacherStudentContributions() {
   const activeDomain = await getActiveDomain();
-  if (activeDomain !== "AI") return <RepoView domain={activeDomain} />;
+  if (activeDomain !== "AI") return <RepoView domain={activeDomain} basePath="/teacher/github" />;
 
   const students = GH_TEAMS.flatMap((t) => t.studentIds).map(studentAnalytics);
   return (

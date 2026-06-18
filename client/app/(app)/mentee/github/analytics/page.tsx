@@ -1,5 +1,5 @@
 import { getActiveDomain } from "@/lib/session";
-import { MenteeAnalytics as RepoView } from "@/components/github/repo/views";
+import { MenteeAnalyticsView as RepoView } from "@/components/github/repo/views";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatCard, StatGrid } from "@/components/dashboard/stat-card";
 import { SectionCard } from "@/components/dashboard/section-card";

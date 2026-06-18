@@ -2,11 +2,10 @@ import { CircleDot, GitPullRequest } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { TASKS, GITHUB_ACTIVITY, TEAMS } from "@/lib/api";
+import { api } from "@/lib/api";
+import type { MockTask, MockGithub } from "@/lib/api";
 import { initials, cn } from "@/lib/utils";
 import type { WorkStatus } from "@/lib/types";
-
-const TEAM = TEAMS.find((t) => t.id === "t-ai-07")!;
 
 interface BoardCard {
   id: string;
@@ -24,33 +23,12 @@ const COLUMNS: { key: string; label: string; statuses: WorkStatus[] }[] = [
   { key: "released", label: "Released", statuses: ["RELEASED"] },
 ];
 
-function cardsFor(statuses: WorkStatus[], extra: BoardCard[] = []): BoardCard[] {
-  const tasks: BoardCard[] = TASKS.filter((t) => statuses.includes(t.status)).map((t) => ({
-    id: t.id,
-    title: t.title,
-    meta: t.project,
-    assignee: t.assignee,
-    kind: "task",
-  }));
-  return [...tasks, ...extra];
+function cardsFor(tasks: MockTask[], statuses: WorkStatus[], extra: BoardCard[] = []): BoardCard[] {
+  const cards: BoardCard[] = tasks
+    .filter((t) => statuses.includes(t.status))
+    .map((t) => ({ id: t.id, title: t.title, meta: t.project, assignee: t.assignee, kind: "task" }));
+  return [...cards, ...extra];
 }
-
-// Open GitHub issues / PRs surfaced onto the board.
-const ghBacklog: BoardCard[] = GITHUB_ACTIVITY
-  .filter((g) => g.type === "ISSUE" && g.state === "open")
-  .map((g) => ({ id: g.id, title: g.title, meta: g.repo, assignee: g.author, kind: "issue" }));
-
-const ghReview: BoardCard[] = GITHUB_ACTIVITY
-  .filter((g) => g.type === "PR" && g.state === "open")
-  .map((g) => ({ id: g.id, title: g.title, meta: g.repo, assignee: g.author, kind: "pr" }));
-
-const COLUMN_CARDS: Record<string, BoardCard[]> = {
-  backlog: cardsFor(["TODO"], ghBacklog),
-  progress: cardsFor(["IN_PROGRESS"]),
-  review: cardsFor(["IN_REVIEW"], ghReview),
-  done: cardsFor(["DONE"]),
-  released: cardsFor(["RELEASED"]),
-};
 
 const KIND_BADGE: Record<BoardCard["kind"], { label: string; tone: "neutral" | "info" | "primary" }> = {
   task: { label: "Task", tone: "neutral" },
@@ -58,12 +36,28 @@ const KIND_BADGE: Record<BoardCard["kind"], { label: string; tone: "neutral" | "
   pr: { label: "PR", tone: "primary" },
 };
 
-export default function TeamBoard() {
+export default async function TeamBoard() {
+  const [TASKS, GITHUB_ACTIVITY, teams] = await Promise.all([api.tasks(), api.githubActivity(), api.teams()]);
+  const TEAM = teams[0]; // the mentor's team (server scopes teams to the caller)
+
+  const ghCard = (g: MockGithub, kind: "issue" | "pr"): BoardCard =>
+    ({ id: g.id, title: g.title, meta: g.repo, assignee: g.author, kind });
+  const ghBacklog = GITHUB_ACTIVITY.filter((g) => g.type === "ISSUE" && g.state === "open").map((g) => ghCard(g, "issue"));
+  const ghReview = GITHUB_ACTIVITY.filter((g) => g.type === "PR" && g.state === "open").map((g) => ghCard(g, "pr"));
+
+  const COLUMN_CARDS: Record<string, BoardCard[]> = {
+    backlog: cardsFor(TASKS, ["TODO"], ghBacklog),
+    progress: cardsFor(TASKS, ["IN_PROGRESS"]),
+    review: cardsFor(TASKS, ["IN_REVIEW"], ghReview),
+    done: cardsFor(TASKS, ["DONE"]),
+    released: cardsFor(TASKS, ["RELEASED"]),
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Sprint Board"
-        description={`${TEAM.name} · ${TEAM.repo}`}
+        description={TEAM ? `${TEAM.name}${TEAM.repo ? ` · ${TEAM.repo}` : ""}` : "Your team's tasks and GitHub activity"}
       />
 
       <div className="flex gap-4 overflow-x-auto pb-2">

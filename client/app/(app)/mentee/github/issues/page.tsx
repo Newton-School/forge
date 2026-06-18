@@ -1,5 +1,5 @@
 import { getActiveDomain } from "@/lib/session";
-import { MenteeIssues as RepoView } from "@/components/github/repo/views";
+import { MenteeIssuesView as RepoView } from "@/components/github/repo/views";
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { SectionCard } from "@/components/dashboard/section-card";

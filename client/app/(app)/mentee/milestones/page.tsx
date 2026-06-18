@@ -4,10 +4,11 @@ import { SectionCard } from "@/components/dashboard/section-card";
 import { WorkBadge } from "@/components/dashboard/status-badge";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MILESTONES } from "@/lib/api";
+import { api } from "@/lib/api";
 import { shortDate } from "@/lib/utils";
 
-export default function MenteeMilestonesPage() {
+export default async function MenteeMilestonesPage() {
+  const MILESTONES = await api.milestones();
   const phases = [...new Set(MILESTONES.map((m) => m.phase))];
 
   return (

@@ -7,9 +7,14 @@ export const tasksRepo = {
     prisma.task.findMany({
       where,
       orderBy: [{ status: "asc" }, { assignedAt: "desc" }],
+      include: { project: { select: { name: true } } },
       take,
       skip,
     }),
+
+  /** Resolve display names for assignee/assignedBy ids (those columns have no Prisma relation). */
+  userNames: (ids: string[]) =>
+    prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, fullName: true } }),
 
   findById: (id: string) =>
     prisma.task.findUnique({

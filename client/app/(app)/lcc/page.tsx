@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { DomainFilter } from "@/components/dashboard/domain-filter";
 import { parseDomains, inDomains } from "@/lib/domains";
-import { DRIVE_HEALTH, DOMAINS, CONCERNS, TEAMS } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { Severity } from "@/lib/types";
 
 const SEVERITY_RANK: Record<Severity, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
@@ -21,9 +21,11 @@ export default async function GlobalDashboard({
 }) {
   const sp = await searchParams;
   const selected = parseDomains(sp.domain);
-  const h = DRIVE_HEALTH;
+  const [h, allDomains, allConcerns, allTeams] = await Promise.all([
+    api.driveHealth(), api.domains(), api.concerns(), api.teams(),
+  ]);
 
-  const domains = DOMAINS.filter((d) => inDomains(d.key, selected));
+  const domains = allDomains.filter((d) => inDomains(d.key, selected));
 
   const domainBars = domains.map((d) => ({
     label: d.key,
@@ -34,11 +36,11 @@ export default async function GlobalDashboard({
       | "warning",
   }));
 
-  const openConcerns = CONCERNS.filter(
+  const openConcerns = allConcerns.filter(
     (c) => !["RESOLVED", "CLOSED"].includes(c.status) && inDomains(c.domainKey, selected),
   ).sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]);
 
-  const inactiveTeams = TEAMS.filter(
+  const inactiveTeams = allTeams.filter(
     (t) => t.status !== "ON_TRACK" && inDomains(t.domainKey, selected),
   );
 

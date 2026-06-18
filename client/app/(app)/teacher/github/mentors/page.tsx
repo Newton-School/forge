@@ -1,5 +1,5 @@
 import { getActiveDomain } from "@/lib/session";
-import { TeacherRepoHome as RepoView } from "@/components/github/repo/views";
+import { RepoDomainDashboard as RepoView } from "@/components/github/repo/views";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ const HEALTH = { Healthy: "success", Watch: "warning", "At risk": "danger" } as 
 
 export default async function TeacherMentorPerformance() {
   const activeDomain = await getActiveDomain();
-  if (activeDomain !== "AI") return <RepoView domain={activeDomain} />;
+  if (activeDomain !== "AI") return <RepoView domain={activeDomain} basePath="/teacher/github" />;
 
   const mentors = allMentorAnalytics();
   return (

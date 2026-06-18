@@ -3,6 +3,7 @@ import { z } from "zod";
 /** Submit a deliverable artifact for review under a project. */
 export const submitDeliverableSchema = z.object({
   projectId: z.string().min(1),
+  name: z.string().min(1).max(200).optional(),
   milestoneId: z.string().min(1).optional(),
   typeId: z.string().min(1).optional(),
   artifactUrl: z.string().url().max(2000),

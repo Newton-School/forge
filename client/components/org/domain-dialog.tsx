@@ -6,16 +6,16 @@ import { Button } from "@/components/ui/button";
 import { FormDialog, Field } from "@/components/ui/form-dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { submit, USERS } from "@/lib/api";
-import type { MockDomain } from "@/lib/api";
+import { submit } from "@/lib/api";
+import type { MockDomain, MockUser } from "@/lib/api";
 
 const str = (d: FormData, k: string) => ((d.get(k) as string) ?? "").trim() || undefined;
 
 /**
  * Admin domain create/edit → POST/PATCH /org/domains. Presentation-safe via `submit`.
- * Teacher assignment is a separate many-to-many endpoint in production.
+ * The teacher list is supplied by the server page; assignment is a separate m2m endpoint.
  */
-export function DomainDialog({ domain }: { domain?: MockDomain }) {
+export function DomainDialog({ domain, teachers }: { domain?: MockDomain; teachers: MockUser[] }) {
   const router = useRouter();
   const editing = Boolean(domain);
 
@@ -55,7 +55,7 @@ export function DomainDialog({ domain }: { domain?: MockDomain }) {
           <Select defaultValue={domain?.teacher}>
             <SelectTrigger><SelectValue placeholder="Select teacher" /></SelectTrigger>
             <SelectContent>
-              {USERS.filter((u) => u.role === "TEACHER").map((u) => (
+              {teachers.map((u) => (
                 <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>
               ))}
             </SelectContent>

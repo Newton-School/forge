@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DomainFilter } from "@/components/dashboard/domain-filter";
 import { parseDomains, inDomains } from "@/lib/domains";
-import { DOMAINS } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export default async function DomainsPage({
   searchParams,
@@ -13,7 +13,7 @@ export default async function DomainsPage({
 }) {
   const sp = await searchParams;
   const selected = parseDomains(sp.domain);
-  const domains = DOMAINS.filter((d) => inDomains(d.key, selected));
+  const domains = (await api.domains()).filter((d) => inDomains(d.key, selected));
 
   return (
     <div className="flex flex-col gap-6">

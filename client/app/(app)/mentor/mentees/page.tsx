@@ -4,10 +4,11 @@ import { SectionCard } from "@/components/dashboard/section-card";
 import { L2Badge } from "@/components/dashboard/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MentorStatusDialog } from "@/components/reviews/mentor-status-dialog";
-import { MENTEES } from "@/lib/api";
+import { api } from "@/lib/api";
 import { shortDate } from "@/lib/utils";
 
-export default function MenteesPage() {
+export default async function MenteesPage() {
+  const MENTEES = await api.mentees();
   return (
     <div className="flex flex-col gap-6">
       <PageHeader

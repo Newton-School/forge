@@ -1,7 +1,11 @@
+import type { Metadata } from "next";
 import { getCurrentUser, getActiveDomain } from "@/lib/session";
 import { isPresentationMode } from "@/lib/config";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopNav } from "@/components/layout/topnav";
+
+// Authenticated app — never index any of it.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();

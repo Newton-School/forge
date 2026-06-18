@@ -7,7 +7,38 @@ Internet → Cloudflare → Route 53 → Application Load Balancer
         → AWS ECS (Fargate): client (Next.js) + server (Express) → RDS PostgreSQL
 ```
 
-> **Architecture v2.** This is **not** a Vercel/serverless app. See [`docs/architecture-v2.md`](docs/architecture-v2.md), [`docs/infra-ecs.md`](docs/infra-ecs.md), [`docs/security.md`](docs/security.md), and the onboarding guide [`docs/repo-guide.html`](docs/repo-guide.html).
+> **Architecture v2.** AWS ECS is the **target** topology (see [`docs/architecture-v2.md`](docs/architecture-v2.md), [`docs/infra-ecs.md`](docs/infra-ecs.md), [`docs/security.md`](docs/security.md), and [`docs/repo-guide.html`](docs/repo-guide.html)). The current **live preview** runs on Render (backend) + Vercel (frontend) — see below.
+
+---
+
+## Live deployment
+
+| Surface | URL |
+|---|---|
+| **Frontend** (Vercel) | https://forge.taj.works |
+| **Backend** (Render) | https://forge.server.taj.works |
+| **Health check** | https://forge.server.taj.works/api/health |
+
+Frontend and backend are **subdomains of the same site** (`taj.works`), so session cookies are same-site (`SameSite=Lax`, `Secure`) and the env just points them at each other. **Secrets (DB, Redis, OAuth, SMTP) live in each host's env settings — never in git.**
+
+**Render — backend env**
+
+| Var | Value |
+|---|---|
+| `APP_BASE_URL` | `https://forge.taj.works` (frontend origin: CORS, post-login redirect, email links) |
+| `GOOGLE_OAUTH_REDIRECT_URI` | `https://forge.server.taj.works/api/auth/google/callback` |
+| `GITHUB_OAUTH_REDIRECT_URI` | `https://forge.server.taj.works/api/integrations/github/oauth/callback` |
+| `REDIS_URL` | Upstash `rediss://…` (secret) |
+| `DATABASE_URL` · `DIRECT_URL` · `SESSION_SECRET` · `GOOGLE_OAUTH_*` · `GITHUB_*` · `SMTP_*` | secrets |
+
+**Vercel — frontend env**
+
+| Var | Value |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | `https://forge.server.taj.works/api` |
+| `APP_MODE` | `production` |
+
+> After deploying, add both production URLs to the provider consoles: **Google OAuth** (authorized redirect URI = the backend `…/api/auth/google/callback`; authorized JS origin = the backend) and any **GitHub OAuth** app callback. Email links resolve from `APP_BASE_URL`, so setting it to the Vercel URL makes onboarding/notification links point at the live app.
 
 ---
 

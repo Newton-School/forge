@@ -6,7 +6,20 @@ const withEvents = { events: { orderBy: { at: "asc" as const } } } as const;
 /** Data access for concerns. Callers pass a scope `where` from rbac/scopeWhere. */
 export const concernsRepo = {
   list: (where: Record<string, unknown>, take: number, skip: number) =>
-    prisma.concern.findMany({ where, orderBy: { createdAt: "desc" }, take, skip }),
+    prisma.concern.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: {
+        raisedBy: { select: { fullName: true, roles: { select: { role: true }, take: 1 } } },
+        assignedTo: { select: { fullName: true } },
+      },
+      take,
+      skip,
+    }),
+
+  /** Resolve domain keys for the bare domainId column on concerns. */
+  domainKeys: (ids: string[]) =>
+    prisma.domain.findMany({ where: { id: { in: ids } }, select: { id: true, key: true } }),
 
   count: (where: Record<string, unknown>) => prisma.concern.count({ where }),
 

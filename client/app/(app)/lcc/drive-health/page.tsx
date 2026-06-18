@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { DomainFilter } from "@/components/dashboard/domain-filter";
 import { parseDomains, inDomains } from "@/lib/domains";
-import { DRIVE_HEALTH, DOMAINS } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export default async function DriveHealthPage({
   searchParams,
@@ -17,9 +17,9 @@ export default async function DriveHealthPage({
 }) {
   const sp = await searchParams;
   const selected = parseDomains(sp.domain);
-  const h = DRIVE_HEALTH;
+  const [h, allDomains] = await Promise.all([api.driveHealth(), api.domains()]);
 
-  const domains = DOMAINS.filter((d) => inDomains(d.key, selected));
+  const domains = allDomains.filter((d) => inDomains(d.key, selected));
 
   const completionBars = domains.map((d) => ({
     label: d.key,

@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DomainFilter } from "@/components/dashboard/domain-filter";
 import { CreateUserButton } from "@/components/onboarding/create-user-button";
 import { parseDomains, inDomains } from "@/lib/domains";
-import { USERS } from "@/lib/api";
+import { api, type MockUser } from "@/lib/api";
 import { shortDate } from "@/lib/utils";
 import type { BadgeTone } from "@/lib/labels";
 
@@ -17,7 +17,7 @@ const STATUS_TONE: Record<string, BadgeTone> = {
   SUSPENDED: "danger",
 };
 
-function discordHandle(u: (typeof USERS)[number]) {
+function discordHandle(u: MockUser) {
   if (u.status === "INVITED") return null;
   return "@" + u.name.split(" ")[0].toLowerCase();
 }
@@ -29,7 +29,9 @@ export default async function OnboardingPage({
 }) {
   const sp = await searchParams;
   const selected = parseDomains(sp.domain);
-  const users = USERS.filter((u) => inDomains(u.domainKey, selected));
+  const [allUsers, domains, teams] = await Promise.all([api.users(), api.domains(), api.teams()]);
+  const mentors = allUsers.filter((u) => u.role === "MENTOR");
+  const users = allUsers.filter((u) => inDomains(u.domainKey, selected));
 
   const total = users.length;
   const active = users.filter((u) => u.status === "ACTIVE").length;
@@ -42,7 +44,7 @@ export default async function OnboardingPage({
       <PageHeader
         title="Onboarding"
         description="Account activation and Discord linking status"
-        actions={<><DomainFilter /><CreateUserButton label="Invite user" /></>}
+        actions={<><DomainFilter /><CreateUserButton label="Invite user" domains={domains} teams={teams} mentors={mentors} /></>}
       />
 
       <StatGrid className="lg:grid-cols-3">

@@ -1,5 +1,5 @@
 import { getActiveDomain } from "@/lib/session";
-import { MentorRepoHome as RepoView } from "@/components/github/repo/views";
+import { MentorTeamHome as RepoView } from "@/components/github/repo/views";
 import Link from "next/link";
 import { GitPullRequest, CircleDot, GitMerge, Users, Flag } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -15,7 +15,7 @@ import {
 
 export default async function MentorTeamDashboard() {
   const activeDomain = await getActiveDomain();
-  if (activeDomain !== "AI") return <RepoView domain={activeDomain} />;
+  if (activeDomain !== "AI") return <RepoView domain={activeDomain} basePath="/mentor/github" />;
 
   const team = ghTeam(DEMO.teamId)!;
   const repo = ghRepo(team.repoId)!;

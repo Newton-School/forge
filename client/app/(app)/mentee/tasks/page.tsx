@@ -5,12 +5,12 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { WorkBadge } from "@/components/dashboard/status-badge";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TASKS } from "@/lib/api";
+import { api } from "@/lib/api";
 import { shortDate } from "@/lib/utils";
 
-export default function MenteeTasksPage() {
-  const mine = TASKS.filter((t) => t.assignee === "Sneha Iyer");
-  const tasks = mine.length ? mine : TASKS;
+export default async function MenteeTasksPage() {
+  // Production: the server already scopes tasks to the signed-in mentee (SELF scope).
+  const tasks = await api.tasks();
 
   return (
     <div className="flex flex-col gap-6">

@@ -15,6 +15,19 @@
 import * as fixtures from "@/lib/mock/data";
 import * as repoMock from "@/lib/mock/github-repo";
 import { fetchRetry } from "@/lib/http";
+import { fetchJson } from "./fetch";
+import { graphTeamToRepoTeam, type DomainTeamsDto, type GraphTeamDto } from "./github-repo-live";
+import {
+  userDtoToMock, auditDtoToMock, invitationDtoToMock, domainDtoToMock, teamDtoToMock, taskDtoToMock,
+  updateDtoToMock, weeklyReviewDtoToMock, deliverableDtoToMock, milestoneDtoToMock, concernDtoToMock,
+  menteeDtoToMock, notificationDtoToMock, calendarEventDtoToMock, githubActivityDtoToMock, demeritDtoToMock,
+  emailTemplateDtoToMock,
+  type UserDto, type AuditDto, type InvitationDto, type DomainDto, type TeamDto, type TaskDto,
+  type UpdateDto, type WeeklyReviewDto, type DeliverableDto, type MilestoneDto, type ConcernDto,
+  type MenteeDto, type NotificationDto, type CalendarEventDto, type GithubActivityDto, type DemeritDto,
+  type EmailTemplateDto,
+} from "./mappers";
+export type { MockDemerit } from "./mappers";
 
 // (1) Synchronous fixtures + all Mock* types — the single re-export seam.
 export * from "@/lib/mock/data";
@@ -56,6 +69,40 @@ export async function repoDashboard(opts: {
   if (!res.ok) throw new Error(`repoDashboard → ${res.status}`);
   const dto = (await res.json()) as repoMock.RepoDashboardDto;
   return repoMock.dashboardDtoToConnection(dto, { domain: opts.domain, selfLogin: opts.selfLogin });
+}
+
+/**
+ * Team-first GitHub accessors. Presentation → the mock selectors; production → the live
+ * `/domain-teams`, `/teams/:id/graph`, and per-repo dashboard endpoints (summaries at the
+ * grid, full live data at the repo detail). One swap point, both modes share the views.
+ */
+export async function repoDomainTeams(domain: string): Promise<repoMock.RepoTeam[]> {
+  if (PRESENTATION) return repoMock.teamsForDomain(domain);
+  const dto = await fetchJson<DomainTeamsDto>(`/integrations/github/domain-teams?domain=${encodeURIComponent(domain)}`);
+  return dto.teams.map(graphTeamToRepoTeam);
+}
+
+export async function repoTeamGraph(teamId: string): Promise<repoMock.RepoTeam | null> {
+  if (PRESENTATION) return repoMock.teamById(teamId) ?? null;
+  try {
+    const dto = await fetchJson<GraphTeamDto>(`/integrations/github/teams/${teamId}/graph`);
+    return graphTeamToRepoTeam(dto);
+  } catch {
+    return null;
+  }
+}
+
+export async function repoTeamRepoDashboard(teamId: string, repoName: string): Promise<repoMock.RepoConnection | null> {
+  if (PRESENTATION) {
+    const team = repoMock.teamById(teamId);
+    return team ? repoMock.teamRepoByName(team, repoName) ?? null : null;
+  }
+  try {
+    const dto = await fetchJson<repoMock.RepoDashboardDto>(`/integrations/github/teams/${teamId}/repos/${encodeURIComponent(repoName)}/dashboard`);
+    return repoMock.dashboardDtoToConnection(dto, { domain: dto.team?.domainKey ?? "" });
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -115,21 +162,95 @@ export async function submit<T = { ok: true }>(path: string, method: string, bod
 }
 
 export const api = {
-  domains: () => get("/domains", fixtures.DOMAINS),
-  teams: () => get("/teams", fixtures.TEAMS),
-  mentees: () => get("/mentees", fixtures.MENTEES),
-  updates: () => get("/updates", fixtures.UPDATES),
-  weeklyReviews: () => get("/weekly-reviews", fixtures.WEEKLY_REVIEWS),
-  concerns: () => get("/concerns", fixtures.CONCERNS),
-  tasks: () => get("/tasks", fixtures.TASKS),
-  milestones: () => get("/milestones", fixtures.MILESTONES),
-  deliverables: () => get("/deliverables", fixtures.DELIVERABLES),
-  users: () => get("/users", fixtures.USERS),
-  githubActivity: () => get("/integrations/github/activity", fixtures.GITHUB_ACTIVITY),
-  calendar: () => get("/calendar", fixtures.CALENDAR),
-  notifications: () => get("/notifications", fixtures.NOTIFICATIONS),
-  emailTemplates: () => get("/email-templates", fixtures.EMAIL_TEMPLATES),
-  auditLogs: () => get("/audit-logs", fixtures.AUDIT_LOGS),
-  demerits: () => get("/demerits", fixtures.DEMERITS),
-  driveHealth: () => get("/analytics/drive-health", fixtures.DRIVE_HEALTH),
+  domains: async (): Promise<fixtures.MockDomain[]> => {
+    if (PRESENTATION) return fixtures.DOMAINS;
+    const { items } = await fetchJson<{ items: DomainDto[] }>("/analytics/domains");
+    return items.map(domainDtoToMock);
+  },
+  teams: async (): Promise<fixtures.MockTeam[]> => {
+    if (PRESENTATION) return fixtures.TEAMS;
+    const { items } = await fetchJson<{ items: TeamDto[] }>("/analytics/teams");
+    return items.map(teamDtoToMock);
+  },
+  mentees: async (): Promise<fixtures.MockMentee[]> => {
+    if (PRESENTATION) return fixtures.MENTEES;
+    const { items } = await fetchJson<{ items: MenteeDto[] }>("/reviews/mentees");
+    return items.map(menteeDtoToMock);
+  },
+  updates: async (): Promise<fixtures.MockUpdate[]> => {
+    if (PRESENTATION) return fixtures.UPDATES;
+    const { items } = await fetchJson<{ items: UpdateDto[] }>("/reviews/updates?take=500");
+    return items.map(updateDtoToMock);
+  },
+  weeklyReviews: async (): Promise<fixtures.MockWeeklyReview[]> => {
+    if (PRESENTATION) return fixtures.WEEKLY_REVIEWS;
+    const { items } = await fetchJson<{ items: WeeklyReviewDto[] }>("/reviews/weekly?take=500");
+    return items.map(weeklyReviewDtoToMock);
+  },
+  concerns: async (): Promise<fixtures.MockConcern[]> => {
+    if (PRESENTATION) return fixtures.CONCERNS;
+    const { items } = await fetchJson<{ items: ConcernDto[] }>("/concerns?take=300");
+    return items.map(concernDtoToMock);
+  },
+  tasks: async (): Promise<fixtures.MockTask[]> => {
+    if (PRESENTATION) return fixtures.TASKS;
+    const { items } = await fetchJson<{ items: TaskDto[] }>("/tasks?take=500");
+    return items.map(taskDtoToMock);
+  },
+  milestones: async (): Promise<fixtures.MockMilestone[]> => {
+    if (PRESENTATION) return fixtures.MILESTONES;
+    const { items } = await fetchJson<{ items: MilestoneDto[] }>("/milestones?take=300");
+    return items.map(milestoneDtoToMock);
+  },
+  deliverables: async (): Promise<fixtures.MockDeliverable[]> => {
+    if (PRESENTATION) return fixtures.DELIVERABLES;
+    const { items } = await fetchJson<{ items: DeliverableDto[] }>("/deliverables?take=300");
+    return items.map(deliverableDtoToMock);
+  },
+  // Admin + users + auth slice — real endpoints + DTO→UI mappers (see ./mappers).
+  users: async (): Promise<fixtures.MockUser[]> => {
+    if (PRESENTATION) return fixtures.USERS;
+    const { items } = await fetchJson<{ items: UserDto[] }>("/users?take=200");
+    return items.map(userDtoToMock);
+  },
+  auditLogs: async (): Promise<fixtures.MockAudit[]> => {
+    if (PRESENTATION) return fixtures.AUDIT_LOGS;
+    const { items } = await fetchJson<{ items: AuditDto[] }>("/audit?take=100");
+    return items.map(auditDtoToMock);
+  },
+  invitations: async (): Promise<fixtures.MockInvitation[]> => {
+    if (PRESENTATION) return fixtures.INVITATIONS;
+    const { items } = await fetchJson<{ items: InvitationDto[] }>("/invitations?take=200");
+    return items.map(invitationDtoToMock);
+  },
+  githubActivity: async (): Promise<fixtures.MockGithub[]> => {
+    if (PRESENTATION) return fixtures.GITHUB_ACTIVITY;
+    const { items } = await fetchJson<{ items: GithubActivityDto[] }>("/integrations/github/activity?take=50");
+    return items.map(githubActivityDtoToMock);
+  },
+  calendar: async (): Promise<fixtures.MockCalendar[]> => {
+    if (PRESENTATION) return fixtures.CALENDAR;
+    const { items } = await fetchJson<{ items: CalendarEventDto[] }>("/calendar/events");
+    return items.map(calendarEventDtoToMock);
+  },
+  notifications: async (): Promise<fixtures.MockNotification[]> => {
+    if (PRESENTATION) return fixtures.NOTIFICATIONS;
+    const { items } = await fetchJson<{ items: NotificationDto[] }>("/notifications?take=50");
+    return items.map(notificationDtoToMock);
+  },
+  emailTemplates: async (): Promise<fixtures.MockTemplate[]> => {
+    if (PRESENTATION) return fixtures.EMAIL_TEMPLATES;
+    const { items } = await fetchJson<{ items: EmailTemplateDto[] }>("/email/templates");
+    return items.map(emailTemplateDtoToMock);
+  },
+  demerits: async () => {
+    if (PRESENTATION) return fixtures.DEMERITS;
+    const { items } = await fetchJson<{ items: DemeritDto[] }>("/demerits?take=200");
+    return items.map(demeritDtoToMock);
+  },
+  driveHealth: async (): Promise<typeof fixtures.DRIVE_HEALTH> => {
+    if (PRESENTATION) return fixtures.DRIVE_HEALTH;
+    const { health } = await fetchJson<{ health: typeof fixtures.DRIVE_HEALTH }>("/analytics/overview");
+    return health;
+  },
 };

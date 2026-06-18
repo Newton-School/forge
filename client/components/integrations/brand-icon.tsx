@@ -5,10 +5,18 @@ const SRC: Record<string, string> = {
   discord: "/discord.png",
   calendar: "/google_calendar.png",
   email: "/gmail.webp",
-  groq: "/groq.png",
+  groq: "/logo.png", // Forge AI (publicly branded; powered by Groq under the hood)
 };
 
-/** Brand logos served from /public (GitHub, Discord, Google Calendar, Email, Groq). */
+const LABEL: Record<string, string> = {
+  github: "GitHub",
+  discord: "Discord",
+  calendar: "Google Calendar",
+  email: "Email",
+  groq: "Forge AI",
+};
+
+/** Brand logos served from /public (GitHub, Discord, Google Calendar, Email, Forge AI). */
 export function BrandIcon({
   name, size = 20, className,
 }: {
@@ -19,7 +27,7 @@ export function BrandIcon({
   return (
     <Image
       src={SRC[name]}
-      alt={`${name} logo`}
+      alt={`${LABEL[name] ?? name} logo`}
       width={size}
       height={size}
       className={className}

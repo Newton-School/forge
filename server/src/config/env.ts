@@ -23,6 +23,11 @@ const schema = z.object({
     .url()
     .default("http://localhost:4000/api/auth/google/callback"),
 
+  // Secret that gates internal job endpoints (e.g. recomputing public landing
+  // stats) so a scheduled cron can trigger them without a user session. Optional:
+  // when unset, those job endpoints are disabled (return 403).
+  JOBS_SECRET: z.string().optional(),
+
   // Email (SMTP) — nodemailer transport. Optional: when unset, email is skipped.
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().int().positive().default(587),

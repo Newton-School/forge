@@ -23,7 +23,19 @@ export async function listDemerits(ctx: AuthContext, q: ListDemeritsQuery) {
     ...(q.userId ? { userId: q.userId } : {}),
     ...(q.escalated !== undefined ? { escalated: q.escalated } : {}),
   };
-  const items = await demeritsRepo.list(where, q.take, q.skip);
+  const rows = await demeritsRepo.list(where, q.take, q.skip);
+  const issuerIds = [...new Set(rows.map((d) => d.issuedById).filter(Boolean) as string[])];
+  const issuerOf = new Map((await demeritsRepo.userNames(issuerIds)).map((u) => [u.id, u.fullName]));
+  const items = rows.map((d) => ({
+    id: d.id,
+    user: d.user.fullName,
+    domainKey: d.user.teamMemberships[0]?.team.domain?.key ?? null,
+    reason: d.reason,
+    points: d.points,
+    issuedBy: d.issuedById ? issuerOf.get(d.issuedById) ?? "—" : "—",
+    escalated: d.escalated,
+    createdAt: d.createdAt,
+  }));
   return { items };
 }
 
