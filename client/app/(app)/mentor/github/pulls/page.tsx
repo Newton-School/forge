@@ -1,9 +1,14 @@
+import { getActiveDomain } from "@/lib/session";
+import { MentorPRs as RepoView } from "@/components/github/repo/views";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { PRList } from "@/components/github/pr-list";
 import { DEMO, ghTeam, prsForRepo } from "@/lib/api";
 
-export default function MentorPulls() {
+export default async function MentorPulls() {
+  const activeDomain = await getActiveDomain();
+  if (activeDomain !== "AI") return <RepoView domain={activeDomain} />;
+
   const team = ghTeam(DEMO.teamId)!;
   const prs = prsForRepo(team.repoId);
   const open = prs.filter((p) => p.state === "open");

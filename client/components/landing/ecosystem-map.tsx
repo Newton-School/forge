@@ -23,8 +23,8 @@ const NODES: MapNode[] = [
   { key: "github", label: "GitHub", x: 460, y: 80, logo: "/github.svg" },
   { key: "discord", label: "Discord", x: 650, y: 218, logo: "/discord.png" },
   { key: "calendar", label: "Calendar", x: 578, y: 442, logo: "/google_calendar.png" },
-  { key: "email", label: "Email", x: 342, y: 442, logo: "/email.svg" },
-  { key: "groq", label: "Groq AI", x: 270, y: 218, logo: "/groq.svg" },
+  { key: "email", label: "Email", x: 342, y: 442, logo: "/gmail.webp" },
+  { key: "groq", label: "Forge AI", x: 270, y: 218, glyph: "✦" },
 ];
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -46,7 +46,7 @@ export function EcosystemMap() {
           <SectionHeading
             className="mt-5"
             title="Forge is the intelligence at the center."
-            lead="Every system connects through one portal. Activity flows in from GitHub, Discord, Calendar, Email, and Groq AI — and flows back out as insight, review, and analytics."
+            lead="Every system connects through one portal. Activity flows in from GitHub, Discord, Calendar, and Email, then flows back out as insight, review, and analytics powered by Forge AI."
             align="center"
           />
         </Reveal>
@@ -57,7 +57,7 @@ export function EcosystemMap() {
             viewBox="0 0 920 560"
             className="h-auto w-full"
             role="img"
-            aria-label="Forge portal connected to GitHub, Discord, Calendar, Email, and Groq AI"
+            aria-label="Forge portal connected to GitHub, Discord, Calendar, Email, and Forge AI"
           >
             <defs>
               <linearGradient id="mkt-line" x1="0" y1="0" x2="1" y2="0">

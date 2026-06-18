@@ -14,7 +14,7 @@ export function MarketingFooter() {
             </span>
           </div>
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-            The Profile Building Drive platform — where students build, mentors guide, teachers
+            The Profile Building Drive platform where students build, mentors guide, teachers
             track, and learning becomes measurable.
           </p>
           <p className="mt-4 text-xs text-subtle-foreground">
@@ -47,7 +47,7 @@ export function MarketingFooter() {
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
             <li>Google sign-in (NST only)</li>
             <li>Invite-only onboarding</li>
-            <li>AI · ML · SDSE domains</li>
+            <li>AI · ML · SDSE · DVA domains</li>
           </ul>
         </div>
       </div>

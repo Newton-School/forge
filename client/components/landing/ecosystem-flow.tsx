@@ -23,7 +23,7 @@ export function EcosystemFlow() {
       <Reveal delay={0.06}>
         <SectionHeading
           className="mt-5"
-          title="One chain — from a teacher's intent to a student's growth."
+          title="One chain, from a teacher's intent to a student's growth."
           lead="Direction flows down; contribution and signal flow back up. Every link in the chain is a real system doing real work, not a status field someone updates by hand."
         />
       </Reveal>

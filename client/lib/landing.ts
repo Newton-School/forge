@@ -14,7 +14,7 @@ export const BRAND = {
 } as const;
 
 export const HERO_STATS = [
-  { value: "3", label: "Domains", hint: "AI · ML · SDSE" },
+  { value: "4", label: "Domains", hint: "AI · ML · SDSE · DVA" },
   { value: "L1–L4", label: "Review depth", hint: "Mentee → Teacher" },
   { value: "5", label: "Connected systems", hint: "GitHub · Discord · Calendar · Email · AI" },
   { value: "100%", label: "Measurable", hint: "Every contribution tracked" },
@@ -24,7 +24,7 @@ export const PROBLEMS = [
   {
     problem: "Passive learning",
     detail: "Students watch and forget. Knowledge never turns into anything real.",
-    solution: "Learning happens through building — issues, branches, and pull requests, not slides.",
+    solution: "Learning happens through building: issues, branches, and pull requests, not slides.",
   },
   {
     problem: "No visibility",
@@ -34,7 +34,7 @@ export const PROBLEMS = [
   {
     problem: "No contribution tracking",
     detail: "Effort is invisible; grades guess at who did the work.",
-    solution: "Contribution is attributed per student by stable GitHub identity — automatically.",
+    solution: "Contribution is attributed to each student automatically, by stable GitHub identity.",
   },
   {
     problem: "No project ownership",
@@ -120,7 +120,7 @@ export const INTEGRATIONS: {
       "Real repositories, issues, and pull requests are the substrate of the drive. Activity streams in through HMAC-verified webhooks and is attributed to each student automatically.",
     points: [
       "AI domain runs on a GitHub org with Teams",
-      "ML / SDSE link per-repo with one click",
+      "ML / SDSE / DVA link per-repo with one click",
       "Commits · PRs · reviews · milestones synced live",
       "No GitHub App, no stored user tokens",
     ],
@@ -143,7 +143,7 @@ export const INTEGRATIONS: {
     name: "Google Calendar",
     role: "The schedule",
     blurb:
-      "Mentoring sessions, reviews, checkpoints, and milestone deadlines sync to one shared Forge Drive calendar — so nobody misses what matters.",
+      "Mentoring sessions, reviews, checkpoints, and milestone deadlines sync to one shared Forge Drive calendar, so nobody misses what matters.",
     points: [
       "Mentoring sessions & review meetings",
       "Milestone deadlines & checkpoints",
@@ -166,33 +166,33 @@ export const INTEGRATIONS: {
   },
   {
     key: "groq",
-    name: "Groq AI",
+    name: "Forge AI",
     role: "The intelligence layer",
     blurb:
-      "AI summarizes reviews, surfaces contribution insights, and analyzes progress — assisting mentors and teachers with signal, never replacing their judgment.",
+      "Forge AI summarizes reviews, surfaces contribution insights, and analyzes progress, assisting mentors and teachers with signal without ever replacing their judgment.",
     points: [
       "Review & PR summaries",
       "Contribution insights",
       "Progress & risk analysis",
-      "Assists mentors — never replaces them",
+      "Assists mentors, never replaces them",
     ],
   },
 ];
 
 export const SECURITY = [
-  { title: "Google OAuth only", detail: "No passwords. Sign in with your NST Google account — nothing else." },
+  { title: "Google OAuth only", detail: "No passwords. Sign in with your NST Google account, nothing else." },
   { title: "Invite-only access", detail: "Accounts are provisioned by Admin/LCC; unknown emails are rejected." },
   { title: "Server-side RBAC", detail: "Every request is gated, policy-checked, and scope-filtered in the backend." },
   { title: "Domain & team isolation", detail: "You only ever see the domains and teams you belong to." },
-  { title: "Audit trails", detail: "Every privileged action is recorded immutably — who, what, when." },
+  { title: "Audit trails", detail: "Every privileged action is recorded immutably: who, what, and when." },
   { title: "Verified webhooks", detail: "Every inbound GitHub/Discord event is signature-verified before it's trusted." },
 ] as const;
 
 export const ARCHITECTURE = [
-  { layer: "Client", tech: "Next.js", note: "UI only — dashboards, forms, analytics. No secrets, no direct integrations." },
+  { layer: "Client", tech: "Next.js", note: "UI only: dashboards, forms, analytics. No secrets, no direct integrations." },
   { layer: "Server", tech: "Express + TypeScript", note: "All business logic, RBAC, integrations, and webhooks live here." },
   { layer: "Data", tech: "PostgreSQL + Redis", note: "Prisma-modeled domain data; Redis-backed sessions and cache." },
-  { layer: "Integrations", tech: "GitHub · Discord · Calendar · Email · Groq", note: "Server-only service modules, swappable behind interfaces." },
+  { layer: "Integrations", tech: "GitHub · Discord · Calendar · Email · Forge AI", note: "Server-only service modules, swappable behind interfaces." },
 ] as const;
 
 export const NAV_LINKS = [

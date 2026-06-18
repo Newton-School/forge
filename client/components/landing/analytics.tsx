@@ -20,7 +20,7 @@ export function Analytics() {
         <SectionHeading
           className="mt-5"
           title="Nothing important stays invisible."
-          lead="Team health, contribution metrics, milestone completion, and learning progress roll up automatically — so mentors and teachers act on signal, not hunches."
+          lead="Team health, contribution metrics, milestone completion, and learning progress roll up automatically, so mentors and teachers act on signal, not hunches."
         />
       </Reveal>
 

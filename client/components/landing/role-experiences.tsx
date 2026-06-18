@@ -6,7 +6,7 @@ import { MockFrame } from "./mock-frame";
 
 const ROLE_ICON = { Mentee: GraduationCap, Mentor: UserCog, Teacher: UsersRound } as const;
 
-/** A tiny presentational dashboard mock per role — enough to read as "real". */
+/** A tiny presentational dashboard mock per role, enough to read as "real". */
 function RoleMock({ role }: { role: string }) {
   if (role === "Mentee") {
     return (
@@ -83,7 +83,7 @@ export function RoleExperiences() {
         <SectionHeading
           className="mt-5"
           title="One platform, three points of view."
-          lead="Mentees see what to build. Mentors lead and review. Teachers track every team. Same data — shaped to each role and enforced by server-side access control."
+          lead="Mentees see what to build. Mentors lead and review. Teachers track every team. The same data, shaped to each role and enforced by server-side access control."
         />
       </Reveal>
 

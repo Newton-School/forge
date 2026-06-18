@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GitBranch } from "lucide-react";
-import { NAV, GITHUB_NAV, SHARED_NAV } from "@/lib/nav/nav.config";
+import { NAV, GITHUB_NAV, GITHUB_NAV_REPO, SHARED_NAV } from "@/lib/nav/nav.config";
 import { ROLE_LABEL } from "@/lib/labels";
 import type { AuthUser } from "@/lib/types";
 import type { DomainKey } from "@/lib/presentation";
@@ -11,8 +11,10 @@ import { cn } from "@/lib/utils";
 
 export function Sidebar({ user, domain = "AI" }: { user: AuthUser; domain?: DomainKey }) {
   const pathname = usePathname();
-  // Drive nav for every domain; AI also gets the GitHub-driven nav (source of truth).
-  const sections = [...NAV[user.role], ...(domain === "AI" ? GITHUB_NAV[user.role] ?? [] : [])];
+  // Drive nav for every domain. AI adds the org-driven GitHub nav; ML/DVA/SDSE add the
+  // repository-based GitHub nav (owner + collaborators, no org).
+  const githubNav = (domain === "AI" ? GITHUB_NAV[user.role] : GITHUB_NAV_REPO[user.role]) ?? [];
+  const sections = [...NAV[user.role], ...githubNav];
 
   const isActive = (href: string) =>
     pathname === href || (href !== `/${user.role.toLowerCase()}` && pathname.startsWith(href + "/")) || pathname === href;
@@ -44,7 +46,7 @@ export function Sidebar({ user, domain = "AI" }: { user: AuthUser; domain?: Doma
               "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
               domain === "AI" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
             )}
-            title={domain === "AI" ? "GitHub-driven domain" : "Drive workflow domain"}
+            title={domain === "AI" ? "GitHub-driven org" : "Repository-connected domain"}
           >
             {domain}
           </span>

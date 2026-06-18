@@ -3,7 +3,7 @@
 import { motion, useReducedMotion, type Variants } from "motion/react";
 import type { ReactNode } from "react";
 
-// Signature easing — a confident, slightly overshooting ease-out (Stripe/Linear feel).
+// Signature easing: a confident, slightly overshooting ease-out (Stripe/Linear feel).
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /** Reveal one block on scroll. Falls back to a plain opacity fade under

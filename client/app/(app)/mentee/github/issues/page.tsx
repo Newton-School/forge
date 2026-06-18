@@ -1,3 +1,5 @@
+import { getActiveDomain } from "@/lib/session";
+import { MenteeIssues as RepoView } from "@/components/github/repo/views";
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { SectionCard } from "@/components/dashboard/section-card";
@@ -15,7 +17,10 @@ const STATUS_LABEL: Record<string, { text: string; tone: "primary" | "success" |
 };
 
 /** Mentee issue board — pick an open issue (self-assign) then raise a PR. */
-export default function MenteeIssues() {
+export default async function MenteeIssues() {
+  const activeDomain = await getActiveDomain();
+  if (activeDomain !== "AI") return <RepoView domain={activeDomain} />;
+
   const team = ghTeam(DEMO.teamId)!;
   const issues = issuesForRepo(team.repoId);
   return (

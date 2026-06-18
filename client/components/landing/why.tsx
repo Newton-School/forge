@@ -13,7 +13,7 @@ export function Why() {
         <SectionHeading
           className="mt-5"
           title="Classrooms teach. Forge makes learning happen."
-          lead="Traditional learning leaves the most important things invisible — who built what, who's stuck, and whether anyone actually grew. Forge turns each of those gaps into something you can see."
+          lead="Traditional learning leaves the most important things invisible: who built what, who's stuck, and whether anyone actually grew. Forge turns each of those gaps into something you can see."
         />
       </Reveal>
 

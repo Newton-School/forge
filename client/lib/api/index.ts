@@ -13,12 +13,15 @@
  *     migrates pages from the synchronous fixtures to these accessors.
  */
 import * as fixtures from "@/lib/mock/data";
+import * as repoMock from "@/lib/mock/github-repo";
 import { fetchRetry } from "@/lib/http";
 
 // (1) Synchronous fixtures + all Mock* types — the single re-export seam.
 export * from "@/lib/mock/data";
 // AI Domain — GitHub-as-source-of-truth fixtures + derived analytics selectors.
 export * from "@/lib/mock/github";
+// ML/DVA/SDSE — repository-based GitHub mode (owner + collaborators, no org).
+export * from "@/lib/mock/github-repo";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 // Demo mode is on unless explicitly disabled (NEXT_PUBLIC_* so it reaches the browser).
@@ -34,6 +37,25 @@ async function get<T>(path: string, fixture: T): Promise<T> {
   const res = await fetchRetry(`${API_BASE}${path}`, { credentials: "include" });
   if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
   return (await res.json()) as T;
+}
+
+/**
+ * Repository-mode dashboard (ML/DVA/SDSE). Presentation → the mock for that domain;
+ * production → the live team endpoint, mapped to the same `RepoConnection` shape the
+ * views render. Returns null when no repo is connected.
+ */
+export async function repoDashboard(opts: {
+  domain: string;
+  teamId?: string;
+  selfLogin?: string;
+}): Promise<repoMock.RepoConnection | null> {
+  if (PRESENTATION) return repoMock.repoConnectionFor(opts.domain) ?? null;
+  if (!opts.teamId) return null;
+  const res = await fetchRetry(`${API_BASE}/integrations/github/teams/${opts.teamId}/repo/dashboard`, { credentials: "include" });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`repoDashboard → ${res.status}`);
+  const dto = (await res.json()) as repoMock.RepoDashboardDto;
+  return repoMock.dashboardDtoToConnection(dto, { domain: opts.domain, selfLogin: opts.selfLogin });
 }
 
 /**

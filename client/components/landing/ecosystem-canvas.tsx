@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 type Node = { x: number; y: number; vx: number; vy: number; r: number };
 
 /**
- * Ambient node-field for the hero — a living "ecosystem" of connected points.
+ * Ambient node-field for the hero: a living "ecosystem" of connected points.
  * Pure Canvas 2D (transform/opacity only, no layout). Pauses when off-screen,
  * and renders a single static frame under prefers-reduced-motion.
  */

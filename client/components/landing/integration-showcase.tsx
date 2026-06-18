@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Check } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { BrandIcon } from "@/components/integrations/brand-icon";
 import { INTEGRATIONS, type IntegrationKey } from "@/lib/landing";
 import { Section, Eyebrow, SectionHeading } from "./section";
 import { Reveal } from "./reveal";
 import { cn } from "@/lib/utils";
 
-/** Real brand logo in a white tile so it stays legible on both active and
- *  inactive tabs. */
+/** Brand logo (or the Forge AI spark) in a white tile so it stays legible on
+ *  both active and inactive tabs. */
 function IntegrationIcon({ k, size = 16 }: { k: IntegrationKey; size?: number }) {
   const tile = size + 12;
   return (
@@ -18,7 +18,11 @@ function IntegrationIcon({ k, size = 16 }: { k: IntegrationKey; size?: number })
       className="grid shrink-0 place-items-center rounded-md border border-border bg-white"
       style={{ width: tile, height: tile }}
     >
-      <BrandIcon name={k} size={size} />
+      {k === "groq" ? (
+        <Sparkles className="text-primary" style={{ width: size, height: size }} />
+      ) : (
+        <BrandIcon name={k} size={size} />
+      )}
     </span>
   );
 }
@@ -82,7 +86,7 @@ export function IntegrationShowcase() {
         <SectionHeading
           className="mt-5"
           title="Five industry-grade systems, one intelligence layer."
-          lead="Forge is the portal at the center. GitHub, Discord, Calendar, Email, and Groq AI each do one job exceptionally well — and the platform weaves them into a single, coherent experience."
+          lead="Forge is the portal at the center. GitHub, Discord, Calendar, Email, and Forge AI each do one job exceptionally well, and the platform weaves them into a single, coherent experience."
         />
       </Reveal>
 

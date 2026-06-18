@@ -1,3 +1,5 @@
+import { getActiveDomain } from "@/lib/session";
+import { MenteeAnalytics as RepoView } from "@/components/github/repo/views";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatCard, StatGrid } from "@/components/dashboard/stat-card";
 import { SectionCard } from "@/components/dashboard/section-card";
@@ -5,7 +7,10 @@ import { ScorePips } from "@/components/github/gh-badges";
 import { ReviewEvalCard } from "@/components/github/review-eval-card";
 import { DEMO, studentAnalytics, GH_PRS, GH_REVIEWS, ghPR } from "@/lib/api";
 
-export default function MenteeAnalytics() {
+export default async function MenteeAnalytics() {
+  const activeDomain = await getActiveDomain();
+  if (activeDomain !== "AI") return <RepoView domain={activeDomain} />;
+
   const a = studentAnalytics(DEMO.menteeId);
   const myPrIds = GH_PRS.filter((p) => p.authorId === DEMO.menteeId).map((p) => p.id);
   const myReviews = GH_REVIEWS.filter((r) => myPrIds.includes(r.prId));

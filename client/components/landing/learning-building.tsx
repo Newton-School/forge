@@ -7,7 +7,7 @@ const STEPS = [
   { icon: Bug, verb: "Solve", note: "Pick up issues and own them end to end." },
   { icon: GitPullRequest, verb: "Raise PRs", note: "Open contributions for mentor review." },
   { icon: MessagesSquare, verb: "Explain", note: "Defend decisions in review discussions." },
-  { icon: Sparkles, verb: "Learn", note: "Grow through execution — not just lectures." },
+  { icon: Sparkles, verb: "Learn", note: "Grow through execution, not just lectures." },
 ];
 
 export function LearningBuilding() {
@@ -23,12 +23,12 @@ export function LearningBuilding() {
             <SectionHeading
               className="mt-5"
               title="Students don't just attend. They contribute."
-              lead="The deepest learning in Forge doesn't come from a slide — it comes from shipping. Every student builds projects, solves issues, raises pull requests, and explains their work. Execution is the curriculum."
+              lead="The deepest learning in Forge doesn't come from a slide. It comes from shipping. Every student builds projects, solves issues, raises pull requests, and explains their work. Execution is the curriculum."
             />
           </Reveal>
           <Reveal delay={0.12}>
             <p className="mt-6 rounded-2xl border border-border bg-white p-5 text-sm leading-relaxed text-muted-foreground">
-              By the end of a drive, a student doesn't have a grade to show — they have a{" "}
+              By the end of a drive, a student doesn't have a grade to show. They have a{" "}
               <span className="font-semibold text-[var(--mkt-ink)]">contribution history</span>: merged
               pull requests, reviewed code, and a measurable record of what they built and learned.
             </p>
