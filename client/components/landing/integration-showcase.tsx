@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Check, Sparkles } from "lucide-react";
+import { Check } from "lucide-react";
 import { BrandIcon } from "@/components/integrations/brand-icon";
 import { INTEGRATIONS, type IntegrationKey } from "@/lib/landing";
 import { Section, Eyebrow, SectionHeading } from "./section";
 import { Reveal } from "./reveal";
 import { cn } from "@/lib/utils";
 
-/** Brand logo (or the Forge AI spark) in a white tile so it stays legible on
- *  both active and inactive tabs. */
+/** Brand logo in a white tile so it stays legible on both active and inactive
+ *  tabs. Forge AI uses the Forge logo (mapped in BrandIcon). */
 function IntegrationIcon({ k, size = 16 }: { k: IntegrationKey; size?: number }) {
   const tile = size + 12;
   return (
@@ -18,11 +18,7 @@ function IntegrationIcon({ k, size = 16 }: { k: IntegrationKey; size?: number })
       className="grid shrink-0 place-items-center rounded-md border border-border bg-white"
       style={{ width: tile, height: tile }}
     >
-      {k === "groq" ? (
-        <Sparkles className="text-primary" style={{ width: size, height: size }} />
-      ) : (
-        <BrandIcon name={k} size={size} />
-      )}
+      <BrandIcon name={k} size={size} />
     </span>
   );
 }
