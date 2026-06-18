@@ -1,3 +1,5 @@
+import { getActiveDomain } from "@/lib/session";
+import { TeacherRepoHome as RepoView } from "@/components/github/repo/views";
 import { Target, Users } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { SectionCard } from "@/components/dashboard/section-card";
@@ -6,7 +8,10 @@ import { TeamCompare } from "@/components/github/team-compare";
 import { GH_PROJECTS, teamsForProject, teamAnalytics } from "@/lib/api";
 
 /** A project may span 1..N teams. For multi-team projects, the teacher compares them head-to-head. */
-export default function TeacherProjectComparison() {
+export default async function TeacherProjectComparison() {
+  const activeDomain = await getActiveDomain();
+  if (activeDomain !== "AI") return <RepoView domain={activeDomain} />;
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Project Comparison" description="Projects can be assigned to one or many teams — compare progress across them" />

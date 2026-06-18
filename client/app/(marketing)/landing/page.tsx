@@ -12,7 +12,7 @@ import { Architecture } from "@/components/landing/architecture";
 import { Cta } from "@/components/landing/cta";
 
 /**
- * Forge marketing landing page — the public showcase of the Profile Building
+ * Forge marketing landing page: the public showcase of the Profile Building
  * Drive ecosystem. Server Component that composes presentational section
  * components; interactivity lives in small "use client" islands within them.
  */

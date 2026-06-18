@@ -19,7 +19,7 @@ export default async function DomainsPage({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Domains"
-        description="Compare AI, ML and SDSE across the drive"
+        description="Compare domains across the drive"
         actions={<DomainFilter />}
       />
 

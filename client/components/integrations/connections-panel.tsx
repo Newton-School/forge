@@ -15,8 +15,8 @@ interface Props {
   discordUsername: string;
   googleEmail: string;
   repo: string; // currently-bound "owner/name" (or "")
-  /** AI = repo access via the org; ML/SDSE = per-repo connect. */
-  domainKey: "AI" | "ML" | "SDSE";
+  /** AI = repo access via the org; ML/SDSE/DVA = per-repo connect. */
+  domainKey: "AI" | "ML" | "SDSE" | "DVA";
   role: string;
   teamId?: string;
   /** Demo mode simulates the round-trip; production redirects to the server OAuth route. */

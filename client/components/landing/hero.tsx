@@ -33,7 +33,7 @@ export function Hero() {
         <Reveal delay={0.16}>
           <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">
             {BRAND.name} is the Profile Building Drive platform from the {BRAND.org}. Real
-            repositories, real pull requests, real review loops — one connected ecosystem where every
+            repositories, real pull requests, real review loops. One connected ecosystem where every
             contribution is tracked and every student's growth is visible.
           </p>
         </Reveal>

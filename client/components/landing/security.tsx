@@ -13,7 +13,7 @@ export function Security() {
         <SectionHeading
           className="mt-5"
           title="Trusted by design, enforced on the server."
-          lead="Access is never a frontend suggestion. Identity, permissions, isolation, and auditing are enforced where it counts — in the backend, on every single request."
+          lead="Access is never a frontend suggestion. Identity, permissions, isolation, and auditing are enforced where it counts: in the backend, on every single request."
         />
       </Reveal>
 

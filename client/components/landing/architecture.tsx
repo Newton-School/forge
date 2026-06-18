@@ -15,7 +15,7 @@ export function Architecture() {
         <SectionHeading
           className="mt-5"
           title="A clean spine: UI in front, intelligence behind."
-          lead="The client only renders. Every decision, integration, and secret lives on the server — the central intelligence layer that connects GitHub, Discord, Calendar, Email, and AI."
+          lead="The client only renders. Every decision, integration, and secret lives on the server, the central intelligence layer that connects GitHub, Discord, Calendar, Email, and AI."
         />
       </Reveal>
 

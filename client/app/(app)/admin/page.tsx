@@ -5,7 +5,7 @@ import { StatCard, StatGrid } from "@/components/dashboard/stat-card";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AUDIT_LOGS } from "@/lib/api";
+import { AUDIT_LOGS, DOMAINS } from "@/lib/api";
 
 export default function AdminOverviewPage() {
   return (
@@ -17,7 +17,7 @@ export default function AdminOverviewPage() {
 
       <StatGrid>
         <StatCard label="Total Users" value={240} sub="across all roles" icon={<Users />} />
-        <StatCard label="Domains" value={3} sub="AI · ML · SDSE" icon={<Boxes />} />
+        <StatCard label="Domains" value={DOMAINS.length} sub={DOMAINS.map((d) => d.key).join(" · ")} icon={<Boxes />} />
         <StatCard label="Teams" value={44} sub="pods, groups & squads" icon={<Network />} />
         <StatCard label="Active Integrations" value="3 / 3" sub="GitHub · Discord · Calendar" icon={<Plug />} />
       </StatGrid>

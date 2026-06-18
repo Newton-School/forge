@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Forge — Phase 1 Demo Guide</title>
+<style>
+  :root{
+    --bg:#fafafa;--card:#fff;--fg:#18181b;--mut:#52525b;--sub:#a1a1aa;--border:#e4e4e7;
+    --indigo:#4f46e5;--indigo-bg:#eef2ff;--green:#059669;--green-bg:#ecfdf5;--amber:#d97706;--amber-bg:#fffbeb;
+    --blue:#2563eb;--blue-bg:#eff6ff;--violet:#7c3aed;--violet-bg:#f5f3ff;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--fg);font-size:15px;line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85em;background:#f4f4f5;border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:#be185d}
+  a{color:var(--indigo);text-decoration:none}a:hover{text-decoration:underline}
+  header{background:#fff;border-bottom:1px solid var(--border);padding:34px 0 24px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .logo{width:32px;height:32px;border-radius:8px;background:var(--indigo);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+  h1{font-size:26px;margin:0 0 8px;letter-spacing:-.02em}
+  .lede{color:var(--mut);max-width:780px;margin:0}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 9px;border-radius:999px;background:#f4f4f5;color:var(--mut);border:1px solid var(--border)}
+  .pill.demo{background:var(--amber-bg);color:#92400e;border-color:#fcd34d}
+  section{padding:34px 0;border-bottom:1px solid var(--border)}
+  h2{font-size:19px;margin:0 0 6px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+  h2 .n{width:26px;height:26px;border-radius:7px;background:var(--indigo);color:#fff;font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+  .sub{color:var(--mut);margin:0 0 18px}
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g5{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+  @media(max-width:780px){.g2,.g3{grid-template-columns:1fr}}
+  .cardx{border:1px solid var(--border);border-radius:11px;background:#fff;padding:15px 16px}
+  .cardx h3{margin:0 0 6px;font-size:14px}
+  .cardx p{margin:0;font-size:13px;color:var(--mut);line-height:1.5}
+  .cardx ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--mut);line-height:1.6}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0;background:#fff;border:1px solid var(--border);border-radius:9px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{background:#f8f8f9;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--sub)}
+  tr:last-child td{border-bottom:0}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:0;margin:4px 0}
+  .flow .s{background:#fff;border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:600}
+  .flow .ar{color:var(--sub);padding:0 9px;font-size:14px}
+  .badge{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:5px}
+  .b-ai{background:var(--indigo-bg);color:#3730a3} .b-repo{background:var(--green-bg);color:#065f46}
+  .note{background:var(--blue-bg);border:1px solid #bfdbfe;border-left:3px solid var(--blue);border-radius:8px;padding:11px 14px;font-size:13.5px;color:#1e40af;margin:14px 0}
+  .note.amber{background:var(--amber-bg);border-color:#fcd34d;border-left-color:var(--amber);color:#92400e}
+  footer{padding:28px 0;color:var(--sub);font-size:13px;text-align:center}
+  kbd{font-family:ui-monospace,monospace;font-size:12px;background:#0b0b0f;color:#e7e7ea;border-radius:5px;padding:2px 7px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand"><div class="logo">F</div><strong>Forge</strong><span class="pill">Phase 1 · Demo Guide</span><span class="pill demo">Presentation — mock data</span></div>
+    <h1>Forge — the platform, end to end</h1>
+    <p class="lede">A guided tour of the Profile Building Drive platform built by the <b>Learner Career Council</b> at <b>Newton School of Technology</b>. This is a <b>presentation build</b>: every screen is real, the data is mocked, and you can switch <b>role</b> and <b>domain</b> to see exactly how the platform behaves before any backend is built.</p>
+  </div>
+</header>
+
+<!-- OVERVIEW -->
+<section id="overview"><div class="wrap">
+  <h2><span class="n">1</span> Platform overview</h2>
+  <p class="sub">Forge runs a multi-domain student drive: students build, mentors guide, teachers track, and learning becomes measurable. GitHub is integrated two different ways depending on how a domain actually works.</p>
+  <div class="grid g3">
+    <div class="cardx"><h3>Roles</h3><p>Admin · LCC · Teacher · Mentor · Mentee. (Team Lead is an alias of Mentor.)</p></div>
+    <div class="cardx"><h3>Domains</h3><p>AI · ML · DVA · SDSE — each a cohort with its own teams, mentors and repositories.</p></div>
+    <div class="cardx"><h3>Integrations</h3><p>GitHub, Discord, Google Calendar, Email, and an AI assistant layer.</p></div>
+  </div>
+  <div class="note">Two GitHub modes power the experience: <span class="badge b-ai">Organization</span> for AI, and <span class="badge b-repo">Repository</span> for ML/DVA/SDSE — both feed the <b>same dashboards</b>.</div>
+</div></section>
+
+<!-- HOW TO DEMO -->
+<section id="demo"><div class="wrap">
+  <h2><span class="n">2</span> How to demo (presentation mode)</h2>
+  <p class="sub">In the top bar there are two switchers. Use them to jump across the entire platform instantly.</p>
+  <div class="grid g2">
+    <div class="cardx"><h3>Viewing as <span class="pill">Role</span></h3><p>Switch between Admin, LCC, Teacher, Mentor, <b>Team Lead</b> (opens the Mentor view), and Mentee. Each role's whole sidebar + dashboards change.</p></div>
+    <div class="cardx"><h3>Domain <span class="pill">AI · ML · DVA · SDSE</span></h3><p>Switch the active domain. <b>AI</b> shows the organization-driven GitHub experience; <b>ML/DVA/SDSE</b> show the repository-based experience. The sidebar's GitHub section changes to match.</p></div>
+  </div>
+  <div class="note">Suggested walk: <b>Mentee on AI</b> (org issues → PRs → reviews) → switch domain to <b>ML</b> (repository: collaborators, branches, releases, contributions) → switch to <b>DVA</b> (same, but <b>Issues optional</b> — see the empty state) → switch role to <b>Mentor</b> then <b>Teacher</b>.</div>
+</div></section>
+
+<!-- NAVIGATION -->
+<section id="nav"><div class="wrap">
+  <h2><span class="n">3</span> Navigation &amp; dashboard structure</h2>
+  <p class="sub">Every role has a drive workspace (updates, tasks, deliverables, reviews, milestones). When a domain uses GitHub, a GitHub section is added to the sidebar — org-style for AI, repository-style for the others.</p>
+  <table>
+    <tr><th>Role</th><th>Drive workspace</th><th>GitHub section (AI · org)</th><th>GitHub section (ML/DVA/SDSE · repo)</th></tr>
+    <tr><td><b>Mentee</b></td><td>Dashboard · Tasks · Deliverables · Reviews · Milestones</td><td>My Repository · Issues · My PRs · Analytics · Milestones</td><td>My Repository · Issues* · My PRs · Contribution Analytics · Milestones</td></tr>
+    <tr><td><b>Mentor</b></td><td>Mentees · Reviews · Tasks · Deliverables · Board</td><td>Team Dashboard · Repository · Issues · PRs · Student Performance</td><td>Team Dashboard · Repository · Issues* · Pull Requests · Student Performance</td></tr>
+    <tr><td><b>Teacher</b></td><td>Domain overview · Teams · Reviews · Analytics</td><td>Org Dashboard · Team/Project Comparison · Repos · Mentor &amp; Student analytics</td><td>Repository Analytics · Repositories · Student Contributions</td></tr>
+    <tr><td><b>LCC / Admin</b></td><td>Onboarding · Users · Domains · Email · Analytics</td><td>AI Domain Overview</td><td>Domain Overview (repository-based)</td></tr>
+  </table>
+  <p style="font-size:12.5px;color:var(--mut)">* Issues appear only if the connected repository uses them; otherwise the page explains work is tracked in the drive.</p>
+</div></section>
+
+<!-- AI FLOW -->
+<section id="ai"><div class="wrap">
+  <h2><span class="n">4</span> AI domain — organization flow <span class="badge b-ai">Organization</span></h2>
+  <p class="sub">AI is GitHub-first. A teacher-owned organization is the source of truth and the workflow lives on GitHub.</p>
+  <div class="flow">
+    <span class="s">Organization</span><span class="ar">→</span><span class="s">Teams</span><span class="ar">→</span><span class="s">Repositories</span><span class="ar">→</span><span class="s">Issues</span><span class="ar">→</span><span class="s">Pull Requests</span><span class="ar">→</span><span class="s">Reviews</span><span class="ar">→</span><span class="s">Milestones</span>
+  </div>
+  <p style="font-size:13.5px;color:var(--mut);margin-top:12px">Issues are the unit of work; multiple students may attempt one issue (each a PR); the mentor reviews the PR <b>and evaluates learning</b> (understanding · explanation · technical depth) before merging — which advances the milestone.</p>
+</div></section>
+
+<!-- REPO FLOW -->
+<section id="repo"><div class="wrap">
+  <h2><span class="n">5</span> ML / DVA / SDSE — repository flow <span class="badge b-repo">Repository</span></h2>
+  <p class="sub">These domains have <b>no organization</b>. A Team Lead or Mentor owns one repository and students are collaborators — the repository is the source of truth, and issues are optional.</p>
+  <div class="flow">
+    <span class="s">Repository</span><span class="ar">→</span><span class="s">Collaborators</span><span class="ar">→</span><span class="s">Commits</span><span class="ar">→</span><span class="s">Pull Requests</span><span class="ar">→</span><span class="s">Branches</span><span class="ar">→</span><span class="s">Releases</span><span class="ar">→</span><span class="s">Activity</span>
+  </div>
+  <table style="margin-top:14px">
+    <tr><th>Domain</th><th>Repo owner</th><th>Issues</th><th>Visibility</th><th>What the demo shows</th></tr>
+    <tr><td><span class="badge b-repo">ML</span></td><td>Team Lead</td><td>Yes</td><td>Public</td><td>Issues present + milestones + full contributions</td></tr>
+    <tr><td><span class="badge b-repo">DVA</span></td><td>Mentor</td><td>No</td><td>Public</td><td>"Issues optional" empty state pointing to the drive</td></tr>
+    <tr><td><span class="badge b-repo">SDSE</span></td><td>Mentor</td><td>No</td><td>Private</td><td>Private badge; collaborators, branches, releases</td></tr>
+  </table>
+</div></section>
+
+<!-- INTEGRATION FLOW -->
+<section id="integration"><div class="wrap">
+  <h2><span class="n">6</span> GitHub integration flow</h2>
+  <p class="sub">How each mode connects (the demo simulates this; real sync is a later phase).</p>
+  <div class="grid g2">
+    <div class="cardx"><h3><span class="badge b-ai">Organization</span> AI</h3><ul><li>One org webhook covers every repo</li><li>One read token reads org structure + Teams</li><li>Activity attributed by team (repo) + author (login)</li></ul></div>
+    <div class="cardx"><h3><span class="badge b-repo">Repository</span> ML / DVA / SDSE</h3><ul><li>Mentor/Lead clicks <b>Connect with GitHub</b> + pastes the repo URL</li><li>Server auto-creates the repo webhook (one click)</li><li>Students link their username so contributions attribute</li></ul></div>
+  </div>
+  <div class="note amber">This is a <b>presentation build</b>. No real GitHub sync runs — every dashboard is filled with realistic mock data so the experience and workflows can be reviewed first. The permission analysis for real repository sync is in <code>github-integration-review.md</code>.</div>
+</div></section>
+
+<!-- ROLE EXPERIENCE -->
+<section id="roles"><div class="wrap">
+  <h2><span class="n">7</span> Role-by-role experience</h2>
+  <div class="grid g2">
+    <div class="cardx"><h3>Admin</h3><p>User management, invitations, domains, teams, connections, configuration, audit logs, email testing.</p></div>
+    <div class="cardx"><h3>LCC</h3><p>User onboarding (invite-only), communication/email center, team tracking, domain analytics, drive health.</p></div>
+    <div class="cardx"><h3>Teacher</h3><p>Domain dashboard, team analytics, L4 reviews — plus repository analytics across the domain (org or repo mode).</p></div>
+    <div class="cardx"><h3>Mentor</h3><p>Team dashboard, mentee tracking, L3 reviews, deliverables — plus the team repository: health, contributors, branches, PRs, student performance.</p></div>
+    <div class="cardx"><h3>Mentee</h3><p>My repository, issues (if used), my pull requests, contribution analytics, milestones, daily updates and feedback.</p></div>
+    <div class="cardx"><h3>Team Lead</h3><p>An alias of Mentor — opens the Mentor dashboards. In repository mode a Team Lead may own the repo (shown in the repository view).</p></div>
+  </div>
+</div></section>
+
+<footer class="wrap">Forge · Phase 1 Demo Guide · Learner Career Council &times; Forge · Newton School of Technology · presentation build (mock data)</footer>
+</body>
+</html>

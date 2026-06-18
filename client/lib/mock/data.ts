@@ -29,6 +29,7 @@ export const DOMAINS: MockDomain[] = [
   { id: "d-ai", key: "AI", name: "Artificial Intelligence", teacher: "Bipul Kumar", teams: 18, students: 86, mentors: 18, completion: 72, atRisk: 7 },
   { id: "d-ml", key: "ML", name: "Machine Learning", teacher: "Anita Desai", teams: 12, students: 58, mentors: 12, completion: 64, atRisk: 9 },
   { id: "d-sdse", key: "SDSE", name: "Software Dev & Systems Eng", teacher: "Rahul Verma", teams: 14, students: 96, mentors: 14, completion: 68, atRisk: 11 },
+  { id: "d-dva", key: "DVA", name: "Data Visualisation & Analytics", teacher: "Meera Iyer", teams: 9, students: 47, mentors: 9, completion: 61, atRisk: 6 },
 ];
 
 export const TEAMS: MockTeam[] = [
@@ -39,6 +40,8 @@ export const TEAMS: MockTeam[] = [
   { id: "t-ml-05", name: "ML Squad Gamma", alias: "SQUAD", domainKey: "ML", mentor: "Neha Gupta", teacher: "Anita Desai", squad: "Gamma", members: 5, completion: 70, status: "ON_TRACK" },
   { id: "t-sd-01", name: "Shipyard Team", alias: "TEAM", domainKey: "SDSE", mentor: "Mentor B", teacher: "Rahul Verma", squad: "Alpha", members: 9, completion: 66, status: "ON_TRACK", repo: "nst/shipyard" },
   { id: "t-sd-04", name: "StreamLine Team", alias: "TEAM", domainKey: "SDSE", mentor: "Ishaan Roy", teacher: "Rahul Verma", squad: "Gamma", members: 10, completion: 48, status: "NEEDS_DISCUSSION", repo: "nst/streamline" },
+  { id: "t-dva-01", name: "Insight Squad", alias: "SQUAD", domainKey: "DVA", mentor: "Rohit Sen", teacher: "Meera Iyer", squad: "Alpha", members: 6, completion: 64, status: "ON_TRACK" },
+  { id: "t-dva-03", name: "Dashboard Crew", alias: "SQUAD", domainKey: "DVA", mentor: "Ananya Bose", teacher: "Meera Iyer", squad: "Beta", members: 5, completion: 58, status: "AT_RISK" },
 ];
 
 export const MENTEES: MockMentee[] = [
@@ -110,6 +113,9 @@ export const USERS: MockUser[] = [
   { id: "us8", name: "Arjun Nair", email: "arjun@nst.edu", role: "MENTEE", domainKey: "AI", team: "AI Group 03", squad: "Beta", status: "ACTIVE", lastActive: "2026-06-10" },
   { id: "us9", name: "Kavya Reddy", email: "kavya@nst.edu", role: "MENTEE", domainKey: "ML", team: "ML Squad Beta", squad: "Beta", status: "INVITED" },
   { id: "us10", name: "Rohan Das", email: "rohan@nst.edu", role: "MENTEE", domainKey: "SDSE", team: "StreamLine Team", squad: "Gamma", status: "SUSPENDED", lastActive: "2026-06-05" },
+  { id: "us11", name: "Meera Iyer", email: "meera@nst.edu", role: "TEACHER", domainKey: "DVA", status: "ACTIVE", lastActive: "2026-06-13" },
+  { id: "us12", name: "Rohit Sen", email: "rohit@nst.edu", role: "MENTOR", domainKey: "DVA", team: "Insight Squad", status: "ACTIVE", lastActive: "2026-06-14" },
+  { id: "us13", name: "Lakshmi Menon", email: "lakshmi@nst.edu", role: "MENTEE", domainKey: "DVA", team: "Insight Squad", squad: "Alpha", status: "ACTIVE", lastActive: "2026-06-13" },
 ];
 
 // ── Onboarding invitations (invite-only lifecycle) ───────────────────────────────

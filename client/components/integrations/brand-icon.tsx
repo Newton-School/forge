@@ -4,8 +4,8 @@ const SRC: Record<string, string> = {
   github: "/github.svg",
   discord: "/discord.png",
   calendar: "/google_calendar.png",
-  email: "/email.svg",
-  groq: "/groq.svg",
+  email: "/gmail.webp",
+  groq: "/groq.png",
 };
 
 /** Brand logos served from /public (GitHub, Discord, Google Calendar, Email, Groq). */

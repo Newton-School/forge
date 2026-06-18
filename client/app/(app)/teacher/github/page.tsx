@@ -1,3 +1,5 @@
+import { getActiveDomain } from "@/lib/session";
+import { TeacherRepoHome as RepoView } from "@/components/github/repo/views";
 import Link from "next/link";
 import { GitBranch, Users, GitPullRequest, CircleDot, GitMerge, UsersRound } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -9,7 +11,10 @@ import { RepoCard } from "@/components/github/repo-card";
 import { ActivityFeed } from "@/components/github/activity-feed";
 import { GH_ORG, GH_REPOS, orgAnalytics } from "@/lib/api";
 
-export default function TeacherOrgDashboard() {
+export default async function TeacherOrgDashboard() {
+  const activeDomain = await getActiveDomain();
+  if (activeDomain !== "AI") return <RepoView domain={activeDomain} />;
+
   const a = orgAnalytics();
   return (
     <div className="flex flex-col gap-6">

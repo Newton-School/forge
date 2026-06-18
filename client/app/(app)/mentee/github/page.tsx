@@ -1,3 +1,5 @@
+import { getActiveDomain } from "@/lib/session";
+import { MenteeRepoHome as RepoView } from "@/components/github/repo/views";
 import Link from "next/link";
 import { GitBranch, Target } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -11,7 +13,10 @@ import {
   DEMO, ghTeam, ghRepo, GH_PROJECTS, milestonesForRepo, studentAnalytics, personName,
 } from "@/lib/api";
 
-export default function MenteeRepository() {
+export default async function MenteeRepository() {
+  const activeDomain = await getActiveDomain();
+  if (activeDomain !== "AI") return <RepoView domain={activeDomain} />;
+
   const team = ghTeam(DEMO.teamId)!;
   const repo = ghRepo(team.repoId)!;
   const project = GH_PROJECTS.find((p) => p.teamIds.includes(team.id));

@@ -22,7 +22,7 @@ export function Lifecycle() {
         <SectionHeading
           className="mt-5"
           title="Every contribution travels the same path."
-          lead="From an open issue to a merged milestone, work moves through a real engineering workflow — the same one used in industry. Each stage produces evidence of learning."
+          lead="From an open issue to a merged milestone, work moves through a real engineering workflow, the same one used in industry. Each stage produces evidence of learning."
         />
       </Reveal>
 

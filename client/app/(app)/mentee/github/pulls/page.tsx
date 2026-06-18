@@ -1,9 +1,14 @@
+import { getActiveDomain } from "@/lib/session";
+import { MenteePRs as RepoView } from "@/components/github/repo/views";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { PRList } from "@/components/github/pr-list";
 import { DEMO, GH_PRS, personName } from "@/lib/api";
 
-export default function MenteePulls() {
+export default async function MenteePulls() {
+  const activeDomain = await getActiveDomain();
+  if (activeDomain !== "AI") return <RepoView domain={activeDomain} />;
+
   const mine = GH_PRS.filter((p) => p.authorId === DEMO.menteeId);
   return (
     <div className="flex flex-col gap-6">

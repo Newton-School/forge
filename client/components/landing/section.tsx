@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
-/** Semantic section wrapper — consistent vertical rhythm + max width. */
+/** Semantic section wrapper: consistent vertical rhythm + max width. */
 export function Section({
   id,
   className,

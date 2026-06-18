@@ -26,7 +26,7 @@ export function Cta() {
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-pretty text-base leading-relaxed text-white/70">
               {BRAND.name} is invite-only and signed in with your {BRAND.schoolShort} Google account.
-              Track growth through execution — one connected platform for the whole drive.
+              Track growth through execution, one connected platform for the whole drive.
             </p>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
               <a
