@@ -29,7 +29,9 @@ reviewsRouter.get(
 // ── L2 — mentor dashboard + status ────────────────────────────────────
 reviewsRouter.get(
   "/mentees",
-  requirePermission("mentorStatus:submit"),
+  // Read gate only — Mentor (own teams), Teacher (their domains), Admin/LCC (all) all hold
+  // review:read; the actual visibility is scope-filtered inside mentorDashboard.
+  requirePermission("review:read"),
   asyncHandler(async (req: Request, res: Response) => {
     res.json(await svc.mentorDashboard(req.auth!));
   }),

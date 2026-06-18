@@ -14,7 +14,7 @@ import { CreateUserButton } from "@/components/onboarding/create-user-button";
 import type { BadgeTone } from "@/lib/labels";
 import { ROLE_LABEL } from "@/lib/labels";
 import type { RoleKey } from "@/lib/types";
-import { USERS } from "@/lib/api";
+import { api } from "@/lib/api";
 import { parseDomains, inDomains } from "@/lib/domains";
 import { initials, shortDate } from "@/lib/utils";
 
@@ -31,7 +31,9 @@ export default async function AdminUsersPage({
 }) {
   const sp = await searchParams;
   const selected = parseDomains(sp.domain);
-  const users = USERS.filter((u) => inDomains(u.domainKey, selected));
+  const [allUsers, domains, teams] = await Promise.all([api.users(), api.domains(), api.teams()]);
+  const mentors = allUsers.filter((u) => u.role === "MENTOR");
+  const users = allUsers.filter((u) => inDomains(u.domainKey, selected));
 
   return (
     <div className="flex flex-col gap-6">
@@ -55,7 +57,7 @@ export default async function AdminUsersPage({
                 <Input type="file" accept=".csv" />
               </Field>
             </FormDialog>
-            <CreateUserButton />
+            <CreateUserButton domains={domains} teams={teams} mentors={mentors} />
           </>
         }
       />
@@ -109,7 +111,7 @@ export default async function AdminUsersPage({
                       title="Edit user"
                       submitLabel="Save changes"
                     >
-                      <UserFields user={u} />
+                      <UserFields user={u} domains={domains} teams={teams} mentors={mentors} />
                     </FormDialog>
                   </TableCell>
                 </TableRow>

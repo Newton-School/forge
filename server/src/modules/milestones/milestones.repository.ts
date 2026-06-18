@@ -5,7 +5,13 @@ import type { CreateMilestoneInput } from "./milestones.schema.js";
 /** Data access for milestones. Scope `where` is built by the service. */
 export const milestonesRepo = {
   list: (where: Record<string, unknown>, take: number, skip: number) =>
-    prisma.milestone.findMany({ where, orderBy: { sequence: "asc" }, take, skip }),
+    prisma.milestone.findMany({
+      where,
+      orderBy: { sequence: "asc" },
+      include: { phase: { select: { name: true } } },
+      take,
+      skip,
+    }),
 
   findById: (id: string) =>
     prisma.milestone.findUnique({

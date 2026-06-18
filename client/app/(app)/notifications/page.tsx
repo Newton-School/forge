@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { MarkAllReadButton } from "@/components/notifications/mark-all-read-button";
 import { cn } from "@/lib/utils";
-import { NOTIFICATIONS } from "@/lib/api";
+import { api, type MockNotification } from "@/lib/api";
 
 const DOT: Record<string, string> = {
   info: "bg-info",
@@ -12,7 +12,7 @@ const DOT: Record<string, string> = {
   success: "bg-success",
 };
 
-function NotificationRow({ n }: { n: (typeof NOTIFICATIONS)[number] }) {
+function NotificationRow({ n }: { n: MockNotification }) {
   return (
     <li className={cn("flex items-start gap-3 px-4 py-3", n.unread && "bg-muted/40")}>
       <span className={cn("mt-1.5 size-2 shrink-0 rounded-full", DOT[n.tone])} />
@@ -28,7 +28,8 @@ function NotificationRow({ n }: { n: (typeof NOTIFICATIONS)[number] }) {
   );
 }
 
-export default function NotificationsPage() {
+export default async function NotificationsPage() {
+  const NOTIFICATIONS = await api.notifications();
   const unread = NOTIFICATIONS.filter((n) => n.unread);
   const earlier = NOTIFICATIONS.filter((n) => !n.unread);
 

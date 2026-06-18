@@ -16,6 +16,7 @@ import { DomainSwitcher } from "./domain-switcher";
 import type { DomainKey } from "@/lib/presentation";
 import { RaiseConcernDialog } from "@/components/concerns/raise-concern-dialog";
 import { NOTIFICATIONS } from "@/lib/api";
+import { signOut } from "@/lib/auth-actions";
 
 function Breadcrumbs() {
   const pathname = usePathname();
@@ -127,7 +128,12 @@ export function TopNav({ user, domain, presentation = false }: { user: AuthUser;
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild><Link href="/profile"><User className="size-4" />Profile</Link></DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild><Link href="/login"><LogOut className="size-4" />Sign out</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              {/* Real sign-out: revokes the server session (prod) or clears demo cookies, then → /landing. */}
+              <form action={signOut}>
+                <button type="submit" className="flex w-full items-center gap-2"><LogOut className="size-4" />Sign out</button>
+              </form>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

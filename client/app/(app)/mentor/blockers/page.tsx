@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { TASKS, CONCERNS } from "@/lib/api";
+import { api } from "@/lib/api";
 import { timeAgo, cn } from "@/lib/utils";
 import type { Severity } from "@/lib/types";
 
@@ -42,33 +42,35 @@ interface Row {
   statusNode: React.ReactNode;
 }
 
-const blockedTasks: Row[] = TASKS.filter((t) => t.status === "BLOCKED").map((t) => ({
-  id: t.id,
-  item: t.title,
-  sub: t.project,
-  raisedBy: t.assignee,
-  severity: "HIGH",
-  age: timeAgo(t.due),
-  slaDue: t.due,
-  statusNode: <WorkBadge v={t.status} />,
-}));
+export default async function Blockers() {
+  const [TASKS, CONCERNS] = await Promise.all([api.tasks(), api.concerns()]);
 
-const criticalConcerns: Row[] = CONCERNS
-  .filter((c) => c.severity === "HIGH" || c.severity === "CRITICAL")
-  .map((c) => ({
-    id: c.id,
-    item: c.title,
-    sub: c.ref,
-    raisedBy: c.raisedBy,
-    severity: c.severity,
-    age: timeAgo(c.createdAt),
-    slaDue: c.slaDue,
-    statusNode: <ConcernBadge v={c.status} />,
+  const blockedTasks: Row[] = TASKS.filter((t) => t.status === "BLOCKED").map((t) => ({
+    id: t.id,
+    item: t.title,
+    sub: t.project,
+    raisedBy: t.assignee,
+    severity: "HIGH",
+    age: timeAgo(t.due),
+    slaDue: t.due,
+    statusNode: <WorkBadge v={t.status} />,
   }));
 
-const ROWS = [...blockedTasks, ...criticalConcerns];
+  const criticalConcerns: Row[] = CONCERNS
+    .filter((c) => c.severity === "HIGH" || c.severity === "CRITICAL")
+    .map((c) => ({
+      id: c.id,
+      item: c.title,
+      sub: c.ref,
+      raisedBy: c.raisedBy,
+      severity: c.severity,
+      age: timeAgo(c.createdAt),
+      slaDue: c.slaDue,
+      statusNode: <ConcernBadge v={c.status} />,
+    }));
 
-export default function Blockers() {
+  const ROWS = [...blockedTasks, ...criticalConcerns];
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader

@@ -20,6 +20,16 @@ function updatesScope(ctx: AuthContext): Record<string, unknown> {
   if (s.self) or.push({ userId: ctx.id });
   return or.length ? (or.length === 1 ? or[0]! : { OR: or }) : { id: "__never__" };
 }
+/** Team members visible to the caller: mentor → own teams, teacher → their domains, admin/LCC → all. */
+function menteesScope(ctx: AuthContext): Record<string, unknown> {
+  const s = effectiveScope(ctx);
+  if (s.global) return {};
+  const or: Record<string, unknown>[] = [];
+  if (s.domainIds.length) or.push({ team: { domainId: { in: s.domainIds } } });
+  if (s.teamIds.length) or.push({ teamId: { in: s.teamIds } });
+  if (s.self) or.push({ userId: ctx.id });
+  return or.length ? (or.length === 1 ? or[0]! : { OR: or }) : { id: "__never__" };
+}
 function weeklyScope(ctx: AuthContext): Record<string, unknown> {
   const s = effectiveScope(ctx);
   if (s.global) return {};
@@ -41,7 +51,22 @@ export async function submitUpdate(ctx: AuthContext, input: SubmitUpdateInput, i
 export async function listUpdates(ctx: AuthContext, q: ListUpdatesQuery) {
   const where = { ...updatesScope(ctx), ...(q.menteeId ? { userId: q.menteeId } : {}) };
   const rows = await reviewsRepo.listUpdates(where, q.take, q.skip);
-  return { items: rows };
+  // Display-ready: join the mentee name + their team's domain key + squad name.
+  const items = rows.map((u) => {
+    const membership = u.user.teamMemberships[0];
+    return {
+      id: u.id,
+      date: u.date,
+      mentee: u.user.fullName,
+      domainKey: membership?.team.domain?.key ?? null,
+      squad: membership?.squad?.name ?? null,
+      workedOn: u.workedOn,
+      learning: u.learning,
+      blocker: u.blocker,
+      nextGoal: u.nextGoal,
+    };
+  });
+  return { items };
 }
 
 // ── metrics for one mentee ──────────────────────────────────────────────────
@@ -68,20 +93,42 @@ async function assertMyMentee(ctx: AuthContext, menteeId: string) {
 }
 
 export async function mentorDashboard(ctx: AuthContext) {
-  const mentees = await reviewsRepo.menteesOfMentor(ctx.id);
+  const mentees = await reviewsRepo.menteesInScope(menteesScope(ctx));
+  const statuses = await reviewsRepo.latestStatuses(mentees.map((m) => m.user.id));
   const rows = await Promise.all(
     mentees.map(async (m) => {
       const metrics = await menteeMetrics(m.user.id);
+      const status = statuses.get(m.user.id);
       return {
-        menteeId: m.user.id, name: m.user.fullName, teamId: m.teamId, teamName: m.team.name,
+        menteeId: m.user.id,
+        name: m.user.fullName,
+        teamId: m.teamId,
+        teamName: m.team.name,
+        mentor: m.team.mentor?.fullName ?? null,
+        domainKey: m.team.domain?.key ?? null,
+        squad: m.squad?.name ?? null,
         updatesThisWeek: metrics.updatesThisWeek,
         lastUpdateAt: metrics.lastUpdateAt,
         blockerStreak: metrics.blockerStreak,
         daysSinceUpdate: metrics.daysSinceUpdate,
+        // Explicit mentor-set L2 status wins; otherwise derive from update recency.
+        statusL2: status?.statusL2 ?? deriveStatusL2(metrics),
+        comment: status?.comment ?? null,
+        actionNeeded: status?.actionNeeded ?? null,
+        // Populated by later slices: completion (analytics), githubCommits (GitHub integration).
+        completion: 0,
+        githubCommits: 0,
       };
     }),
   );
   return { items: rows };
+}
+
+/** Auto L2 status from update cadence when the mentor hasn't set one explicitly. */
+function deriveStatusL2(m: { updatesThisWeek: number; daysSinceUpdate: number }): "DOING_WELL" | "NEEDS_CONSISTENCY" | "NO_UPDATES_4PLUS" {
+  if (m.daysSinceUpdate >= 28) return "NO_UPDATES_4PLUS";
+  if (m.updatesThisWeek < 2) return "NEEDS_CONSISTENCY";
+  return "DOING_WELL";
 }
 
 // ── L2: mentor status ───────────────────────────────────────────────────────
@@ -108,7 +155,36 @@ export async function upsertWeekly(ctx: AuthContext, input: WeeklyReviewInput, i
 export async function listWeekly(ctx: AuthContext, q: ListWeeklyQuery) {
   const where = { ...weeklyScope(ctx), ...(q.weekNo ? { weekNo: q.weekNo } : {}) };
   const rows = await reviewsRepo.listWeekly(where, q.take, q.skip);
-  return { items: rows };
+
+  // Resolve the bare id columns to display names/keys in one batched round-trip each.
+  const userIds = [...new Set(rows.flatMap((r) => [r.menteeId, r.mentorId]).filter(Boolean) as string[])];
+  const domainIds = [...new Set(rows.map((r) => r.domainId).filter(Boolean) as string[])];
+  const squadIds = [...new Set(rows.map((r) => r.squadId).filter(Boolean) as string[])];
+  const [users, domains, squads] = await Promise.all([
+    reviewsRepo.userNames(userIds),
+    reviewsRepo.domainKeys(domainIds),
+    reviewsRepo.squadNames(squadIds),
+  ]);
+  const nameOf = new Map(users.map((u) => [u.id, u.fullName]));
+  const keyOf = new Map(domains.map((d) => [d.id, d.key]));
+  const squadOf = new Map(squads.map((s) => [s.id, s.name]));
+
+  const items = rows.map((r) => ({
+    id: r.id,
+    week: r.weekNo,
+    mentee: nameOf.get(r.menteeId) ?? "—",
+    mentor: nameOf.get(r.mentorId) ?? "—",
+    domainKey: r.domainId ? keyOf.get(r.domainId) ?? null : null,
+    squad: r.squadId ? squadOf.get(r.squadId) ?? null : null,
+    progressSummary: r.progressSummary,
+    strength: r.strength,
+    improvementArea: r.improvementArea,
+    autoFlag: r.autoFlag,
+    mentorStatus: r.mentorStatus,
+    teacherDecision: r.teacherDecision,
+    teacherNotes: r.teacherNotes,
+  }));
+  return { items };
 }
 
 // ── L4: teacher decision ────────────────────────────────────────────────────

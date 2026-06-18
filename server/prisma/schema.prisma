@@ -163,6 +163,20 @@ enum CalendarEventType {
   EVENT
 }
 
+// Single-row snapshot of NON-SENSITIVE aggregate metrics shown on the PUBLIC
+// landing page. Recomputed by a secret-gated job; the public read endpoint serves
+// only this row (no live-table access, no PII, no user input) so it can never be a
+// way into the database. Nullable columns => "Coming Soon" until data exists.
+model PlatformStat {
+  id                   String   @id @default("current") // singleton
+  contributionsTracked Int? // commits + PRs + issues + reviews synced
+  prsReviewedPct       Int? // % of PRs that received a review
+  milestonesOnTrackPct Int? // % of milestones progressing / done (not blocked)
+  consistencyLiftPct   Int? // change in update consistency since drive start
+  computedAt           DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
 // ─────────────────── Identity & Access (M1) ───────────────────
 model User {
   id                 String     @id @default(cuid())
@@ -200,6 +214,7 @@ model User {
   demerits         Demerit[]       @relation("DemeritUser")
   auditLogs        AuditLog[]
   notifications    Notification[]
+  ownedRepos       Repository[]    @relation("RepoOwner")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -270,6 +285,15 @@ model Drive {
   createdAt DateTime @default(now())
 }
 
+// How a domain structures its GitHub repositories — drives the team-first, domain-adaptive
+// dashboards. ORG = AI (org + shared team repos); SHARED = DVA/SDSE (one shared team repo);
+// PER_STUDENT = ML (one independent repo per student within a team).
+enum DomainRepoModel {
+  ORG
+  SHARED
+  PER_STUDENT
+}
+
 model Domain {
   id        String  @id @default(cuid())
   driveId   String
@@ -277,6 +301,7 @@ model Domain {
   name      String
   key       String
   active    Boolean @default(true)
+  githubRepoModel DomainRepoModel @default(SHARED)
   governanceProfile Json? // team model, branch policy, default rubric, deliverable types
   // Many-to-many: a domain can have one or more teachers; a teacher can span domains.
   teachers  User[]  @relation("DomainTeachers")
@@ -295,10 +320,12 @@ model Team {
   mentorId        String?
   mentor          User?      @relation("TeamMentor", fields: [mentorId], references: [id])
   githubRepoUrl   String?
+  githubRepoName  String? // display name, e.g. "newton-school-ai/engageiq-ai"
   discordChannelId String?
   members         TeamMember[]
   projects        Project[]
-  repository      Repository? // repository-mode connected repo (ML/DVA/SDSE)
+  // Shared model (DVA/SDSE) → one repo; per-student model (ML) → one repo per student.
+  repositories    Repository[]
 
   @@index([domainId])
 }
@@ -323,9 +350,13 @@ enum RepoCollabRole {
 
 model Repository {
   id            String             @id @default(cuid())
-  teamId        String             @unique
+  teamId        String // a team may own many repos (per-student model) or one (shared)
   team          Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  owner         String // GitHub owner login (team lead or mentor)
+  // The student who owns this repo in the per-student (ML) model; null for a shared team repo.
+  ownerUserId   String?
+  ownerUser     User?              @relation("RepoOwner", fields: [ownerUserId], references: [id])
+  ownerRole     RepoCollabRole     @default(OWNER) // who owns it: team lead, mentor, or student
+  owner         String // GitHub owner login (student, team lead, or mentor)
   name          String
   fullName      String             @unique
   visibility    RepoVisibility     @default(PUBLIC)
@@ -339,6 +370,8 @@ model Repository {
   releases      RepoRelease[]
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
+
+  @@index([teamId])
 }
 
 // Captured at connect time using the OWNER's token (listing collaborators needs write
@@ -556,6 +589,7 @@ model Task {
 
 model Deliverable {
   id            String            @id @default(cuid())
+  name          String? // human title shown in the UI (e.g. "Sprint 2 Demo")
   projectId     String
   project       Project           @relation(fields: [projectId], references: [id])
   milestoneId   String?
@@ -679,6 +713,7 @@ model Evaluation {
 // ─────────────────── Concerns & Demerits (M6) ───────────────────
 model Concern {
   id            String          @id @default(cuid())
+  seq           Int             @default(autoincrement()) // human ticket number → "CON-<seq>"
   raisedById    String
   raisedBy      User            @relation("ConcernRaisedBy", fields: [raisedById], references: [id])
   category      ConcernCategory
@@ -738,6 +773,7 @@ model EmailTemplate {
   variables Json?
   ownerRole RoleKey?
   emails    Email[]
+  updatedAt DateTime @updatedAt
 }
 
 model Email {
@@ -806,6 +842,7 @@ model GithubActivity {
   id         String       @id @default(cuid())
   teamId     String?
   userId     String?
+  repo       String? // source repo full name, e.g. "newton-school-ai/engageiq-ai"
   type       ActivityType
   externalId String       @unique
   title      String?
@@ -815,6 +852,7 @@ model GithubActivity {
   raw        Json?
 
   @@index([teamId, occurredAt])
+  @@index([repo, occurredAt])
 }
 
 model DiscordActivity {

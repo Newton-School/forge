@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DomainFilter } from "@/components/dashboard/domain-filter";
 import { parseDomains, domainName } from "@/lib/domains";
 import { getCurrentUser } from "@/lib/session";
-import { DOMAINS, TEAMS, WEEKLY_REVIEWS } from "@/lib/api";
+import { api } from "@/lib/api";
 
 const gates = [
   { name: "Gate 1 — Proposal", verdict: "Approved", icon: <CircleCheck />, iconClass: "text-success", chipClass: "bg-success-bg text-success" },
@@ -30,9 +30,10 @@ export default async function TeacherDomainOverview({
   const picked = parseDomains(sp.domain);
   const active = picked.length ? picked.filter((d) => myDomains.includes(d)) : myDomains;
 
-  const domains = DOMAINS.filter((d) => active.includes(d.key));
-  const teams = TEAMS.filter((t) => active.includes(t.domainKey));
-  const reviews = WEEKLY_REVIEWS.filter((r) => active.includes(r.domainKey));
+  const [allDomains, allTeams, allReviews] = await Promise.all([api.domains(), api.teams(), api.weeklyReviews()]);
+  const domains = allDomains.filter((d) => active.includes(d.key));
+  const teams = allTeams.filter((t) => active.includes(t.domainKey));
+  const reviews = allReviews.filter((r) => active.includes(r.domainKey));
   const pendingL4 = reviews.filter((r) => r.teacherDecision === null);
 
   const totalTeams = domains.reduce((s, d) => s + d.teams, 0);

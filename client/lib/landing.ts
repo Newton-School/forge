@@ -189,10 +189,10 @@ export const SECURITY = [
 ] as const;
 
 export const ARCHITECTURE = [
-  { layer: "Client", tech: "Next.js", note: "UI only: dashboards, forms, analytics. No secrets, no direct integrations." },
-  { layer: "Server", tech: "Express + TypeScript", note: "All business logic, RBAC, integrations, and webhooks live here." },
-  { layer: "Data", tech: "PostgreSQL + Redis", note: "Prisma-modeled domain data; Redis-backed sessions and cache." },
-  { layer: "Integrations", tech: "GitHub · Discord · Calendar · Email · Forge AI", note: "Server-only service modules, swappable behind interfaces." },
+  { layer: "Experience", tech: "Presentation", note: "Dashboards, forms, and analytics. Holds no secrets and never calls integrations directly." },
+  { layer: "Core", tech: "Logic & control", note: "All business logic, access control, integrations, and webhooks live here." },
+  { layer: "Data", tech: "Secure storage", note: "Durable domain data with fast, secure sessions and caching." },
+  { layer: "Connected systems", tech: "GitHub · Discord · Calendar · Email · Forge AI", note: "Reached only through the core, isolated behind interfaces and swappable." },
 ] as const;
 
 export const NAV_LINKS = [

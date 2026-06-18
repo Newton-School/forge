@@ -2,6 +2,16 @@ import { prisma } from "../../lib/db.js";
 import type { Prisma } from "@prisma/client";
 import type { NormalizedActivity } from "./github.webhook.js";
 
+/** Extract the "owner/repo" display name from a repo URL (or pass-through if it's
+ *  already in owner/repo form). Returns null when it can't be parsed. */
+function repoFullName(s: string): string | null {
+  const u = s.trim();
+  const m = u.match(/github\.com[/:]+([^/\s]+\/[^/\s.]+?)(?:\.git)?\/?$/i);
+  if (m) return m[1]!;
+  if (/^[^/\s]+\/[^/\s]+$/.test(u)) return u;
+  return null;
+}
+
 /** Data access for GitHub activity + identity resolution. */
 export const githubRepo = {
   /** Resolve a GitHub login to a Forge user id (activity attribution). */
@@ -27,9 +37,10 @@ export const githubRepo = {
       where: { externalId: a.externalId },
       create: {
         externalId: a.externalId, type: a.type, title: a.title, state: a.state,
-        url: a.url, occurredAt: a.occurredAt, teamId, userId, raw: { repo: a.repo, login: a.githubLogin } as Prisma.InputJsonValue,
+        url: a.url, occurredAt: a.occurredAt, teamId, userId, repo: a.repo,
+        raw: { repo: a.repo, login: a.githubLogin } as Prisma.InputJsonValue,
       },
-      update: { state: a.state, title: a.title, occurredAt: a.occurredAt, teamId, userId },
+      update: { state: a.state, title: a.title, occurredAt: a.occurredAt, teamId, userId, repo: a.repo },
     }),
 
   /** Team ids belonging to any of the given domains (for domain-scoped reads). */
@@ -40,6 +51,12 @@ export const githubRepo = {
 
   list: (where: Record<string, unknown>, take: number, skip: number) =>
     prisma.githubActivity.findMany({ where, orderBy: { occurredAt: "desc" }, take, skip }),
+
+  /** Display names for the bare userId/teamId columns on activity rows. */
+  userNames: (ids: string[]) =>
+    prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, fullName: true, githubUsername: true } }),
+  teamNames: (ids: string[]) =>
+    prisma.team.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } }),
 
   /** Link a Forge user to their verified GitHub identity (Connect with GitHub). */
   setUserGithub: (userId: string, login: string, githubId: number) =>
@@ -56,9 +73,14 @@ export const githubRepo = {
       select: { id: true, mentorId: true, domainId: true },
     }),
 
-  /** Bind a repo URL to a team (matched later by the webhook's repo full-name). */
+  /** Bind a repo URL to a team (matched later by the webhook's repo full-name).
+   *  Also stores the "owner/repo" display name for dashboards. */
   setTeamRepo: (teamId: string, repoUrl: string) =>
-    prisma.team.update({ where: { id: teamId }, data: { githubRepoUrl: repoUrl }, select: { id: true } }),
+    prisma.team.update({
+      where: { id: teamId },
+      data: { githubRepoUrl: repoUrl, githubRepoName: repoFullName(repoUrl) },
+      select: { id: true },
+    }),
 
   /** The repo URL connected to a team (repository-mode dashboards). */
   teamRepoUrl: async (teamId: string): Promise<string | null> => {

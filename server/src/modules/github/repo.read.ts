@@ -170,8 +170,11 @@ export const repoRead = {
    * gap and saving API calls); commits / PRs / contributors / activity are read live for
    * freshness. Returns null when the team's repo hasn't been synced yet.
    */
-  teamDashboard: async (teamId: string): Promise<RepoDashboardDto | null> => {
-    const stored = await repoStore.byTeam(teamId);
+  teamDashboard: async (teamId: string, repoName?: string): Promise<RepoDashboardDto | null> => {
+    // A specific repo (per-student detail) or the team's primary repo (shared model).
+    const stored = repoName
+      ? await repoStore.repoForTeam(teamId, repoName)
+      : (await repoStore.reposByTeam(teamId))[0] ?? null;
     if (!stored) return null;
     const o = stored.owner, r = stored.name;
     const [repo, contributors, commits, pulls, events, issues, milestones, teamCtx] = await Promise.all([
@@ -218,6 +221,33 @@ export const repoRead = {
       activity: eventsToActivity(events),
       readerAuthed: repoReaderAuthed(),
       team: teamCtx ? { id: teamCtx.id, name: teamCtx.name, domainKey: teamCtx.domain?.key ?? null } : undefined,
+    };
+  },
+
+  /**
+   * Team-first repo list (1 for shared, N for per-student) + the team's repo model.
+   * Backs the team overview + the ML per-student repository grid. Summary only (no live calls).
+   */
+  teamRepos: async (teamId: string) => {
+    const [repos, teamCtx] = await Promise.all([repoStore.reposByTeam(teamId), repoStore.teamContext(teamId)]);
+    return {
+      team: teamCtx ? { id: teamCtx.id, name: teamCtx.name, domainKey: teamCtx.domain?.key ?? null } : undefined,
+      repoModel: teamCtx?.domain?.githubRepoModel ?? "SHARED",
+      repos: repos.map((repo) => ({
+        name: repo.name,
+        fullName: repo.fullName,
+        owner: repo.owner,
+        ownerUserId: repo.ownerUserId,
+        ownerRole: repo.ownerRole === "OWNER" ? "owner" : repo.ownerRole === "MAINTAINER" ? "maintainer" : "collaborator",
+        visibility: repo.visibility === "PRIVATE" ? "private" : "public",
+        description: repo.description,
+        defaultBranch: repo.defaultBranch,
+        hasIssues: repo.hasIssues,
+        branches: repo.branches.length,
+        releases: repo.releases.length,
+        collaborators: repo.collaborators.length,
+        lastSyncedAt: repo.lastSyncedAt,
+      })),
     };
   },
 

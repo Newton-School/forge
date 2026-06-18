@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { BRAND, NAV_LINKS } from "@/lib/landing";
+import { ForgeLogo } from "@/components/brand/forge-logo";
 
 export function MarketingNav() {
   const [scrolled, setScrolled] = useState(false);
@@ -30,9 +31,7 @@ export function MarketingNav() {
           )}
         >
           <Link href="#top" className="flex items-center gap-2.5">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-sm font-bold text-white">
-              F
-            </span>
+            <ForgeLogo src="/logo.png" size={34} className="h-[34px] w-[34px] rounded-lg" priority />
             <span className="flex flex-col leading-none">
               <span className="text-sm font-semibold tracking-tight text-[var(--mkt-ink)]">
                 {BRAND.name}

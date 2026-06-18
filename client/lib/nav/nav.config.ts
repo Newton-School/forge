@@ -187,8 +187,8 @@ export const GITHUB_NAV_REPO: Partial<Record<RoleKey, NavSection[]>> = {
     {
       label: "GitHub",
       items: [
-        { label: "Repository Analytics", href: "/teacher/github", icon: "GitBranch" },
-        { label: "Repositories", href: "/teacher/github/repos", icon: "FolderGit" },
+        { label: "Domain Dashboard", href: "/teacher/github", icon: "LayoutDashboard" },
+        { label: "Teams", href: "/teacher/github/teams", icon: "Users" },
         { label: "Student Contributions", href: "/teacher/github/students", icon: "GraduationCap" },
       ],
     },
@@ -197,7 +197,7 @@ export const GITHUB_NAV_REPO: Partial<Record<RoleKey, NavSection[]>> = {
     {
       label: "GitHub",
       items: [
-        { label: "Team Dashboard", href: "/mentor/github", icon: "LayoutDashboard" },
+        { label: "My Team", href: "/mentor/github", icon: "LayoutDashboard" },
         { label: "Repository", href: "/mentor/github/repo", icon: "GitBranch" },
         { label: "Issues", href: "/mentor/github/issues", icon: "CircleDot" },
         { label: "Pull Requests", href: "/mentor/github/pulls", icon: "GitPullRequest" },
@@ -210,15 +210,14 @@ export const GITHUB_NAV_REPO: Partial<Record<RoleKey, NavSection[]>> = {
       label: "GitHub",
       items: [
         { label: "My Repository", href: "/mentee/github", icon: "GitBranch" },
-        { label: "Issues", href: "/mentee/github/issues", icon: "CircleDot" },
         { label: "My Pull Requests", href: "/mentee/github/pulls", icon: "GitPullRequest" },
         { label: "Contribution Analytics", href: "/mentee/github/analytics", icon: "ChartBar" },
         { label: "Milestones", href: "/mentee/github/milestones", icon: "Flag" },
       ],
     },
   ],
-  LCC: [{ label: "GitHub", items: [{ label: "Domain Overview", href: "/lcc/github", icon: "GitBranch" }] }],
-  ADMIN: [{ label: "GitHub", items: [{ label: "Domain Overview", href: "/admin/github", icon: "GitBranch" }] }],
+  LCC: [{ label: "GitHub", items: [{ label: "Domain Overview", href: "/lcc/github", icon: "LayoutDashboard" }] }],
+  ADMIN: [{ label: "GitHub", items: [{ label: "Domain Overview", href: "/admin/github", icon: "LayoutDashboard" }] }],
 };
 
 /** Landing route per role. */

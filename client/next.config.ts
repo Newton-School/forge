@@ -9,6 +9,17 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
+  /**
+   * Same-origin API proxy. In production the backend (Render) is a different domain, so
+   * proxying `/api/*` through the client makes the session cookie first-party — which is
+   * what lets the server components read it and enforce the auth gate. Set
+   * `API_PROXY_TARGET` to the backend origin (dev: http://localhost:4000). When unset
+   * (pure presentation/mock), no rewrite is added.
+   */
+  async rewrites() {
+    const target = process.env.API_PROXY_TARGET;
+    return target ? [{ source: "/api/:path*", destination: `${target}/api/:path*` }] : [];
+  },
 };
 
 export default nextConfig;

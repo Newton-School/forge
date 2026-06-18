@@ -1,12 +1,12 @@
 import { getActiveDomain } from "@/lib/session";
-import { TeacherRepos as RepoView } from "@/components/github/repo/views";
+import { RepoTeamsList as RepoView } from "@/components/github/repo/views";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { RepoCard } from "@/components/github/repo-card";
 import { GH_REPOS } from "@/lib/api";
 
 export default async function TeacherRepos() {
   const activeDomain = await getActiveDomain();
-  if (activeDomain !== "AI") return <RepoView domain={activeDomain} />;
+  if (activeDomain !== "AI") return <RepoView domain={activeDomain} basePath="/teacher/github" />;
 
   return (
     <div className="flex flex-col gap-6">

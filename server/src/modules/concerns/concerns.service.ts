@@ -36,11 +36,25 @@ export async function listConcerns(ctx: AuthContext, q: ListConcernsQuery) {
     ...(q.domain ? { domainId: q.domain } : {}),
   };
   const [rows, total] = await Promise.all([concernsRepo.list(where, q.take, q.skip), concernsRepo.count(where)]);
+  const domainIds = [...new Set(rows.map((c) => c.domainId).filter(Boolean) as string[])];
+  const keyOf = new Map((await concernsRepo.domainKeys(domainIds)).map((d) => [d.id, d.key]));
   // re-fetch each with events would be N+1; list view omits events
   return {
     items: rows.map((c) => ({
-      id: c.id, title: c.title, category: c.category, severity: c.severity, status: c.status,
-      domainId: c.domainId, teamId: c.teamId, slaDueAt: c.slaDueAt, createdAt: c.createdAt,
+      id: c.id,
+      ref: `CON-${c.seq}`,
+      title: c.title,
+      category: c.category,
+      severity: c.severity,
+      status: c.status,
+      // Anonymous concerns hide the raiser's identity from the list.
+      raisedBy: c.anonymous ? "Anonymous" : c.raisedBy?.fullName ?? "—",
+      raisedByRole: c.anonymous ? null : c.raisedBy?.roles[0]?.role ?? null,
+      assignedTo: c.assignedTo?.fullName ?? null,
+      domainKey: c.domainId ? keyOf.get(c.domainId) ?? null : null,
+      description: c.description,
+      slaDue: c.slaDueAt,
+      createdAt: c.createdAt,
     })),
     total, take: q.take, skip: q.skip,
   };

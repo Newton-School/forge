@@ -7,6 +7,7 @@ import { buildSession } from "./middleware/session.js";
 import { configurePassport } from "./middleware/passport.js";
 import { attachAuth, enforceAbsoluteTimeout, requireAuth } from "./middleware/auth.js";
 import { errorHandler, notFound } from "./middleware/error.js";
+import { isProd } from "./config/env.js";
 import { logger } from "./lib/logger.js";
 import { healthPayload } from "./lib/health.js";
 import { openapiDocument } from "./lib/openapi.js";
@@ -32,6 +33,7 @@ import { discordRouter, discordWebhookRouter } from "./modules/discord/discord.r
 import { calendarRouter } from "./modules/calendar/calendar.routes.js";
 import { assistantRouter } from "./modules/assistant/assistant.routes.js";
 import { jobsRouter } from "./modules/jobs/jobs.routes.js";
+import { publicRouter } from "./modules/public/public.routes.js";
 
 /**
  * Build the Express app. Middleware order matters:
@@ -39,6 +41,11 @@ import { jobsRouter } from "./modules/jobs/jobs.routes.js";
  */
 export function buildApp(): Express {
   const app = express();
+
+  // Behind a TLS-terminating proxy in prod (Render / Cloudflare / ALB): trust the
+  // first hop so `secure` cookies are actually set (req.secure from X-Forwarded-Proto)
+  // and req.ip reflects the real client (correct per-client rate limiting).
+  if (isProd) app.set("trust proxy", 1);
 
   applySecurity(app);
   app.use(pinoHttp({ logger }));
@@ -53,6 +60,9 @@ export function buildApp(): Express {
   app.use("/api/integrations/discord/interactions", discordWebhookRouter);
   // Email open-tracking pixel is public (mail clients fetch it with no cookie).
   app.use("/api/email/track", emailTrackRouter);
+  // Public landing metrics (read-only aggregates) + secret-gated recompute.
+  // Public, no session/CSRF — mounted before the auth stack.
+  app.use("/api/public", publicRouter);
 
   app.use(enforceAbsoluteTimeout); // hard session lifetime cap (beyond the rolling idle window)
   app.use(attachAuth); // loads the fresh AuthContext onto req.auth

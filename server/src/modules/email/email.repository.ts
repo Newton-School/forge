@@ -40,7 +40,7 @@ export const emailRepo = {
     prisma.email.update({ where: { id }, data: { status, sentAt } }),
 
   listTemplates: () =>
-    prisma.emailTemplate.findMany({ select: { id: true, name: true, subject: true, ownerRole: true }, orderBy: { name: "asc" } }),
+    prisma.emailTemplate.findMany({ select: { id: true, name: true, subject: true, ownerRole: true, updatedAt: true }, orderBy: { name: "asc" } }),
 
   createAnnouncement: (authorId: string, data: { title: string; body: string; scopeType: string; scopeId?: string | null; channels: string[] }) =>
     prisma.announcement.create({

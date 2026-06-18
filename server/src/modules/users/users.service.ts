@@ -34,6 +34,7 @@ async function labelsFromGrant(grant: RoleGrant | undefined): Promise<InviteLabe
 
 /** Public shape returned to clients — never leaks password/mfa fields. */
 export function toUserDto(u: NonNullable<UserWithRoles>) {
+  const membership = u.teamMemberships[0];
   return {
     id: u.id,
     email: u.email,
@@ -43,6 +44,9 @@ export function toUserDto(u: NonNullable<UserWithRoles>) {
     githubUsername: u.githubUsername,
     discordUsername: u.discordUsername,
     roles: u.roles.map((r) => ({ role: r.role, scopeType: r.scopeType, scopeId: r.scopeId })),
+    // Display context for the admin/LCC user lists — the member's team and its domain key.
+    domainKey: membership?.team.domain?.key ?? null,
+    teamName: membership?.team.name ?? null,
     lastLoginAt: u.lastLoginAt,
     createdAt: u.createdAt,
   };

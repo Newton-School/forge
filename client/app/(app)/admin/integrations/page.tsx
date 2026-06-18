@@ -8,7 +8,7 @@ import { BrandIcon } from "@/components/integrations/brand-icon";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FormDialog, ConfirmDialog, Field } from "@/components/ui/form-dialog";
 import { Input } from "@/components/ui/input";
-import { TEAMS } from "@/lib/api";
+import { api } from "@/lib/api";
 
 interface Integration {
   key: "github" | "discord" | "calendar";
@@ -51,8 +51,8 @@ const INTEGRATIONS: Integration[] = [
   },
 ];
 
-export default function AdminIntegrationsPage() {
-  const mapped = TEAMS.filter((t) => t.repo);
+export default async function AdminIntegrationsPage() {
+  const mapped = (await api.teams()).filter((t) => t.repo);
 
   return (
     <div className="flex flex-col gap-6">

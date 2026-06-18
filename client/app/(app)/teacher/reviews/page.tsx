@@ -1,6 +1,6 @@
 import { parseDomains } from "@/lib/domains";
 import { getCurrentUser } from "@/lib/session";
-import { WEEKLY_REVIEWS } from "@/lib/api";
+import { api } from "@/lib/api";
 import { ReviewsClient } from "./reviews-client";
 
 export default async function TeacherReviewsPage({
@@ -14,7 +14,7 @@ export default async function TeacherReviewsPage({
   const picked = parseDomains(sp.domain);
   const active = picked.length ? picked.filter((d) => myDomains.includes(d)) : myDomains;
 
-  const reviews = WEEKLY_REVIEWS.filter((r) => active.includes(r.domainKey));
+  const reviews = (await api.weeklyReviews()).filter((r) => active.includes(r.domainKey));
 
   return <ReviewsClient reviews={reviews} domains={myDomains} />;
 }

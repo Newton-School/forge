@@ -1,12 +1,18 @@
 /**
- * Mock GitHub data — REPOSITORY-based mode (presentation).
+ * Mock GitHub data — REPOSITORY-based mode (presentation), TEAM-CENTRIC.
  *
- * ML / DVA / SDSE don't use a GitHub Organization. A Team Lead or Mentor OWNS a single
- * repository and students are COLLABORATORS — the repository is the source of truth.
- * Issues are OPTIONAL here (work flows through tasks/deliverables/milestones); a repo may
- * or may not use them. This file seeds one connected repo per non-AI domain and derives all
- * analytics from base arrays, mirroring the org-mode shapes in `github.ts`. Surfaced via
- * `@/lib/api`. Kept separate from the org model so the two modes never contradict.
+ * The non-AI domains don't use a GitHub Organization, but they are still navigated
+ * team-first: Domain → Team → Repository → Students → Contributions → Progress. The repo
+ * structure is DOMAIN-ADAPTIVE:
+ *   • ML   → PER-STUDENT: each student owns a fully independent repo (own commits / PRs /
+ *            branches / releases). The team is a discussion + grouping layer, not a shared
+ *            codebase. The team view compares the students' independent repos side-by-side.
+ *   • DVA  → SHARED: the team collaborates in one shared repo (data-storytelling / analytics).
+ *   • SDSE → SHARED: the team collaborates in one shared repo (engineering).
+ *   • AI   → org-mode (see github.ts) — untouched here.
+ *
+ * A `RepoConnection` is the repo unit (shared repo, or one per-student repo). Teams group
+ * them with mentor / team-lead / members context. Surfaced via `@/lib/api`.
  */
 
 export type RepoVisibility = "public" | "private";
@@ -80,7 +86,15 @@ export interface MockRepoMilestone {
   state: "open" | "closed";
 }
 
-/** A single connected repository — the unit of GitHub integration for non-AI domains. */
+export interface MockRepoDeliverable {
+  name: string;
+  type: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  submittedBy: string;
+  submittedAt: string;
+}
+
+/** A single repository — the unit of GitHub integration (shared team repo, or a student's repo). */
 export interface RepoConnection {
   domainKey: string;
   team: string;
@@ -102,88 +116,179 @@ export interface RepoConnection {
   releases: MockRepoRelease[];
   issues: MockRepoIssue[]; // empty when !hasIssues
   milestones: MockRepoMilestone[];
+  deliverables: MockRepoDeliverable[];
   /** The mentee-view subject for the demo (a student collaborator's login). */
   demoMentee: string;
 }
 
-// ── ML — Insight Squad · Team-Lead-owned · USES issues ───────────────────────────────
-const ML: RepoConnection = {
-  domainKey: "ML",
-  team: "Insight Squad",
-  repoName: "insight-forecaster",
-  fullName: "rohit-sen/insight-forecaster",
-  description: "Sales forecasting + interactive insight dashboard for the ML drive.",
-  defaultBranch: "main",
-  visibility: "public",
-  topics: ["ml", "forecasting", "streamlit"],
-  createdAt: "2026-05-18",
-  updatedAt: "2026-06-16",
-  ownerLogin: "rohit-sen",
-  ownerRole: "Team Lead",
-  hasIssues: true,
-  collaborators: [
-    { login: "rohit-sen", name: "Rohit Sen", repoRole: "owner", permission: "admin", portalRole: "Team Lead", isStudent: true, color: "#4f46e5" },
-    { login: "neha-g", name: "Neha Gupta", repoRole: "maintainer", permission: "write", portalRole: "Mentor", isStudent: false, color: "#0ea5e9" },
-    { login: "lakshmi-m", name: "Lakshmi Menon", repoRole: "collaborator", permission: "write", portalRole: "Mentee", isStudent: true, color: "#059669" },
-    { login: "rajan-m", name: "Rajan Mehta", repoRole: "collaborator", permission: "write", portalRole: "Mentee", isStudent: true, color: "#d97706" },
-    { login: "divya-r", name: "Divya Rao", repoRole: "collaborator", permission: "write", portalRole: "Mentee", isStudent: true, color: "#db2777" },
-  ],
-  commits: [
-    { sha: "a1f2e30", authorLogin: "rohit-sen", message: "chore: scaffold project + CI", additions: 180, deletions: 0, when: "2026-05-20" },
-    { sha: "b2a3d41", authorLogin: "lakshmi-m", message: "feat: data loader + cleaning", additions: 210, deletions: 14, when: "2026-06-04" },
-    { sha: "c3b4e52", authorLogin: "rajan-m", message: "feat: baseline ARIMA model", additions: 160, deletions: 8, when: "2026-06-09" },
-    { sha: "d4c5f63", authorLogin: "divya-r", message: "feat: streamlit dashboard shell", additions: 140, deletions: 3, when: "2026-06-12" },
-    { sha: "e5d6a74", authorLogin: "lakshmi-m", message: "feat: feature engineering (lags, rolling)", additions: 120, deletions: 22, when: "2026-06-14" },
-    { sha: "f6e7b85", authorLogin: "rohit-sen", message: "refactor: split pipeline into stages", additions: 90, deletions: 60, when: "2026-06-15" },
-    { sha: "a7f8c96", authorLogin: "rajan-m", message: "feat: SHAP explanations panel", additions: 110, deletions: 5, when: "2026-06-16" },
-  ],
-  prs: [
-    { number: 12, authorLogin: "lakshmi-m", title: "Data loader + cleaning pipeline", state: "merged", additions: 210, deletions: 14, commits: 4, reviewers: ["rohit-sen"], reviewState: "approved", createdAt: "2026-06-03", mergedAt: "2026-06-04" },
-    { number: 15, authorLogin: "rajan-m", title: "Baseline ARIMA forecaster", state: "merged", additions: 160, deletions: 8, commits: 3, reviewers: ["neha-g"], reviewState: "approved", createdAt: "2026-06-08", mergedAt: "2026-06-09" },
-    { number: 18, authorLogin: "divya-r", title: "Dashboard shell + layout", state: "open", additions: 140, deletions: 3, commits: 2, reviewers: ["rohit-sen"], reviewState: "pending", createdAt: "2026-06-12" },
-    { number: 21, authorLogin: "rajan-m", title: "SHAP explanations panel", state: "open", additions: 110, deletions: 5, commits: 2, reviewers: ["neha-g"], reviewState: "changes_requested", createdAt: "2026-06-16" },
-  ],
-  branches: [
-    { name: "main", protected: true, ahead: 0, behind: 0, lastCommit: "refactor: split pipeline into stages", author: "rohit-sen", updatedAt: "2026-06-15" },
-    { name: "feat/dashboard", protected: false, ahead: 4, behind: 1, lastCommit: "feat: streamlit dashboard shell", author: "divya-r", updatedAt: "2026-06-12" },
-    { name: "feat/shap", protected: false, ahead: 2, behind: 3, lastCommit: "feat: SHAP explanations panel", author: "rajan-m", updatedAt: "2026-06-16" },
-  ],
-  releases: [
-    { tag: "v0.1.0", name: "M1 — Data Pipeline", publishedAt: "2026-06-05", author: "rohit-sen", notes: "Cleaned dataset + loader; reproducible pipeline." },
-    { tag: "v0.2.0", name: "M2 — Baseline Model", publishedAt: "2026-06-10", author: "rohit-sen", notes: "ARIMA baseline beating the naive forecast." },
-  ],
-  issues: [
-    { number: 22, title: "Add holiday calendar as a feature", state: "open", labels: ["feature", "data"], assignee: "lakshmi-m", createdAt: "2026-06-13" },
-    { number: 23, title: "Dashboard: add date-range filter", state: "open", labels: ["dashboard"], assignee: "divya-r", createdAt: "2026-06-14" },
-    { number: 19, title: "Pipeline fails on missing weeks", state: "closed", labels: ["bug"], assignee: "lakshmi-m", createdAt: "2026-06-06" },
-  ],
-  milestones: [
-    { title: "M1 — Data Pipeline", progress: 100, dueAt: "2026-06-05", state: "closed" },
-    { title: "M2 — Forecast + Dashboard", progress: 62, dueAt: "2026-06-24", state: "open" },
-  ],
-  demoMentee: "lakshmi-m",
-};
+// ─────────────────────── Team-centric layer ───────────────────────
 
-// ── DVA — Dashboard Crew · Mentor-owned · NO issues (drive-tracked) ───────────────────
-const DVA: RepoConnection = {
-  domainKey: "DVA",
-  team: "Dashboard Crew",
-  repoName: "viz-stories",
-  fullName: "ananya-bose/viz-stories",
+/** How a domain structures its repositories. AI is org-mode; non-AI is shared or per-student. */
+export type RepoModel = "org" | "shared" | "per-student";
+
+export function repoModelFor(domainKey: string): RepoModel {
+  if (domainKey === "AI") return "org";
+  if (domainKey === "ML") return "per-student";
+  return "shared"; // DVA, SDSE
+}
+
+export interface TeamPerson {
+  login: string;
+  name: string;
+  role: "Mentor" | "TeamLead" | "Mentee";
+  color: string;
+}
+
+/** A team: mentor + student team-lead + members, and either one shared repo or per-student repos. */
+export interface RepoTeam {
+  id: string;
+  name: string;
+  domainKey: string;
+  repoModel: RepoModel;
+  mentor: TeamPerson;
+  teamLead: TeamPerson;
+  members: TeamPerson[]; // students (includes the team lead)
+  /** Shared model → 1 repo. Per-student model → one independent repo per student. */
+  repos: RepoConnection[];
+}
+
+const PALETTE = ["#4f46e5", "#0ea5e9", "#059669", "#d97706", "#db2777", "#7c3aed", "#0891b2"];
+
+const portalRoleOf = (p: TeamPerson): PortalRole =>
+  p.role === "TeamLead" ? "Team Lead" : p.role === "Mentor" ? "Mentor" : "Mentee";
+
+function collab(p: TeamPerson, repoRole: RepoRole, permission: "admin" | "write" | "read"): MockCollaborator {
+  return { login: p.login, name: p.name, repoRole, permission, portalRole: portalRoleOf(p), isStudent: p.role !== "Mentor", color: p.color };
+}
+
+// ── ML — per-student independent repos ───────────────────────────────────────────────
+/** Build one student's fully independent ML repo (own commits / PRs / branches / releases). */
+function mlStudentRepo(student: TeamPerson, mentor: TeamPerson, teamName: string, i: number): RepoConnection {
+  const d = (day: number) => `2026-06-${String(day).padStart(2, "0")}`;
+  const repoName = `${student.login}-forecast`;
+  const commits: MockRepoCommit[] = [
+    { sha: `${student.login}01`, authorLogin: student.login, message: "chore: scaffold notebook + env", additions: 110 + i * 6, deletions: 0, when: d(2 + i) },
+    { sha: `${student.login}02`, authorLogin: student.login, message: "feat: EDA + data cleaning", additions: 160 + i * 4, deletions: 12, when: d(6 + i) },
+    { sha: `${student.login}03`, authorLogin: student.login, message: "feat: baseline forecaster", additions: 150, deletions: 8, when: d(9 + i) },
+    { sha: `${student.login}04`, authorLogin: student.login, message: "feat: feature engineering", additions: 120, deletions: 20, when: d(12 + (i % 3)) },
+    { sha: `${student.login}05`, authorLogin: student.login, message: "feat: evaluation + plots", additions: 90, deletions: 6, when: d(14 + (i % 2)) },
+  ].slice(0, 4 + (i % 2)); // 4–5 commits, varied per student
+  const prs: MockRepoPR[] = [
+    { number: 3, authorLogin: student.login, title: "Baseline forecaster", state: "merged", additions: 150, deletions: 8, commits: 3, reviewers: [mentor.login], reviewState: "approved", createdAt: d(8 + i), mergedAt: d(9 + i) },
+    { number: 6, authorLogin: student.login, title: "Feature engineering + tuning", state: "open", additions: 120, deletions: 20, commits: 2, reviewers: [mentor.login], reviewState: i % 2 === 0 ? "pending" : "changes_requested", createdAt: d(13 + (i % 3)) },
+  ];
+  const branches: MockRepoBranch[] = [
+    { name: "main", protected: true, ahead: 0, behind: 0, lastCommit: "feat: evaluation + plots", author: student.login, updatedAt: d(14 + (i % 2)) },
+    { name: "feat/tuning", protected: false, ahead: 2 + (i % 2), behind: i % 3, lastCommit: "feat: feature engineering", author: student.login, updatedAt: d(12 + (i % 3)) },
+  ];
+  const releases: MockRepoRelease[] = [
+    { tag: "v0.1.0", name: "M1 — Baseline", publishedAt: d(10 + i), author: student.login, notes: "Baseline forecaster beating the naive model." },
+  ];
+  const milestones: MockRepoMilestone[] = [
+    { title: "M1 — Baseline", progress: 100, dueAt: d(10), state: "closed" },
+    { title: "M2 — Tuned model + report", progress: 45 + i * 12, dueAt: "2026-06-26", state: "open" },
+  ];
+  const deliverables: MockRepoDeliverable[] = [
+    { name: "Baseline notebook", type: "Notebook", status: "APPROVED", submittedBy: student.name, submittedAt: d(10 + i) },
+    { name: "Model report v1", type: "Report", status: i % 2 === 0 ? "PENDING" : "APPROVED", submittedBy: student.name, submittedAt: d(14 + (i % 2)) },
+  ];
+  return {
+    domainKey: "ML",
+    team: teamName,
+    repoName,
+    fullName: `${student.login}/${repoName}`,
+    description: `${student.name.split(" ")[0]}'s individual forecasting project (${teamName}).`,
+    defaultBranch: "main",
+    visibility: "public",
+    topics: ["ml", "forecasting"],
+    createdAt: "2026-05-20",
+    updatedAt: d(14 + (i % 2)),
+    ownerLogin: student.login,
+    ownerRole: "Team Lead",
+    hasIssues: false,
+    collaborators: [collab(student, "owner", "admin"), collab(mentor, "maintainer", "write")],
+    commits,
+    prs,
+    branches,
+    releases,
+    issues: [],
+    milestones,
+    deliverables,
+    demoMentee: student.login,
+  };
+}
+
+function mlTeam(opts: { id: string; name: string; mentor: TeamPerson; lead: TeamPerson; others: TeamPerson[] }): RepoTeam {
+  const members = [opts.lead, ...opts.others];
+  return {
+    id: opts.id,
+    name: opts.name,
+    domainKey: "ML",
+    repoModel: "per-student",
+    mentor: opts.mentor,
+    teamLead: opts.lead,
+    members,
+    repos: members.map((s, i) => mlStudentRepo(s, opts.mentor, opts.name, i)),
+  };
+}
+
+const ML_TEAMS: RepoTeam[] = [
+  mlTeam({
+    id: "ml-insight",
+    name: "Insight Squad",
+    mentor: { login: "neha-g", name: "Neha Gupta", role: "Mentor", color: PALETTE[1]! },
+    lead: { login: "rohit-sen", name: "Rohit Sen", role: "TeamLead", color: PALETTE[0]! },
+    others: [
+      { login: "lakshmi-m", name: "Lakshmi Menon", role: "Mentee", color: PALETTE[2]! },
+      { login: "rajan-m", name: "Rajan Mehta", role: "Mentee", color: PALETTE[3]! },
+      { login: "divya-r", name: "Divya Rao", role: "Mentee", color: PALETTE[4]! },
+    ],
+  }),
+  mlTeam({
+    id: "ml-vision",
+    name: "Vision Pod",
+    mentor: { login: "arvind-k", name: "Arvind Kumar", role: "Mentor", color: PALETTE[5]! },
+    lead: { login: "meera-j", name: "Meera Joshi", role: "TeamLead", color: PALETTE[0]! },
+    others: [
+      { login: "sahil-p", name: "Sahil Patel", role: "Mentee", color: PALETTE[2]! },
+      { login: "ananya-d", name: "Ananya Das", role: "Mentee", color: PALETTE[6]! },
+    ],
+  }),
+];
+
+// ── DVA + SDSE — shared team repos ────────────────────────────────────────────────────
+function sharedTeam(opts: {
+  id: string; domainKey: string; name: string; mentor: TeamPerson; lead: TeamPerson; others: TeamPerson[]; repo: RepoConnection;
+}): RepoTeam {
+  return {
+    id: opts.id,
+    name: opts.name,
+    domainKey: opts.domainKey,
+    repoModel: "shared",
+    mentor: opts.mentor,
+    teamLead: opts.lead,
+    members: [opts.lead, ...opts.others],
+    repos: [opts.repo],
+  };
+}
+
+// DVA team 1 — Dashboard Crew (mentor-owned shared repo, no issues)
+const DVA_PEOPLE = {
+  mentor: { login: "ananya-bose", name: "Ananya Bose", role: "Mentor" as const, color: PALETTE[0]! },
+  lead: { login: "kabir-s", name: "Kabir Singh", role: "TeamLead" as const, color: PALETTE[1]! },
+  ishita: { login: "ishita-b", name: "Ishita Bose", role: "Mentee" as const, color: PALETTE[2]! },
+  tara: { login: "tara-s", name: "Tara Singh", role: "Mentee" as const, color: PALETTE[3]! },
+};
+const DVA_REPO: RepoConnection = {
+  domainKey: "DVA", team: "Dashboard Crew", repoName: "viz-stories", fullName: "ananya-bose/viz-stories",
   description: "Data-storytelling dashboards and visual analytics for the DVA drive.",
-  defaultBranch: "main",
-  visibility: "public",
-  topics: ["d3", "dataviz", "analytics"],
-  createdAt: "2026-05-22",
-  updatedAt: "2026-06-15",
-  ownerLogin: "ananya-bose",
-  ownerRole: "Mentor",
-  hasIssues: false,
+  defaultBranch: "main", visibility: "public", topics: ["d3", "dataviz", "analytics"],
+  createdAt: "2026-05-22", updatedAt: "2026-06-15", ownerLogin: "ananya-bose", ownerRole: "Mentor", hasIssues: false,
   collaborators: [
-    { login: "ananya-bose", name: "Ananya Bose", repoRole: "owner", permission: "admin", portalRole: "Mentor", isStudent: false, color: "#4f46e5" },
-    { login: "kabir-s", name: "Kabir Singh", repoRole: "maintainer", permission: "write", portalRole: "Team Lead", isStudent: true, color: "#0ea5e9" },
-    { login: "ishita-b", name: "Ishita Bose", repoRole: "collaborator", permission: "write", portalRole: "Mentee", isStudent: true, color: "#059669" },
-    { login: "tara-s", name: "Tara Singh", repoRole: "collaborator", permission: "write", portalRole: "Mentee", isStudent: true, color: "#d97706" },
+    collab(DVA_PEOPLE.mentor, "owner", "admin"),
+    collab(DVA_PEOPLE.lead, "maintainer", "write"),
+    collab(DVA_PEOPLE.ishita, "collaborator", "write"),
+    collab(DVA_PEOPLE.tara, "collaborator", "write"),
   ],
   commits: [
     { sha: "11a22b3", authorLogin: "ananya-bose", message: "chore: repo + design tokens", additions: 150, deletions: 0, when: "2026-05-24" },
@@ -202,37 +307,74 @@ const DVA: RepoConnection = {
     { name: "main", protected: true, ahead: 0, behind: 0, lastCommit: "feat: story scrollytelling layout", author: "ishita-b", updatedAt: "2026-06-15" },
     { name: "feat/map", protected: false, ahead: 2, behind: 0, lastCommit: "feat: choropleth map", author: "tara-s", updatedAt: "2026-06-13" },
   ],
-  releases: [
-    { tag: "v0.1.0", name: "Chart toolkit", publishedAt: "2026-06-11", author: "ananya-bose", notes: "Reusable D3 chart components + data adapter." },
-  ],
+  releases: [{ tag: "v0.1.0", name: "Chart toolkit", publishedAt: "2026-06-11", author: "ananya-bose", notes: "Reusable D3 chart components + data adapter." }],
   issues: [],
   milestones: [
     { title: "M1 — Chart Toolkit", progress: 100, dueAt: "2026-06-11", state: "closed" },
     { title: "M2 — Data Story", progress: 45, dueAt: "2026-06-26", state: "open" },
   ],
+  deliverables: [
+    { name: "Chart toolkit", type: "Library", status: "APPROVED", submittedBy: "Kabir Singh", submittedAt: "2026-06-11" },
+    { name: "Data story draft", type: "Dashboard", status: "PENDING", submittedBy: "Ishita Bose", submittedAt: "2026-06-15" },
+  ],
   demoMentee: "ishita-b",
 };
 
-// ── SDSE — Shipyard · Mentor-owned · NO issues ───────────────────────────────────────
-const SDSE: RepoConnection = {
-  domainKey: "SDSE",
-  team: "Shipyard Team",
-  repoName: "shipyard",
-  fullName: "ishaan-roy/shipyard",
-  description: "Internal deployment console for the SDSE drive — services, builds, releases.",
-  defaultBranch: "main",
-  visibility: "public",
-  topics: ["nextjs", "node", "devops"],
-  createdAt: "2026-05-15",
-  updatedAt: "2026-06-16",
-  ownerLogin: "ishaan-roy",
-  ownerRole: "Mentor",
-  hasIssues: false,
+const DVA_REPO2: RepoConnection = {
+  domainKey: "DVA", team: "Signal Studio", repoName: "signal-board", fullName: "meghna-r/signal-board",
+  description: "Real-time signal monitoring dashboards for the DVA drive.",
+  defaultBranch: "main", visibility: "public", topics: ["dataviz", "realtime"],
+  createdAt: "2026-05-25", updatedAt: "2026-06-14", ownerLogin: "meghna-r", ownerRole: "Mentor", hasIssues: false,
   collaborators: [
-    { login: "ishaan-roy", name: "Ishaan Roy", repoRole: "owner", permission: "admin", portalRole: "Mentor", isStudent: false, color: "#4f46e5" },
-    { login: "aniket", name: "Aniket Sharma", repoRole: "maintainer", permission: "write", portalRole: "Team Lead", isStudent: true, color: "#0ea5e9" },
-    { login: "priyak", name: "Priya Kulkarni", repoRole: "collaborator", permission: "write", portalRole: "Mentee", isStudent: true, color: "#059669" },
-    { login: "rohan-d", name: "Rohan Das", repoRole: "collaborator", permission: "read", portalRole: "Mentee", isStudent: true, color: "#d97706" },
+    collab({ login: "meghna-r", name: "Meghna Rao", role: "Mentor", color: PALETTE[0]! }, "owner", "admin"),
+    collab({ login: "dev-k", name: "Dev Kapoor", role: "TeamLead", color: PALETTE[1]! }, "maintainer", "write"),
+    collab({ login: "nisha-v", name: "Nisha Verma", role: "Mentee", color: PALETTE[2]! }, "collaborator", "write"),
+  ],
+  commits: [
+    { sha: "aa11", authorLogin: "dev-k", message: "feat: websocket data feed", additions: 140, deletions: 4, when: "2026-06-06" },
+    { sha: "bb22", authorLogin: "nisha-v", message: "feat: live line chart", additions: 120, deletions: 8, when: "2026-06-12" },
+    { sha: "cc33", authorLogin: "dev-k", message: "feat: alert thresholds", additions: 90, deletions: 10, when: "2026-06-14" },
+  ],
+  prs: [
+    { number: 5, authorLogin: "dev-k", title: "Websocket data feed", state: "merged", additions: 140, deletions: 4, commits: 3, reviewers: ["meghna-r"], reviewState: "approved", createdAt: "2026-06-05", mergedAt: "2026-06-06" },
+    { number: 9, authorLogin: "nisha-v", title: "Live line chart", state: "open", additions: 120, deletions: 8, commits: 2, reviewers: ["meghna-r"], reviewState: "pending", createdAt: "2026-06-12" },
+  ],
+  branches: [{ name: "main", protected: true, ahead: 0, behind: 0, lastCommit: "feat: alert thresholds", author: "dev-k", updatedAt: "2026-06-14" }],
+  releases: [],
+  issues: [],
+  milestones: [{ title: "M1 — Live feed", progress: 70, dueAt: "2026-06-22", state: "open" }],
+  deliverables: [{ name: "Live dashboard demo", type: "Dashboard", status: "PENDING", submittedBy: "Dev Kapoor", submittedAt: "2026-06-14" }],
+  demoMentee: "nisha-v",
+};
+
+const DVA_TEAMS: RepoTeam[] = [
+  sharedTeam({ id: "dva-crew", domainKey: "DVA", name: "Dashboard Crew", mentor: DVA_PEOPLE.mentor, lead: DVA_PEOPLE.lead, others: [DVA_PEOPLE.ishita, DVA_PEOPLE.tara], repo: DVA_REPO }),
+  sharedTeam({
+    id: "dva-signal", domainKey: "DVA", name: "Signal Studio",
+    mentor: { login: "meghna-r", name: "Meghna Rao", role: "Mentor", color: PALETTE[0]! },
+    lead: { login: "dev-k", name: "Dev Kapoor", role: "TeamLead", color: PALETTE[1]! },
+    others: [{ login: "nisha-v", name: "Nisha Verma", role: "Mentee", color: PALETTE[2]! }],
+    repo: DVA_REPO2,
+  }),
+];
+
+// SDSE team 1 — Shipyard (mentor-owned shared repo)
+const SDSE_PEOPLE = {
+  mentor: { login: "ishaan-roy", name: "Ishaan Roy", role: "Mentor" as const, color: PALETTE[0]! },
+  lead: { login: "aniket", name: "Aniket Sharma", role: "TeamLead" as const, color: PALETTE[1]! },
+  priya: { login: "priyak", name: "Priya Kulkarni", role: "Mentee" as const, color: PALETTE[2]! },
+  rohan: { login: "rohan-d", name: "Rohan Das", role: "Mentee" as const, color: PALETTE[3]! },
+};
+const SDSE_REPO: RepoConnection = {
+  domainKey: "SDSE", team: "Shipyard Team", repoName: "shipyard", fullName: "ishaan-roy/shipyard",
+  description: "Internal deployment console for the SDSE drive — services, builds, releases.",
+  defaultBranch: "main", visibility: "public", topics: ["nextjs", "node", "devops"],
+  createdAt: "2026-05-15", updatedAt: "2026-06-16", ownerLogin: "ishaan-roy", ownerRole: "Mentor", hasIssues: false,
+  collaborators: [
+    collab(SDSE_PEOPLE.mentor, "owner", "admin"),
+    collab(SDSE_PEOPLE.lead, "maintainer", "write"),
+    collab(SDSE_PEOPLE.priya, "collaborator", "write"),
+    collab(SDSE_PEOPLE.rohan, "collaborator", "read"),
   ],
   commits: [
     { sha: "90aa11b", authorLogin: "ishaan-roy", message: "chore: monorepo + lint/test CI", additions: 220, deletions: 0, when: "2026-05-18" },
@@ -259,18 +401,233 @@ const SDSE: RepoConnection = {
     { title: "M1 — Registry + Board", progress: 100, dueAt: "2026-06-12", state: "closed" },
     { title: "M2 — Releases + Rollback", progress: 40, dueAt: "2026-06-27", state: "open" },
   ],
+  deliverables: [
+    { name: "Service registry", type: "Service", status: "APPROVED", submittedBy: "Aniket Sharma", submittedAt: "2026-06-07" },
+    { name: "Rollback runbook", type: "Doc", status: "PENDING", submittedBy: "Aniket Sharma", submittedAt: "2026-06-15" },
+  ],
   demoMentee: "priyak",
 };
 
-export const REPO_CONNECTIONS: Record<string, RepoConnection> = { ML, DVA, SDSE };
+const SDSE_REPO2: RepoConnection = {
+  domainKey: "SDSE", team: "Platform Pod", repoName: "gatewayx", fullName: "vikram-n/gatewayx",
+  description: "API gateway + auth service for the SDSE drive.",
+  defaultBranch: "main", visibility: "public", topics: ["go", "gateway", "auth"],
+  createdAt: "2026-05-19", updatedAt: "2026-06-15", ownerLogin: "vikram-n", ownerRole: "Mentor", hasIssues: false,
+  collaborators: [
+    collab({ login: "vikram-n", name: "Vikram Nair", role: "Mentor", color: PALETTE[0]! }, "owner", "admin"),
+    collab({ login: "zoya-h", name: "Zoya Hassan", role: "TeamLead", color: PALETTE[1]! }, "maintainer", "write"),
+    collab({ login: "arnav-t", name: "Arnav Trivedi", role: "Mentee", color: PALETTE[2]! }, "collaborator", "write"),
+  ],
+  commits: [
+    { sha: "dd11", authorLogin: "zoya-h", message: "feat: gateway routing", additions: 200, deletions: 5, when: "2026-06-07" },
+    { sha: "ee22", authorLogin: "arnav-t", message: "feat: JWT auth middleware", additions: 150, deletions: 12, when: "2026-06-13" },
+  ],
+  prs: [
+    { number: 4, authorLogin: "zoya-h", title: "Gateway routing", state: "merged", additions: 200, deletions: 5, commits: 4, reviewers: ["vikram-n"], reviewState: "approved", createdAt: "2026-06-06", mergedAt: "2026-06-07" },
+    { number: 7, authorLogin: "arnav-t", title: "JWT auth middleware", state: "open", additions: 150, deletions: 12, commits: 2, reviewers: ["vikram-n"], reviewState: "pending", createdAt: "2026-06-13" },
+  ],
+  branches: [{ name: "main", protected: true, ahead: 0, behind: 0, lastCommit: "feat: JWT auth middleware", author: "arnav-t", updatedAt: "2026-06-15" }],
+  releases: [{ tag: "v0.1.0", name: "Gateway routing", publishedAt: "2026-06-08", author: "vikram-n", notes: "Routing + health checks." }],
+  issues: [],
+  milestones: [{ title: "M1 — Gateway + Auth", progress: 60, dueAt: "2026-06-24", state: "open" }],
+  deliverables: [{ name: "Gateway service", type: "Service", status: "APPROVED", submittedBy: "Zoya Hassan", submittedAt: "2026-06-08" }],
+  demoMentee: "arnav-t",
+};
 
-/** The connected repo for a domain (undefined for AI, which is org-driven). */
+const SDSE_TEAMS: RepoTeam[] = [
+  sharedTeam({ id: "sdse-shipyard", domainKey: "SDSE", name: "Shipyard Team", mentor: SDSE_PEOPLE.mentor, lead: SDSE_PEOPLE.lead, others: [SDSE_PEOPLE.priya, SDSE_PEOPLE.rohan], repo: SDSE_REPO }),
+  sharedTeam({
+    id: "sdse-platform", domainKey: "SDSE", name: "Platform Pod",
+    mentor: { login: "vikram-n", name: "Vikram Nair", role: "Mentor", color: PALETTE[0]! },
+    lead: { login: "zoya-h", name: "Zoya Hassan", role: "TeamLead", color: PALETTE[1]! },
+    others: [{ login: "arnav-t", name: "Arnav Trivedi", role: "Mentee", color: PALETTE[2]! }],
+    repo: SDSE_REPO2,
+  }),
+];
+
+const TEAMS_BY_DOMAIN: Record<string, RepoTeam[]> = { ML: ML_TEAMS, DVA: DVA_TEAMS, SDSE: SDSE_TEAMS };
+const ALL_TEAMS: RepoTeam[] = [...ML_TEAMS, ...DVA_TEAMS, ...SDSE_TEAMS];
+
+// ─────────────────────── Team-first selectors ───────────────────────
+
+/** Teams for a non-AI domain (empty for AI / unknown). */
+export function teamsForDomain(domainKey: string): RepoTeam[] {
+  return TEAMS_BY_DOMAIN[domainKey] ?? [];
+}
+
+export function teamById(id: string): RepoTeam | undefined {
+  return ALL_TEAMS.find((t) => t.id === id);
+}
+
+export function allRepoTeams(): RepoTeam[] {
+  return ALL_TEAMS;
+}
+
+/** Every repo for a team (1 for shared, N for per-student). */
+export function teamReposOf(team: RepoTeam): RepoConnection[] {
+  return team.repos;
+}
+
+/** A student's own repo within a per-student team. */
+export function repoOfStudent(team: RepoTeam, login: string): RepoConnection | undefined {
+  return team.repos.find((r) => r.ownerLogin === login);
+}
+
+/** Find a repo (by name) within a team — used by the repository detail route. */
+export function teamRepoByName(team: RepoTeam, repoName: string): RepoConnection | undefined {
+  return team.repos.find((r) => r.repoName === repoName);
+}
+
+/** A team's primary repo (shared repo, or the team-lead's repo for per-student). */
+export function primaryRepoOf(team: RepoTeam): RepoConnection {
+  return team.repos.find((r) => r.ownerLogin === team.teamLead.login) ?? team.repos[0]!;
+}
+
+export interface TeamRollup {
+  team: RepoTeam;
+  repos: number;
+  commits: number;
+  prs: number;
+  mergedPrs: number;
+  openPrs: number;
+  members: number;
+  milestoneProgress: number; // avg across repos' open milestones
+  lastActive: string;
+}
+
+function avg(ns: number[]): number {
+  return ns.length ? Math.round(ns.reduce((a, b) => a + b, 0) / ns.length) : 0;
+}
+
+/** Headline rollup for one team (aggregated across its repo(s)). */
+export function teamRollup(team: RepoTeam): TeamRollup {
+  const repos = team.repos;
+  const commits = repos.reduce((s, r) => s + r.commits.length, 0);
+  const prs = repos.flatMap((r) => r.prs);
+  const dates = repos.flatMap((r) => r.commits.map((c) => c.when)).sort();
+  const progresses = repos.flatMap((r) => r.milestones).map((m) => m.progress);
+  return {
+    team,
+    repos: repos.length,
+    commits,
+    prs: prs.length,
+    mergedPrs: prs.filter((p) => p.state === "merged").length,
+    openPrs: prs.filter((p) => p.state === "open").length,
+    members: team.members.length,
+    milestoneProgress: avg(progresses),
+    lastActive: dates.length ? dates[dates.length - 1]! : "—",
+  };
+}
+
+/** Teacher rollup — every team in a domain with headline stats. */
+export function domainTeamRollup(domainKey: string): TeamRollup[] {
+  return teamsForDomain(domainKey).map(teamRollup);
+}
+
+/**
+ * DB-available team summary (repos / members / branches / releases / collaborators) — the
+ * metrics shown at the grid + overview level. Works identically for mock (full data) and
+ * production (count-only summaries), where commits/PRs load lazily at the repo detail.
+ */
+export function teamSummary(team: RepoTeam) {
+  const repos = team.repos;
+  return {
+    repos: repos.length,
+    members: team.members.length,
+    branches: repos.reduce((s, r) => s + r.branches.length, 0),
+    releases: repos.reduce((s, r) => s + r.releases.length, 0),
+    collaborators: repos.reduce((s, r) => s + r.collaborators.length, 0),
+  };
+}
+
+/** Per-student repo summary within a per-student team (DB-available: branches/releases). */
+export function teamStudentRepoSummaries(team: RepoTeam) {
+  return team.members.map((person) => {
+    const repo = repoOfStudent(team, person.login);
+    return {
+      person,
+      repoName: repo?.repoName ?? "—",
+      branches: repo?.branches.length ?? 0,
+      releases: repo?.releases.length ?? 0,
+      visibility: repo?.visibility ?? "public",
+    };
+  });
+}
+
+/** Merged, newest-first activity across a team's repo(s). */
+export function teamActivity(team: RepoTeam, limit = 12): RepoActivityItem[] {
+  return team.repos
+    .flatMap((r) => repoActivity(r, limit))
+    .sort((a, b) => (a.when < b.when ? 1 : -1))
+    .slice(0, limit);
+}
+
+/** Per-student contribution summary within a team (their own repo for ML, their slice for shared). */
+export interface StudentContribution {
+  person: TeamPerson;
+  repoName: string;
+  commits: number;
+  prs: number;
+  mergedPrs: number;
+  openPrs: number;
+  additions: number;
+  deletions: number;
+  milestoneProgress: number;
+  lastActive: string;
+}
+
+export function teamStudentContributions(team: RepoTeam): StudentContribution[] {
+  const students = team.members; // mentees + team lead
+  if (team.repoModel === "per-student") {
+    return students.map((p) => {
+      const repo = repoOfStudent(team, p.login);
+      const s = repo ? repoStats(repo) : undefined;
+      const dates = repo ? repo.commits.map((c) => c.when).sort() : [];
+      return {
+        person: p,
+        repoName: repo?.repoName ?? "—",
+        commits: s?.commits ?? 0,
+        prs: s?.prs ?? 0,
+        mergedPrs: s?.mergedPrs ?? 0,
+        openPrs: s?.openPrs ?? 0,
+        additions: s?.additions ?? 0,
+        deletions: s?.deletions ?? 0,
+        milestoneProgress: repo ? avg(repo.milestones.map((m) => m.progress)) : 0,
+        lastActive: dates.length ? dates[dates.length - 1]! : "—",
+      };
+    });
+  }
+  // shared repo: each student's slice of the one repo
+  const repo = primaryRepoOf(team);
+  return students.map((p) => {
+    const cs = contributorStat(repo, p.login);
+    return {
+      person: p,
+      repoName: repo.repoName,
+      commits: cs?.commits ?? 0,
+      prs: cs?.prs ?? 0,
+      mergedPrs: cs?.mergedPrs ?? 0,
+      openPrs: cs?.openPrs ?? 0,
+      additions: cs?.additions ?? 0,
+      deletions: cs?.deletions ?? 0,
+      milestoneProgress: avg(repo.milestones.map((m) => m.progress)),
+      lastActive: cs?.lastActive ?? "—",
+    };
+  });
+}
+
+// ─────────────────────── Repo-level selectors (reused by blocks/views) ───────────────────────
+
+export const REPO_CONNECTIONS: Record<string, RepoConnection> = { ML: primaryRepoOf(ML_TEAMS[0]!), DVA: DVA_REPO, SDSE: SDSE_REPO };
+
+/** Legacy shim: a representative repo for a domain (the first team's primary repo). */
 export function repoConnectionFor(domainKey: string): RepoConnection | undefined {
-  return REPO_CONNECTIONS[domainKey];
+  const teams = teamsForDomain(domainKey);
+  return teams.length ? primaryRepoOf(teams[0]!) : undefined;
 }
 
 export function allRepoConnections(): RepoConnection[] {
-  return Object.values(REPO_CONNECTIONS);
+  return ALL_TEAMS.flatMap((t) => t.repos);
 }
 
 export interface RepoStats {
@@ -373,7 +730,7 @@ export function repoActivity(conn: RepoConnection, limit = 12): RepoActivityItem
   return items.sort((a, b) => (a.when < b.when ? 1 : -1)).slice(0, limit);
 }
 
-/** Teacher rollup — every non-AI domain repo with its headline stats. */
+/** Teacher rollup — every non-AI domain repo with its headline stats (legacy, kept for compat). */
 export function domainRepoAnalytics(): { conn: RepoConnection; stats: RepoStats }[] {
   return allRepoConnections().map((conn) => ({ conn, stats: repoStats(conn) }));
 }
@@ -392,7 +749,6 @@ export interface RepoDashboardDto {
   team?: { id: string; name: string; domainKey: string | null };
 }
 
-const PALETTE = ["#4f46e5", "#0ea5e9", "#059669", "#d97706", "#db2777", "#7c3aed"];
 const portalFromRepoRole = (r: RepoRole): PortalRole => (r === "collaborator" ? "Mentee" : "Mentor");
 
 /**
@@ -428,6 +784,7 @@ export function dashboardDtoToConnection(dto: RepoDashboardDto, opts: { domain: 
     releases: dto.releases.map((r) => ({ tag: r.tag, name: r.name, publishedAt: r.publishedAt, author: r.author ?? "", notes: r.notes })),
     issues: dto.issues.map((i) => ({ number: i.number, title: i.title, state: i.state, labels: i.labels, assignee: i.assignee ?? undefined, createdAt: i.createdAt })),
     milestones: dto.milestones,
+    deliverables: [],
     demoMentee: opts.selfLogin ?? dto.collaborators.find((c) => c.repoRole === "collaborator")?.login ?? "",
   };
 }

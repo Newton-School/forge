@@ -7,10 +7,10 @@ import { FormDialog, Field } from "@/components/ui/form-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { submit, MENTEES } from "@/lib/api";
+import { submit, type MockMentee } from "@/lib/api";
 
 /** Admin/LCC "Issue demerit" → POST /demerits. Presentation-safe via `submit`. */
-export function IssueDemeritDialog() {
+export function IssueDemeritDialog({ users }: { users: MockMentee[] }) {
   const router = useRouter();
 
   async function issue(data: FormData) {
@@ -35,7 +35,7 @@ export function IssueDemeritDialog() {
         <Select name="userId">
           <SelectTrigger id="dem-user"><SelectValue placeholder="Select user" /></SelectTrigger>
           <SelectContent>
-            {MENTEES.map((m) => (
+            {users.map((m) => (
               <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
             ))}
           </SelectContent>

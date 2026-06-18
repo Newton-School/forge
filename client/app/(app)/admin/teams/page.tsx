@@ -4,7 +4,7 @@ import { SectionCard } from "@/components/dashboard/section-card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TeamDialog } from "@/components/org/team-dialog";
-import { TEAMS } from "@/lib/api";
+import { api } from "@/lib/api";
 import { parseDomains, inDomains } from "@/lib/domains";
 
 export default async function AdminTeamsPage({
@@ -14,7 +14,9 @@ export default async function AdminTeamsPage({
 }) {
   const sp = await searchParams;
   const selected = parseDomains(sp.domain);
-  const teams = TEAMS.filter((t) => inDomains(t.domainKey, selected));
+  const [allTeams, domains, allUsers] = await Promise.all([api.teams(), api.domains(), api.users()]);
+  const mentors = allUsers.filter((u) => u.role === "MENTOR");
+  const teams = allTeams.filter((t) => inDomains(t.domainKey, selected));
 
   return (
     <div className="flex flex-col gap-6">
@@ -24,7 +26,7 @@ export default async function AdminTeamsPage({
         actions={
           <>
             <DomainFilter />
-            <TeamDialog />
+            <TeamDialog domains={domains} mentors={mentors} />
           </>
         }
       />
@@ -54,7 +56,7 @@ export default async function AdminTeamsPage({
                 <TableCell className="text-muted-foreground">{t.mentor}</TableCell>
                 <TableCell className="text-right tabular-nums">{t.members}</TableCell>
                 <TableCell className="pr-4 text-right">
-                  <TeamDialog team={t} />
+                  <TeamDialog team={t} domains={domains} mentors={mentors} />
                 </TableCell>
               </TableRow>
             ))}

@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { DomainFilter } from "@/components/dashboard/domain-filter";
 import { parseDomains, inDomains } from "@/lib/domains";
-import { TEAMS } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export default async function TeamsPage({
   searchParams,
@@ -15,7 +15,7 @@ export default async function TeamsPage({
 }) {
   const sp = await searchParams;
   const selected = parseDomains(sp.domain);
-  const teams = TEAMS.filter((t) => inDomains(t.domainKey, selected));
+  const teams = (await api.teams()).filter((t) => inDomains(t.domainKey, selected));
 
   return (
     <div className="flex flex-col gap-6">

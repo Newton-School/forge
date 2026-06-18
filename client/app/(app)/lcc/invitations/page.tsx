@@ -1,6 +1,10 @@
 import { InvitationsView } from "@/components/onboarding/invitations-view";
-import { INVITATIONS } from "@/lib/api";
+import { api } from "@/lib/api";
 
-export default function LccInvitationsPage() {
-  return <InvitationsView invitations={INVITATIONS} />;
+export default async function LccInvitationsPage() {
+  const [invitations, domains, teams, allUsers] = await Promise.all([
+    api.invitations(), api.domains(), api.teams(), api.users(),
+  ]);
+  const mentors = allUsers.filter((u) => u.role === "MENTOR");
+  return <InvitationsView invitations={invitations} domains={domains} teams={teams} mentors={mentors} />;
 }

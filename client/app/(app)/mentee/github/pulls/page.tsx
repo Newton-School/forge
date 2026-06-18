@@ -1,5 +1,5 @@
 import { getActiveDomain } from "@/lib/session";
-import { MenteePRs as RepoView } from "@/components/github/repo/views";
+import { MenteePRsView as RepoView } from "@/components/github/repo/views";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { PRList } from "@/components/github/pr-list";

@@ -8,9 +8,14 @@ export const deliverablesRepo = {
     prisma.deliverable.findMany({
       where,
       orderBy: { submittedAt: "desc" },
+      include: { type: { select: { name: true } }, project: { select: { name: true } } },
       take,
       skip,
     }),
+
+  /** Resolve display names for the submittedBy id column (no Prisma relation on it). */
+  userNames: (ids: string[]) =>
+    prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, fullName: true } }),
 
   findById: (id: string) =>
     prisma.deliverable.findUnique({
@@ -28,6 +33,7 @@ export const deliverablesRepo = {
     prisma.deliverable.create({
       data: {
         projectId: input.projectId,
+        name: input.name ?? null,
         milestoneId: input.milestoneId ?? null,
         typeId: input.typeId ?? null,
         artifactUrl: input.artifactUrl,

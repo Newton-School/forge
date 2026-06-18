@@ -1,5 +1,5 @@
 import { getActiveDomain } from "@/lib/session";
-import { MenteeRepoHome as RepoView } from "@/components/github/repo/views";
+import { MenteeRepoView as RepoView } from "@/components/github/repo/views";
 import Link from "next/link";
 import { GitBranch, Target } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";

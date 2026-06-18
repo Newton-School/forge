@@ -3,7 +3,15 @@ import { Badge } from "@/components/ui/badge";
 import { ghTeam, type StudentAnalytics } from "@/lib/api";
 
 /** Student contribution table — GitHub throughput + learning-eval averages. */
-export function StudentTable({ students, showTeam = true }: { students: StudentAnalytics[]; showTeam?: boolean }) {
+export function StudentTable({
+  students,
+  showTeam = true,
+  showRepo = showTeam,
+}: {
+  students: StudentAnalytics[];
+  showTeam?: boolean;
+  showRepo?: boolean;
+}) {
   const rate = (v: number): "success" | "warning" | "danger" => (v >= 67 ? "success" : v >= 34 ? "warning" : "danger");
   return (
     <Table>
@@ -11,6 +19,7 @@ export function StudentTable({ students, showTeam = true }: { students: StudentA
         <TableRow>
           <TableHead>Student</TableHead>
           {showTeam ? <TableHead>Team</TableHead> : null}
+          {showRepo ? <TableHead>Repo</TableHead> : null}
           <TableHead className="text-right">Attempted</TableHead>
           <TableHead className="text-right">Solved</TableHead>
           <TableHead className="text-right">PRs</TableHead>
@@ -25,6 +34,7 @@ export function StudentTable({ students, showTeam = true }: { students: StudentA
           <TableRow key={s.userId}>
             <TableCell className="font-medium">{s.name} <span className="font-mono text-[11px] text-subtle-foreground">@{s.login}</span></TableCell>
             {showTeam ? <TableCell className="text-muted-foreground">{ghTeam(s.teamId)?.name ?? "—"}</TableCell> : null}
+            {showRepo ? <TableCell className="font-mono text-[12px] text-muted-foreground">{s.repoName || "—"}</TableCell> : null}
             <TableCell className="text-right tabular-nums">{s.issuesAttempted}</TableCell>
             <TableCell className="text-right tabular-nums">{s.issuesSolved}</TableCell>
             <TableCell className="text-right tabular-nums">{s.prsRaised}</TableCell>

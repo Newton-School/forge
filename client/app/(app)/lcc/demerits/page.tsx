@@ -6,7 +6,7 @@ import { DomainFilter } from "@/components/dashboard/domain-filter";
 import { IssueDemeritDialog } from "@/components/demerits/issue-demerit-dialog";
 import { EditDemeritDialog } from "@/components/demerits/edit-demerit-dialog";
 import { parseDomains, inDomains } from "@/lib/domains";
-import { DEMERITS } from "@/lib/api";
+import { api } from "@/lib/api";
 import { shortDate } from "@/lib/utils";
 
 export default async function DemeritsPage({
@@ -16,7 +16,8 @@ export default async function DemeritsPage({
 }) {
   const sp = await searchParams;
   const selected = parseDomains(sp.domain);
-  const demerits = DEMERITS.filter((d) => inDomains(d.domainKey, selected));
+  const [allDemerits, mentees] = await Promise.all([api.demerits(), api.mentees()]);
+  const demerits = allDemerits.filter((d) => inDomains(d.domainKey, selected));
 
   return (
     <div className="flex flex-col gap-6">
@@ -26,7 +27,7 @@ export default async function DemeritsPage({
         actions={
           <div className="flex items-center gap-2">
             <DomainFilter />
-            <IssueDemeritDialog />
+            <IssueDemeritDialog users={mentees} />
           </div>
         }
       />

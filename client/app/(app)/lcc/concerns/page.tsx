@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DomainFilter } from "@/components/dashboard/domain-filter";
 import { parseDomains, inDomains } from "@/lib/domains";
-import { CONCERNS, CONCERN_CATEGORIES } from "@/lib/api";
+import { api, CONCERN_CATEGORIES } from "@/lib/api";
 import { shortDate, cn } from "@/lib/utils";
 import type { Severity } from "@/lib/types";
 
@@ -21,7 +21,7 @@ export default async function ConcernQueuePage({
 }) {
   const sp = await searchParams;
   const selected = parseDomains(sp.domain);
-  const concerns = CONCERNS.filter((c) => inDomains(c.domainKey, selected));
+  const concerns = (await api.concerns()).filter((c) => inDomains(c.domainKey, selected));
 
   const open = concerns.filter((c) => !["RESOLVED", "CLOSED"].includes(c.status));
   const escalated = concerns.filter((c) => c.status === "ESCALATED");

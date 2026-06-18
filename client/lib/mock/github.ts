@@ -308,12 +308,16 @@ export const allTeamAnalytics = () => GH_TEAMS.map((t) => teamAnalytics(t.id));
 
 export interface StudentAnalytics {
   userId: string; name: string; login: string; teamId: string;
+  repoId: string; repoName: string;
   issuesAttempted: number; issuesSolved: number; prsRaised: number; prsMerged: number;
   acceptanceRate: number; commits: number; reviewsReceived: number;
   avgUnderstanding: number; avgExplanation: number; avgTechnical: number;
 }
 export function studentAnalytics(userId: string): StudentAnalytics {
   const p = ghPerson(userId)!;
+  // A student's repo is their team's repo.
+  const team = p.teamId ? ghTeam(p.teamId) : undefined;
+  const repo = team ? ghRepo(team.repoId) : undefined;
   const attempts = GH_ATTEMPTS.filter((a) => a.studentId === userId);
   const prs = GH_PRS.filter((pr) => pr.authorId === userId);
   const merged = prs.filter((pr) => pr.state === "merged").length;
@@ -322,6 +326,7 @@ export function studentAnalytics(userId: string): StudentAnalytics {
   const avg = (sel: (r: MockReview) => number) => (reviews.length ? +(reviews.reduce((s, r) => s + sel(r), 0) / reviews.length).toFixed(1) : 0);
   return {
     userId, name: p.name, login: p.login, teamId: p.teamId ?? "",
+    repoId: repo?.id ?? "", repoName: repo?.name ?? "",
     issuesAttempted: attempts.length,
     issuesSolved: attempts.filter((a) => a.status === "merged").length,
     prsRaised: prs.length, prsMerged: merged, acceptanceRate: pct(merged, decided),

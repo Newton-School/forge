@@ -25,7 +25,18 @@ export async function listDeliverables(ctx: AuthContext, q: ListDeliverablesQuer
     ...(q.projectId ? { projectId: q.projectId } : {}),
     ...(q.reviewStatus ? { reviewStatus: q.reviewStatus } : {}),
   };
-  const items = await deliverablesRepo.list(where, q.take, q.skip);
+  const rows = await deliverablesRepo.list(where, q.take, q.skip);
+  const ids = [...new Set(rows.map((d) => d.submittedById).filter(Boolean) as string[])];
+  const nameOf = new Map((await deliverablesRepo.userNames(ids)).map((u) => [u.id, u.fullName]));
+  const items = rows.map((d) => ({
+    id: d.id,
+    name: d.name ?? d.type?.name ?? "Deliverable",
+    type: d.type?.name ?? "—",
+    project: d.project?.name ?? "—",
+    submittedBy: d.submittedById ? nameOf.get(d.submittedById) ?? "—" : "—",
+    status: d.reviewStatus,
+    submittedAt: d.submittedAt,
+  }));
   return { items };
 }
 

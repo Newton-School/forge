@@ -22,6 +22,10 @@ export function buildSession(): ReturnType<typeof session> {
     cookie: {
       httpOnly: true,
       secure: isProd,
+      // Frontend (forge.taj.works) and API (forge.server.taj.works) are subdomains of
+      // the same registrable site (taj.works), so requests between them are SAME-site:
+      // SameSite=Lax IS sent on the SPA's cross-origin API calls and keeps CSRF
+      // protection. (Only truly cross-site domains would need "none".)
       sameSite: "lax",
       maxAge: 1000 * 60 * 60 * 8, // 8h absolute
       path: "/",

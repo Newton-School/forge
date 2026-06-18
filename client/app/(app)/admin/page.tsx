@@ -5,9 +5,10 @@ import { StatCard, StatGrid } from "@/components/dashboard/stat-card";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AUDIT_LOGS, DOMAINS } from "@/lib/api";
+import { api } from "@/lib/api";
 
-export default function AdminOverviewPage() {
+export default async function AdminOverviewPage() {
+  const [AUDIT_LOGS, DOMAINS] = await Promise.all([api.auditLogs(), api.domains()]);
   return (
     <div className="flex flex-col gap-6">
       <PageHeader

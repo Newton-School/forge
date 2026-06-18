@@ -30,10 +30,13 @@ export async function syncRepository(
   owner: string,
   repo: string,
   ownerToken?: string,
+  opts?: { ownerUserId?: string | null; ownerRole?: RepoCollabRole },
 ): Promise<SyncResult> {
   const ov = toOverview(await repoApi.getRepo(owner, repo), owner, repo);
   const repository = await repoStore.upsertRepository({
     teamId,
+    ownerUserId: opts?.ownerUserId ?? null,
+    ownerRole: opts?.ownerRole ?? "OWNER",
     owner,
     name: ov.repo,
     fullName: ov.fullName,

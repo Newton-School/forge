@@ -4,13 +4,24 @@ import { Button } from "@/components/ui/button";
 import { FormDialog } from "@/components/ui/form-dialog";
 import { UserFields } from "./user-fields";
 import { submit } from "@/lib/api";
+import type { MockDomain, MockTeam, MockUser } from "@/lib/api";
 
 /**
  * Create-user action shared by Admin + LCC. On submit it provisions the account and
  * (server-side) sends the Google-OAuth onboarding invitation. Presentation-safe: in demo
- * mode `submit` resolves without a backend.
+ * mode `submit` resolves without a backend. Option lists are supplied by the server page.
  */
-export function CreateUserButton({ label = "Create User" }: { label?: string }) {
+export function CreateUserButton({
+  label = "Create User",
+  domains,
+  teams,
+  mentors,
+}: {
+  label?: string;
+  domains: MockDomain[];
+  teams: MockTeam[];
+  mentors: MockUser[];
+}) {
   return (
     <FormDialog
       trigger={<Button size="sm"><Plus />{label}</Button>}
@@ -21,7 +32,7 @@ export function CreateUserButton({ label = "Create User" }: { label?: string }) 
         await submit("/users", "POST", Object.fromEntries(data));
       }}
     >
-      <UserFields />
+      <UserFields domains={domains} teams={teams} mentors={mentors} />
     </FormDialog>
   );
 }

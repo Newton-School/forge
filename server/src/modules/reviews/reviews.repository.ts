@@ -18,10 +18,42 @@ export const reviewsRepo = {
       where: { team: { mentorId } },
       select: {
         teamId: true,
+        squad: { select: { name: true } },
         user: { select: { id: true, fullName: true, email: true } },
-        team: { select: { name: true, domainId: true } },
+        team: { select: { name: true, domainId: true, domain: { select: { key: true } } } },
       },
     }),
+
+  /** Team members visible under a scope `where` (mentor → own teams, teacher → domain, admin → all). */
+  menteesInScope: (where: Record<string, unknown>) =>
+    prisma.teamMember.findMany({
+      where,
+      select: {
+        teamId: true,
+        squad: { select: { name: true } },
+        user: { select: { id: true, fullName: true, email: true } },
+        team: {
+          select: {
+            name: true,
+            domainId: true,
+            domain: { select: { key: true } },
+            mentor: { select: { fullName: true } },
+          },
+        },
+      },
+    }),
+
+  /** Latest L2 mentor status per mentee (for comment/actionNeeded/explicit statusL2). */
+  latestStatuses: async (menteeIds: string[]) => {
+    const rows = await prisma.mentorStatus.findMany({
+      where: { menteeId: { in: menteeIds } },
+      orderBy: { date: "desc" },
+      select: { menteeId: true, statusL2: true, comment: true, actionNeeded: true },
+    });
+    const byMentee = new Map<string, (typeof rows)[number]>();
+    for (const r of rows) if (!byMentee.has(r.menteeId)) byMentee.set(r.menteeId, r);
+    return byMentee;
+  },
 
   // ── L1: mentee updates ────────────────────────────────────────────
   createUpdate: (userId: string, teamId: string | null, input: SubmitUpdateInput) =>
@@ -33,7 +65,23 @@ export const reviewsRepo = {
       },
     }),
   listUpdates: (where: Record<string, unknown>, take: number, skip: number) =>
-    prisma.menteeUpdate.findMany({ where, orderBy: { date: "desc" }, take, skip }),
+    prisma.menteeUpdate.findMany({
+      where,
+      orderBy: { date: "desc" },
+      include: {
+        user: {
+          select: {
+            fullName: true,
+            teamMemberships: {
+              take: 1,
+              select: { squad: { select: { name: true } }, team: { select: { domain: { select: { key: true } } } } },
+            },
+          },
+        },
+      },
+      take,
+      skip,
+    }),
   updatesForMentee: (menteeId: string, since?: Date) =>
     prisma.menteeUpdate.findMany({
       where: { userId: menteeId, ...(since ? { date: { gte: since } } : {}) },
@@ -79,6 +127,14 @@ export const reviewsRepo = {
   listWeekly: (where: Record<string, unknown>, take: number, skip: number) =>
     prisma.weeklyReview.findMany({ where, orderBy: [{ weekNo: "desc" }, { createdAt: "desc" }], take, skip }),
   findWeeklyById: (id: string) => prisma.weeklyReview.findUnique({ where: { id } }),
+
+  // Display-name resolvers for the bare id columns on WeeklyReview (mentee/mentor/domain/squad).
+  userNames: (ids: string[]) =>
+    prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, fullName: true } }),
+  domainKeys: (ids: string[]) =>
+    prisma.domain.findMany({ where: { id: { in: ids } }, select: { id: true, key: true } }),
+  squadNames: (ids: string[]) =>
+    prisma.squad.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } }),
   setTeacherDecision: (
     id: string,
     teacherId: string,

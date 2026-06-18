@@ -6,9 +6,10 @@ import { SectionCard } from "@/components/dashboard/section-card";
 import { Button } from "@/components/ui/button";
 import { L2Badge, L3Badge, FlagBadge } from "@/components/dashboard/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MENTEES, WEEKLY_REVIEWS } from "@/lib/api";
+import { api } from "@/lib/api";
 
-export default function MentorDashboard() {
+export default async function MentorDashboard() {
+  const [MENTEES, WEEKLY_REVIEWS] = await Promise.all([api.mentees(), api.weeklyReviews()]);
   const needAttention = MENTEES.filter((m) => m.statusL2 !== "DOING_WELL");
   const updatesThisWeek = MENTEES.reduce((sum, m) => sum + m.updatesThisWeek, 0);
   const atRisk = needAttention.length;

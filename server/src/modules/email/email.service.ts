@@ -97,7 +97,16 @@ export async function sendAnnouncement(ctx: AuthContext, input: AnnouncementInpu
 }
 
 export async function listTemplates(_ctx: AuthContext) {
-  return { items: await emailRepo.listTemplates() };
+  const rows = await emailRepo.listTemplates();
+  const items = rows.map((t) => ({
+    id: t.id,
+    name: t.name,
+    subject: t.subject,
+    // "Owned by" the responsible role (no per-edit author tracking yet).
+    updatedBy: t.ownerRole ? t.ownerRole.charAt(0) + t.ownerRole.slice(1).toLowerCase() : "—",
+    updatedAt: t.updatedAt,
+  }));
+  return { items };
 }
 
 /** "abhinav.choudhary2024" → "Abhinav Choudhary" — a friendly name for previews. */

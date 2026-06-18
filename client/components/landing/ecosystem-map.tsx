@@ -24,7 +24,7 @@ const NODES: MapNode[] = [
   { key: "discord", label: "Discord", x: 650, y: 218, logo: "/discord.png" },
   { key: "calendar", label: "Calendar", x: 578, y: 442, logo: "/google_calendar.png" },
   { key: "email", label: "Email", x: 342, y: 442, logo: "/gmail.webp" },
-  { key: "groq", label: "Forge AI", x: 270, y: 218, glyph: "✦" },
+  { key: "groq", label: "Forge AI", x: 270, y: 218, logo: "/logo.png" },
 ];
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -147,21 +147,22 @@ export function EcosystemMap() {
               transition={{ duration: 0.6, ease: EASE }}
               style={{ transformOrigin: `${CX}px ${CY}px` }}
             >
-              <circle
-                cx={CX}
-                cy={CY}
-                r={62}
-                fill="#4f46e5"
-                className="mkt-ring-pulse"
-                opacity={0.12}
+              <defs>
+                <clipPath id="portal-chip-clip">
+                  <rect x={CX - 50} y={CY - 50} width={100} height={100} rx={24} ry={24} />
+                </clipPath>
+              </defs>
+              <image
+                href="/forge_app_chip.png"
+                x={CX - 50}
+                y={CY - 50}
+                width={100}
+                height={100}
+                clipPath="url(#portal-chip-clip)"
               />
-              <rect x={CX - 70} y={CY - 34} width={140} height={68} rx={18} fill="#0b0b12" />
-              <text x={CX} y={CY - 4} textAnchor="middle" fontSize={20} fontWeight={700} fill="#fff">
-                Forge
-              </text>
               <text
                 x={CX}
-                y={CY + 16}
+                y={CY + 66}
                 textAnchor="middle"
                 fontSize={11}
                 fontWeight={600}

@@ -5,7 +5,7 @@ import { SectionCard } from "@/components/dashboard/section-card";
 import { BarChart } from "@/components/dashboard/bar-chart";
 import { DomainFilter } from "@/components/dashboard/domain-filter";
 import { parseDomains, inDomains } from "@/lib/domains";
-import { DRIVE_HEALTH, DOMAINS } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export default async function AnalyticsPage({
   searchParams,
@@ -14,9 +14,9 @@ export default async function AnalyticsPage({
 }) {
   const sp = await searchParams;
   const selected = parseDomains(sp.domain);
-  const h = DRIVE_HEALTH;
+  const [h, allDomains] = await Promise.all([api.driveHealth(), api.domains()]);
 
-  const domains = DOMAINS.filter((d) => inDomains(d.key, selected));
+  const domains = allDomains.filter((d) => inDomains(d.key, selected));
 
   const completionBars = domains.map((d) => ({
     label: d.key,

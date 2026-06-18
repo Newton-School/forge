@@ -4,7 +4,7 @@ import { SectionCard } from "@/components/dashboard/section-card";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DeliverableReviewActions } from "@/components/work/deliverable-review-actions";
-import { DELIVERABLES } from "@/lib/api";
+import { api } from "@/lib/api";
 import { shortDate } from "@/lib/utils";
 
 const STATUS_TONE = {
@@ -13,7 +13,8 @@ const STATUS_TONE = {
   REJECTED: { text: "Rejected", tone: "danger" as const },
 };
 
-export default function DeliverablesPage() {
+export default async function DeliverablesPage() {
+  const DELIVERABLES = await api.deliverables();
   const pending = DELIVERABLES.filter((d) => d.status === "PENDING").length;
   return (
     <div className="flex flex-col gap-6">

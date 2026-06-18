@@ -3,9 +3,10 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { FlagBadge, L3Badge } from "@/components/dashboard/status-badge";
 import { WriteReviewDialog } from "@/components/reviews/write-review-dialog";
-import { WEEKLY_REVIEWS, MENTEES } from "@/lib/api";
+import { api } from "@/lib/api";
 
-export default function ReviewsPage() {
+export default async function ReviewsPage() {
+  const [WEEKLY_REVIEWS, MENTEES] = await Promise.all([api.weeklyReviews(), api.mentees()]);
   const menteeNames = MENTEES.map((m) => m.name);
   return (
     <div className="flex flex-col gap-6">

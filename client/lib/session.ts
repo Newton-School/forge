@@ -1,15 +1,59 @@
 import { cookies } from "next/headers";
-import type { AuthUser, RoleKey, Scope } from "@/lib/types";
+import { redirect } from "next/navigation";
+import type { AuthUser, RoleKey, Scope, ScopeType } from "@/lib/types";
 import { type DomainKey, DOMAIN_KEYS, DOMAIN_COOKIE_NAME } from "@/lib/presentation";
 
 /**
- * PHASE 1 ONLY — dev session resolution by cookie (no real auth yet).
- * The TopNav Role Switcher sets `forge_role`; this returns a representative
- * AuthUser for that role so every dashboard is previewable.
- * Phase 3 replaces this with Auth.js `auth()` returning the real session.
+ * Session resolution. In **presentation** mode it's the dev cookie switcher (a
+ * representative AuthUser per role, every dashboard previewable). In **production** it
+ * reads the real server session via `/api/auth/me` (the session cookie is first-party
+ * thanks to the same-origin API proxy — see next.config) and unauthenticated visitors are
+ * redirected out of the app shell to the public landing page.
  */
+const PRESENTATION =
+  (process.env.NEXT_PUBLIC_APP_MODE ?? process.env.APP_MODE ?? "presentation") === "presentation";
+/** Backend origin for the server-side session check (same value as the API proxy target). */
+const SERVER_ORIGIN = process.env.API_PROXY_TARGET ?? "http://localhost:4000";
 
 const ROLE_COOKIE = "forge_role";
+
+const ROLE_RANK: Record<string, number> = { ADMIN: 4, LCC: 3, TEACHER: 2, MENTOR: 1, MENTEE: 0 };
+interface ServerSessionUser {
+  id: string;
+  email: string;
+  fullName: string;
+  roles: { role: string; scopeType: string; scopeId: string | null }[];
+}
+
+/** Map the server's AuthContext (`/auth/me`) to the UI AuthUser the shell expects. */
+function toAuthUser(su: ServerSessionUser): AuthUser {
+  const roles = su.roles.length ? su.roles : [{ role: "MENTEE", scopeType: "SELF", scopeId: null }];
+  const primary = [...roles].sort((a, b) => (ROLE_RANK[b.role] ?? 0) - (ROLE_RANK[a.role] ?? 0))[0]!;
+  const scopes: Scope[] = roles.map((r) => ({ type: r.scopeType as ScopeType, id: r.scopeId ?? undefined }));
+  return {
+    id: su.id,
+    fullName: su.fullName,
+    email: su.email,
+    role: primary.role as RoleKey,
+    scopes,
+    domainId: roles.find((r) => r.scopeType === "DOMAIN")?.scopeId ?? undefined,
+    teamId: roles.find((r) => r.scopeType === "TEAM")?.scopeId ?? undefined,
+  };
+}
+
+/** Read the real server session, forwarding the (first-party) cookies. Null if signed out. */
+async function fetchServerUser(): Promise<AuthUser | null> {
+  const store = await cookies();
+  const cookieHeader = store.getAll().map((c) => `${c.name}=${c.value}`).join("; ");
+  try {
+    const res = await fetch(`${SERVER_ORIGIN}/api/auth/me`, { headers: { cookie: cookieHeader }, cache: "no-store" });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { user?: ServerSessionUser };
+    return data.user ? toAuthUser(data.user) : null;
+  } catch {
+    return null;
+  }
+}
 
 export const DEV_USERS: Record<RoleKey, AuthUser> = {
   ADMIN: {
@@ -48,10 +92,23 @@ export async function getCurrentRole(): Promise<RoleKey> {
   return v && VALID.includes(v) ? v : "MENTEE";
 }
 
-export async function getCurrentUser(): Promise<AuthUser> {
-  const role = await getCurrentRole();
-  return DEV_USERS[role];
+/** The signed-in user, or null if signed out. Presentation → the dev role user. */
+export async function getOptionalUser(): Promise<AuthUser | null> {
+  if (!PRESENTATION) return fetchServerUser();
+  return DEV_USERS[await getCurrentRole()];
 }
+
+/**
+ * The signed-in user for the app shell. In production an unauthenticated visitor is
+ * redirected to the public landing page (so the dashboards are never shown signed-out).
+ */
+export async function getCurrentUser(): Promise<AuthUser> {
+  const user = await getOptionalUser();
+  if (!user) redirect("/landing");
+  return user;
+}
+
+export const isPresentation = PRESENTATION;
 
 export const ROLE_COOKIE_NAME = ROLE_COOKIE;
 

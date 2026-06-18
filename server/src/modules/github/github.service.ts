@@ -4,7 +4,65 @@ import { logger } from "../../lib/logger.js";
 import { effectiveScope } from "../../rbac/policy.js";
 import type { AuthContext } from "../../rbac/types.js";
 import { githubRepo } from "./github.repository.js";
+import { repoStore } from "./repo.store.js";
 import { normalizeEvent, verifyGithubSignature } from "./github.webhook.js";
+
+const isLead = (memberRole: string) => /maintainer|lead/i.test(memberRole);
+
+type TeamGraphRow = NonNullable<Awaited<ReturnType<typeof repoStore.teamGraph>>>;
+
+/** Shape one team's roster + repo summaries into the team-first DTO. */
+function mapTeamGraph(t: TeamGraphRow) {
+  const lead = t.members.find((m) => isLead(m.memberRole));
+  return {
+    id: t.id,
+    name: t.name,
+    domainKey: t.domain?.key ?? null,
+    repoModel: t.domain?.githubRepoModel ?? "SHARED",
+    mentor: t.mentor ? { name: t.mentor.fullName, login: t.mentor.githubUsername } : null,
+    teamLead: lead ? { userId: lead.user.id, name: lead.user.fullName, login: lead.user.githubUsername } : null,
+    members: t.members.map((m) => ({
+      userId: m.user.id, name: m.user.fullName, login: m.user.githubUsername,
+      role: isLead(m.memberRole) ? "TeamLead" : "Mentee",
+    })),
+    repos: t.repositories.map((r) => ({
+      name: r.name, fullName: r.fullName, owner: r.owner, ownerUserId: r.ownerUserId,
+      ownerRole: r.ownerRole === "OWNER" ? "owner" : r.ownerRole === "MAINTAINER" ? "maintainer" : "collaborator",
+      visibility: r.visibility === "PRIVATE" ? "private" : "public",
+      hasIssues: r.hasIssues, description: r.description, defaultBranch: r.defaultBranch,
+      collaborators: r._count.collaborators, branches: r._count.branches, releases: r._count.releases,
+    })),
+  };
+}
+
+/**
+ * Team-first GitHub graph for a domain (scope-filtered): every team with its mentor,
+ * student team-lead, members, and repo summaries + the domain's repo model. Backs the
+ * Domain → Teams → Repository → Students navigation; per-repo detail is a separate call.
+ */
+export async function domainTeamGraph(ctx: AuthContext, domainKey: string) {
+  const s = effectiveScope(ctx);
+  let where: Record<string, unknown> = {};
+  if (!s.global) {
+    const or: Record<string, unknown>[] = [];
+    if (s.domainIds.length) or.push({ domainId: { in: s.domainIds } });
+    if (s.teamIds.length) or.push({ id: { in: s.teamIds } });
+    where = or.length ? { OR: or } : { id: "__never__" };
+  }
+  const teams = await repoStore.teamGraphForDomain(domainKey, where);
+  return {
+    domainKey,
+    repoModel: teams[0]?.domain?.githubRepoModel ?? "SHARED",
+    teams: teams.map(mapTeamGraph),
+  };
+}
+
+/** A single team's roster + repo summaries (team-detail + repo-detail context). */
+export async function teamGraph(ctx: AuthContext, teamId: string) {
+  await assertTeamAccess(ctx, teamId);
+  const t = await repoStore.teamGraph(teamId);
+  return t ? mapTeamGraph(t) : null;
+}
 
 export interface WebhookResult {
   event: string;
@@ -58,10 +116,25 @@ async function activityScope(ctx: AuthContext): Promise<Record<string, unknown>>
   return or.length ? (or.length === 1 ? or[0]! : { OR: or }) : { id: "__never__" };
 }
 
-/** Scope-filtered read of recorded GitHub activity. */
+/** Scope-filtered read of recorded GitHub activity, shaped for the UI feed. */
 export async function listActivity(ctx: AuthContext, q: { teamId?: string; take: number; skip: number }) {
   const where = { ...(await activityScope(ctx)), ...(q.teamId ? { teamId: q.teamId } : {}) };
-  return { items: await githubRepo.list(where, q.take, q.skip) };
+  const rows = await githubRepo.list(where, q.take, q.skip);
+  const userIds = [...new Set(rows.map((a) => a.userId).filter(Boolean) as string[])];
+  const teamIds = [...new Set(rows.map((a) => a.teamId).filter(Boolean) as string[])];
+  const [users, teams] = await Promise.all([githubRepo.userNames(userIds), githubRepo.teamNames(teamIds)]);
+  const userOf = new Map(users.map((u) => [u.id, u.fullName ?? u.githubUsername ?? "—"]));
+  const teamOf = new Map(teams.map((t) => [t.id, t.name]));
+  const items = rows.map((a) => ({
+    id: a.id,
+    type: a.type,
+    title: a.title ?? "",
+    author: a.userId ? userOf.get(a.userId) ?? "—" : "—",
+    repo: a.teamId ? teamOf.get(a.teamId) ?? "—" : "—",
+    state: a.state ?? "",
+    occurredAt: a.occurredAt,
+  }));
+  return { items };
 }
 
 /**

@@ -162,6 +162,40 @@ const part = (name: "collaborators" | "contributors" | "commits" | "pulls" | "br
     }));
 (["collaborators", "contributors", "commits", "pulls", "branches", "releases", "activity"] as const).forEach(part);
 
+/** Team-first graph for a domain: teams + roster + repo summaries + repo model (scope-filtered). */
+githubRouter.get("/domain-teams", requirePermission("review:read"),
+  asyncHandler(async (req, res: Response) => {
+    const domainKey = String(req.query.domain ?? "");
+    res.json(await svc.domainTeamGraph(req.auth!, domainKey));
+  }));
+
+/** A single team's roster + repo summaries + repo model (team-detail + repo-detail context). */
+githubRouter.get("/teams/:teamId/graph", requirePermission("review:read"),
+  asyncHandler(async (req, res: Response) => {
+    const { teamId } = teamParam.parse(req.params);
+    const graph = await svc.teamGraph(req.auth!, teamId);
+    if (!graph) return res.status(404).json({ error: { code: "no_team", message: "Team not found" } });
+    res.json(graph);
+  }));
+
+/** Team-first repo list (1 shared, or N per-student) + the team's repo model. */
+githubRouter.get("/teams/:teamId/repos", requirePermission("review:read"),
+  asyncHandler(async (req, res: Response) => {
+    const { teamId } = teamParam.parse(req.params);
+    await svc.assertTeamAccess(req.auth!, teamId);
+    res.json(await repoRead.teamRepos(teamId));
+  }));
+
+/** One repo's full dashboard within a team (the repository-detail view; per-student for ML). */
+githubRouter.get("/teams/:teamId/repos/:repo/dashboard", requirePermission("review:read"),
+  asyncHandler(async (req, res: Response) => {
+    const { teamId } = teamParam.parse(req.params);
+    await svc.assertTeamAccess(req.auth!, teamId);
+    const dash = await repoRead.teamDashboard(teamId, req.params.repo);
+    if (!dash) return res.status(404).json({ error: { code: "no_repo", message: "Repository not found for this team" } });
+    res.json(dash);
+  }));
+
 /** Team-scoped dashboard: DB-backed (collaborators/branches/releases) when synced, else live. */
 githubRouter.get("/teams/:teamId/repo/dashboard", requirePermission("review:read"),
   asyncHandler(async (req, res: Response) => {

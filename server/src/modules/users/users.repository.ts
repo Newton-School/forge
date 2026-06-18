@@ -2,7 +2,15 @@ import { prisma } from "../../lib/db.js";
 import type { ScopeType } from "../../rbac/types.js";
 import type { AssignRoleInput, CreateUserInput, ListUsersQuery } from "./users.schema.js";
 
-const withRoles = { roles: true } as const;
+// Roles drive RBAC; the first team membership gives the UI its domain key + team name
+// (mentors/mentees are scoped to a team) without an extra round-trip.
+const withRoles = {
+  roles: true,
+  teamMemberships: {
+    take: 1,
+    include: { team: { select: { name: true, domain: { select: { key: true } } } } },
+  },
+} as const;
 
 export interface DerivedScope {
   scopeType: ScopeType;

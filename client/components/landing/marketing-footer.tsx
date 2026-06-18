@@ -1,4 +1,5 @@
 import { BRAND, NAV_LINKS } from "@/lib/landing";
+import { ForgeLogo } from "@/components/brand/forge-logo";
 
 export function MarketingFooter() {
   return (
@@ -6,9 +7,7 @@ export function MarketingFooter() {
       <div className="mx-auto grid max-w-6xl gap-10 sm:grid-cols-[1.4fr_1fr_1fr]">
         <div>
           <div className="flex items-center gap-2.5">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-sm font-bold text-white">
-              F
-            </span>
+            <ForgeLogo size={32} className="h-8 w-8" />
             <span className="text-sm font-semibold tracking-tight text-[var(--mkt-ink)]">
               {BRAND.name}
             </span>

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GitBranch } from "lucide-react";
+import { ForgeLogo } from "@/components/brand/forge-logo";
 import { NAV, GITHUB_NAV, GITHUB_NAV_REPO, SHARED_NAV } from "@/lib/nav/nav.config";
 import { ROLE_LABEL } from "@/lib/labels";
 import type { AuthUser } from "@/lib/types";
@@ -23,9 +23,7 @@ export function Sidebar({ user, domain = "AI" }: { user: AuthUser; domain?: Doma
     <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-background lg:flex">
       {/* Brand */}
       <div className="flex h-14 items-center gap-2 border-b border-border px-4">
-        <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-          <GitBranch className="size-4" />
-        </div>
+        <ForgeLogo size={28} className="size-7" />
         <div className="leading-tight">
           <p className="text-sm font-semibold tracking-tight">Forge</p>
           <p className="text-[10px] text-subtle-foreground">Profile Building Drive</p>

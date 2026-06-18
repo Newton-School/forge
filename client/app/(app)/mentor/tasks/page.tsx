@@ -4,10 +4,11 @@ import { Progress } from "@/components/ui/progress";
 import { WorkBadge } from "@/components/dashboard/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AssignTaskDialog } from "@/components/work/assign-task-dialog";
-import { TASKS } from "@/lib/api";
+import { api } from "@/lib/api";
 import { shortDate } from "@/lib/utils";
 
-export default function TasksPage() {
+export default async function TasksPage() {
+  const TASKS = await api.tasks();
   return (
     <div className="flex flex-col gap-6">
       <PageHeader

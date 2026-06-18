@@ -1,5 +1,3 @@
-"use client";
-
 import { ScrollText, Search } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { SectionCard } from "@/components/dashboard/section-card";
@@ -7,12 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AUDIT_LOGS } from "@/lib/api";
+import { api } from "@/lib/api";
 
-const ACTORS = Array.from(new Set(AUDIT_LOGS.map((l) => l.actor)));
-const ACTIONS = Array.from(new Set(AUDIT_LOGS.map((l) => l.action)));
-
-export default function AdminAuditLogsPage() {
+export default async function AdminAuditLogsPage() {
+  const AUDIT_LOGS = await api.auditLogs();
+  const ACTORS = Array.from(new Set(AUDIT_LOGS.map((l) => l.actor)));
+  const ACTIONS = Array.from(new Set(AUDIT_LOGS.map((l) => l.action)));
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
