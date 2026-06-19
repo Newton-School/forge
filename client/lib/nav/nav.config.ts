@@ -113,6 +113,7 @@ export const NAV: Record<RoleKey, NavSection[]> = {
 export const SHARED_NAV: NavSection = {
   label: "General",
   items: [
+    { label: "Testing Portal", href: "/testing", icon: "FlaskConical" },
     { label: "Calendar", href: "/calendar", icon: "Calendar" },
     { label: "Connections", href: "/connections", icon: "Plug" },
     { label: "Notifications", href: "/notifications", icon: "Bell" },
