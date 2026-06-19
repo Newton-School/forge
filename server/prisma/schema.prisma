@@ -895,3 +895,76 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([actorId, at])
 }
+
+// ─────────── Testing Portal (Phase-2 backend for the tester experience) ───────────
+// Server-persisted tester progress + issue reports. Testers are an email allowlist
+// (see testing module); these tables don't FK to User so external/admin testers work too.
+enum TestSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TestDomainStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+/** A tester's progress through one domain's guided test plan (Resume across devices). */
+model TestingProgress {
+  id          String           @id @default(cuid())
+  testerEmail String
+  domainKey   String // AI | ML | DVA | SDSE
+  status      TestDomainStatus @default(NOT_STARTED)
+  done        String[] // completed step ids
+  skipped     String[] // skipped step ids
+  current     Int              @default(0)
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([testerEmail, domainKey])
+}
+
+/** A domain's guided test plan — DB-backed so the script is editable without a redeploy. */
+model TestPlan {
+  id        String         @id @default(cuid())
+  domainKey String         @unique // AI | ML | DVA | SDSE
+  name      String // domain display name
+  model     String // one-line description of the domain's GitHub model
+  steps     TestPlanStep[]
+  updatedAt DateTime       @updatedAt
+}
+
+/** One guided step within a test plan (ordered; stepKey is the stable progress id). */
+model TestPlanStep {
+  id          String   @id @default(cuid())
+  planId      String
+  plan        TestPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  seq         Int // render order
+  stepKey     String // stable id used in TestingProgress.done/skipped (e.g. "AI-um-invite")
+  group       String // checklist category
+  role        String // act-as role label
+  title       String
+  instruction String
+  expected    String
+  success     String
+
+  @@unique([planId, stepKey])
+  @@index([planId, seq])
+}
+
+/** An issue a tester reported on a step (emailed to the Testing Admin). */
+model TestIssue {
+  id          String       @id @default(cuid())
+  testerEmail String
+  domainKey   String
+  stepId      String?
+  title       String
+  description String?
+  severity    TestSeverity @default(MEDIUM)
+  createdAt   DateTime     @default(now())
+
+  @@index([testerEmail])
+  @@index([domainKey])
+}

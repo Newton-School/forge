@@ -33,6 +33,7 @@ import { discordRouter, discordWebhookRouter } from "./modules/discord/discord.r
 import { calendarRouter } from "./modules/calendar/calendar.routes.js";
 import { assistantRouter } from "./modules/assistant/assistant.routes.js";
 import { jobsRouter } from "./modules/jobs/jobs.routes.js";
+import { testingRouter } from "./modules/testing/testing.routes.js";
 import { publicRouter } from "./modules/public/public.routes.js";
 
 /**
@@ -98,6 +99,7 @@ export function buildApp(): Express {
   app.use("/api/calendar", requireAuth, calendarRouter);
   app.use("/api/assistant", requireAuth, assistantRouter);
   app.use("/api/jobs", requireAuth, jobsRouter);
+  app.use("/api/testing", requireAuth, testingRouter);
 
   // Fallbacks
   app.use(notFound);
