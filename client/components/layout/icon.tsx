@@ -1,6 +1,6 @@
 import {
   Activity, Bell, Boxes, Calendar, ChartBar, CircleCheckBig, CircleDot, ClipboardCheck,
-  ClipboardList, Flag, FolderGit2, GitBranch, GitCompare, GitPullRequest,
+  ClipboardList, Flag, FlaskConical, FolderGit2, GitBranch, GitCompare, GitPullRequest,
   GraduationCap, LayoutDashboard, Mail, MessageSquare, Network, OctagonAlert, Package,
   Plug, ScrollText, Settings, ShieldAlert, ShieldCheck, User, UserCheck, UserPlus,
   Users, type LucideIcon,
@@ -8,7 +8,7 @@ import {
 
 const MAP: Record<string, LucideIcon> = {
   Activity, Bell, Boxes, Calendar, ChartBar, CircleCheckBig, CircleDot, ClipboardCheck,
-  ClipboardList, Flag, FolderGit2, GitBranch, GitCompare, GitPullRequest,
+  ClipboardList, Flag, FlaskConical, FolderGit2, GitBranch, GitCompare, GitPullRequest,
   GraduationCap, LayoutDashboard, Mail, MessageSquare, Network, OctagonAlert, Package,
   Plug, ScrollText, Settings, ShieldAlert, ShieldCheck, User, UserCheck, UserPlus, Users,
 };

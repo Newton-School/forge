@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Forge — Testing Portal Walkthrough</title>
+<style>
+  :root{--ink:#18181b;--mut:#52525b;--sub:#a1a1aa;--bd:#e4e4e7;--bg:#fafafa;--card:#fff;--pri:#4f46e5;--pri-bg:#eef2ff;--ok:#059669;--ok-bg:#ecfdf5;--warn:#d97706;--warn-bg:#fffbeb;--danger:#dc2626;}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);}
+  .wrap{max-width:920px;margin:0 auto;padding:48px 24px 80px;}
+  header{border-bottom:1px solid var(--bd);padding-bottom:24px;margin-bottom:32px;}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);}
+  h1{font-size:30px;letter-spacing:-.02em;margin:14px 0 6px;}
+  h2{font-size:20px;letter-spacing:-.01em;margin:40px 0 12px;padding-top:8px;}
+  h3{font-size:15px;margin:20px 0 8px;}
+  p.lead{color:var(--mut);font-size:16px;margin:0;}
+  .muted{color:var(--mut);}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px 20px;margin:14px 0;}
+  .grid{display:grid;gap:14px;grid-template-columns:1fr 1fr;}
+  @media(max-width:680px){.grid{grid-template-columns:1fr}}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;border:1px solid var(--bd);color:var(--mut);background:#f4f4f5;margin:0 4px 4px 0;}
+  .pill.ai{color:var(--pri);background:var(--pri-bg);border-color:#c7d2fe;}
+  .pill.ok{color:var(--ok);background:var(--ok-bg);border-color:#a7f3d0;}
+  .pill.warn{color:var(--warn);background:var(--warn-bg);border-color:#fde68a;}
+  ol.steps{counter-reset:s;list-style:none;padding:0;margin:0;}
+  ol.steps>li{position:relative;padding:12px 0 12px 44px;border-bottom:1px solid var(--bd);}
+  ol.steps>li:last-child{border-bottom:0;}
+  ol.steps>li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:12px;width:28px;height:28px;border-radius:8px;background:var(--pri-bg);color:var(--pri);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  table{width:100%;border-collapse:collapse;font-size:14px;margin:10px 0;}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);vertical-align:top;}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--sub);}
+  code{font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:#f4f4f5;border:1px solid var(--bd);border-radius:5px;padding:1px 5px;}
+  .step-demo{display:flex;flex-direction:column;gap:10px;}
+  .box{border:1px solid var(--bd);border-radius:9px;padding:10px 12px;}
+  .box .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+  .box.cur{background:#f4f4f5}.box.cur .lbl{color:var(--sub)}
+  .box.exp{background:#eef6ff;border-color:#cfe3ff}.box.exp .lbl{color:#2563eb}
+  .box.suc{background:var(--ok-bg);border-color:#bbf7d0}.box.suc .lbl{color:var(--ok)}
+  .btnrow span{display:inline-block;font-size:12px;font-weight:600;border:1px solid var(--bd);border-radius:7px;padding:5px 10px;margin:0 6px 6px 0;background:#fff;}
+  .btnrow span.pri{background:var(--pri);color:#fff;border-color:var(--pri);}
+  .btnrow span.dn{color:var(--danger);}
+  .note{border-left:3px solid var(--warn);background:var(--warn-bg);padding:12px 16px;border-radius:0 8px 8px 0;color:#7c5b00;font-size:14px;}
+  footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--bd);color:var(--sub);font-size:13px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <span class="badge">● Presentation mode · mock data</span>
+  <h1>Forge — Testing Portal</h1>
+  <p class="lead">A complete tester experience so authorized users can validate every workflow, screen, integration, role and domain <strong>before</strong> any production implementation.</p>
+</header>
+
+<h2>What it is</h2>
+<p>A guided, sequential testing experience built into the app. Authorized testers sign in, open the <strong>Testing Portal</strong>, and validate each domain step-by-step — with a clear instruction, the expected result, and success criteria for every step. Progress is tracked, can be resumed, and issues can be reported inline.</p>
+
+<h2>Who can test</h2>
+<p>Access is restricted to a fixed list of accounts (gated by email). One <strong>Testing Admin</strong> controls the environment.</p>
+<table>
+  <tr><th>Tester</th><th>Validates as</th></tr>
+  <tr><td>Shaik Tajuddin <span class="muted">shaik.tajuddin2024@…</span></td><td><strong>Testing Admin</strong></td></tr>
+  <tr><td>Learner Career Council</td><td>LCC</td></tr>
+  <tr><td>Abhinav Choudhary</td><td>Teacher</td></tr>
+  <tr><td>Aniket Pathak</td><td>Mentor</td></tr>
+  <tr><td>Anwesha Adhikari</td><td>Team Lead</td></tr>
+  <tr><td>Khushi · Nikith S</td><td>Mentee</td></tr>
+</table>
+<div class="note">In presentation mode there's no real login, so the portal includes a <strong>"Switch tester"</strong> selector to experience the portal as any role. In production this is replaced by email-gated access.</div>
+
+<h2>The flow</h2>
+<ol class="steps">
+  <li><strong>Open the Testing Portal</strong> from the sidebar. See the four domains — <span class="pill ai">AI</span><span class="pill">ML</span><span class="pill">DVA</span><span class="pill">SDSE</span> — each with a status: <span class="pill">Not Started</span><span class="pill warn">In Progress</span><span class="pill ok">Completed</span> and a progress bar.</li>
+  <li><strong>Start Testing</strong> a domain (becomes <strong>Resume Testing</strong> once begun). The domain auto-populates a realistic environment (teachers, mentors, team leads, students, teams, repositories, milestones, deliverables) using the real tester accounts.</li>
+  <li><strong>Work the guided steps</strong> in sequence. Each step tells you what to do, what to expect, and how to know it passed.</li>
+  <li><strong>Mark each step</strong> Done or Skip; <strong>Report Issue</strong> any time. Progress saves automatically.</li>
+  <li>When every step is handled → <strong>Domain Completed</strong>.</li>
+</ol>
+
+<h2>A guided step</h2>
+<div class="card step-demo">
+  <div style="display:flex;justify-content:space-between;align-items:center;"><strong>Step 6 of 21 · Mentor</strong><span class="pill warn">Act as Mentor</span></div>
+  <div class="box cur"><div class="lbl">Current step</div>As Mentor, open Reviews and submit/inspect a weekly review.</div>
+  <div class="grid">
+    <div class="box exp"><div class="lbl">Expected result</div>The L3 weekly review form + history are shown.</div>
+    <div class="box suc"><div class="lbl">Success criteria</div>Review workflow is clear.</div>
+  </div>
+  <div class="btnrow"><span class="pri">▶ Start Step</span><span>✓ Mark as Done</span><span>⤼ Skip</span><span class="dn">⚠ Report Issue</span></div>
+</div>
+
+<h2>Domain validation — adaptive per domain</h2>
+<div class="grid">
+  <div class="card"><h3><span class="pill ai">AI</span> Organization</h3><p class="muted">Org → teams → shared repos → issues → PRs → reviews. Validate team views, shared-repo activity, contribution analytics, PR reviews.</p></div>
+  <div class="card"><h3><span class="pill">ML</span> Per-student repos</h3><p class="muted">Team → students → individual repositories. Validate the per-student repo grid, individual tracking, student comparison.</p></div>
+  <div class="card"><h3><span class="pill">DVA</span> Shared + analytics</h3><p class="muted">Team → shared repo → deliverables + analytics projects. Validate the shared repo, deliverables, contribution monitoring.</p></div>
+  <div class="card"><h3><span class="pill">SDSE</span> Shared + engineering</h3><p class="muted">Team → shared repo → deliverables + engineering work. Validate the shared repo, milestones, contributions.</p></div>
+</div>
+
+<h2>Role-specific testing</h2>
+<p>Every domain includes test cases for each role: <strong>Admin</strong> (user management, invitations, domains, integrations), <strong>LCC</strong> (onboarding, communications, teams), <strong>Teacher</strong> (domain analytics, team & progress tracking), <strong>Mentor</strong> (repository tracking, reviews, contribution monitoring), <strong>Team Lead</strong> (team management, deliverables, repository monitoring), and <strong>Mentee</strong> (repository, tasks, milestones, submissions). Plus integration checks — GitHub, Discord, Calendar, Notifications. <span class="muted">(See role-test-cases.md.)</span></p>
+
+<h2>Issue reporting</h2>
+<p>On any step, <strong>Report Issue</strong> opens a form: <strong>Title · Description · Severity</strong> (Low/Medium/High/Critical) · screenshot placeholder. Reported issues appear in the domain's <em>Reported issues</em> panel.</p>
+<div class="note">In presentation mode reports are recorded locally. In production they email <code>shaik.tajuddin2024@nst.rishihood.edu.in</code>.</div>
+
+<h2>Progress &amp; resume</h2>
+<p>Each step is tracked as done / skipped / current. Domain status is derived (Not Started → In Progress → Completed). Leave and return any time — the domain reopens where you left off, and completed domains can be reset to run again.</p>
+
+<h2>Presentation-mode limitations (by design)</h2>
+<table>
+  <tr><th>Area</th><th>In presentation</th><th>Production (Phase 2)</th></tr>
+  <tr><td>Login</td><td>Tester switcher (no real auth)</td><td>Google sign-in, email-gated access</td></tr>
+  <tr><td>Integrations</td><td>Connected state shown from mock</td><td>Real GitHub/Discord/Calendar OAuth + sync</td></tr>
+  <tr><td>GitHub data</td><td>Sample repos/activity</td><td>Live org/repos</td></tr>
+  <tr><td>Emails &amp; issue reports</td><td>Simulated / recorded locally</td><td>Sent + emailed to the Testing Admin</td></tr>
+  <tr><td>Progress</td><td>Per-browser (localStorage)</td><td>Persisted server-side per tester</td></tr>
+</table>
+
+<footer>Forge · Testing Portal walkthrough · presentation mode · companion docs: testing-scenarios.md · tester-guide.md · role-test-cases.md</footer>
+</div>
+</body>
+</html>
