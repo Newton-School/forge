@@ -110,20 +110,49 @@ export async function repoTeamRepoDashboard(teamId: string, repoName: string): P
  * Today they return fixtures; Phase 2 flips PRESENTATION off and they hit the API —
  * with no change to call sites.
  */
-/** Read the CSRF token cookie (set by the server) for state-changing requests. */
-function csrfToken(): string | undefined {
+/** Read the CSRF token cookie via JS (fast path; unreliable across split subdomains / host-only cookies). */
+function csrfTokenFromCookie(): string | undefined {
   if (typeof document === "undefined") return undefined;
   return document.cookie.split("; ").find((c) => c.startsWith("forge_csrf="))?.split("=")[1];
 }
 
-/** Mutating request helper (POST/PATCH/DELETE) — sends cookies + CSRF header. */
+let csrfCache: string | undefined;
+/**
+ * The CSRF token the SERVER will validate against. Reading document.cookie is unreliable when
+ * the client + API are on different subdomains (a host-only forge_csrf on the API host isn't
+ * readable from the client host), so we ask the server what it sees via GET /auth/csrf — that
+ * value always matches the cookie the browser will also send on the mutating request. Cached.
+ */
+async function getCsrf(force = false): Promise<string | undefined> {
+  if (!force && csrfCache) return csrfCache;
+  try {
+    const res = await fetch(`${API_BASE}/auth/csrf`, { credentials: "include" });
+    if (res.ok) {
+      const data = (await res.json()) as { csrfToken?: string | null };
+      // The endpoint primes the cookie if absent; fall back to the now-set cookie when null.
+      csrfCache = data.csrfToken ?? csrfTokenFromCookie();
+      return csrfCache;
+    }
+  } catch {
+    /* fall through to the cookie */
+  }
+  return csrfTokenFromCookie();
+}
+
+/** Mutating request helper (POST/PATCH/DELETE) — sends cookies + a server-agreed CSRF header. */
 export async function apiMutate<T>(path: string, method: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    credentials: "include",
-    headers: { "content-type": "application/json", ...(csrfToken() ? { "x-csrf-token": csrfToken()! } : {}) },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  const doFetch = (token?: string) =>
+    fetch(`${API_BASE}${path}`, {
+      method,
+      credentials: "include",
+      headers: { "content-type": "application/json", ...(token ? { "x-csrf-token": token } : {}) },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+
+  let res = await doFetch(await getCsrf());
+  // A 403 is usually a stale/absent CSRF token — refresh from the server and retry once.
+  if (res.status === 403) res = await doFetch(await getCsrf(true));
+
   if (!res.ok) {
     const err = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
     throw new Error(err?.error?.message ?? `${method} ${path} → ${res.status}`);
