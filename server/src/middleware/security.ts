@@ -47,6 +47,8 @@ export function csrf(req: Request, res: Response, next: NextFunction): void {
       sameSite: "lax",
       secure: env.NODE_ENV === "production",
       httpOnly: false, // the client must read it to echo it back
+      // Shared across *.taj.works (split client/API subdomains) so the client JS can read it.
+      domain: env.COOKIE_DOMAIN || undefined,
       path: "/",
     });
   }

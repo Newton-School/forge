@@ -11,6 +11,11 @@ const schema = z.object({
   REDIS_URL: z.string().default("redis://localhost:6379"),
 
   SESSION_SECRET: z.string().min(16, "SESSION_SECRET must be at least 16 chars"),
+  // Cookie scope. When client + API are on different subdomains (e.g. forge.taj.works +
+  // forge.server.taj.works), set this to the shared parent (".taj.works") so the session and
+  // CSRF cookies are readable on BOTH — required for the client's SSR session check and CSRF
+  // echo. Leave unset for a single-host/localhost setup (host-only cookies).
+  COOKIE_DOMAIN: z.string().optional(),
   // Hard cap on a session's lifetime regardless of activity (idle window is the cookie
   // maxAge). Forces re-auth after this many hours even for a continuously-active user.
   SESSION_ABSOLUTE_HOURS: z.coerce.number().int().min(1).max(720).default(24),
