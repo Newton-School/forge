@@ -45,11 +45,23 @@ class SmtpEmailProvider implements EmailProvider {
     const spec = "nodemailer";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const nodemailer: any = await import(spec);
+    // Transport config mirrors the proven LinkUp setup (pool + rate limits + short timeouts),
+    // plus an IPv4 default for PaaS hosts (Render/Fly) whose IPv6 egress is broken — that's the
+    // usual cause of "works locally, ETIMEDOUT at CONN in prod". Set SMTP_FAMILY=0 to disable.
     this.transport = (nodemailer.default ?? nodemailer).createTransport({
       host: env.SMTP_HOST,
       port: env.SMTP_PORT,
-      secure: env.SMTP_PORT === 465,
+      secure: env.SMTP_PORT === 465, // 465 = implicit TLS; 587/2525 = STARTTLS
       auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
+      family: env.SMTP_FAMILY || undefined, // 4 = force IPv4; 0 → omit (auto)
+      pool: true,
+      maxConnections: 1,
+      maxMessages: 100,
+      rateDelta: 1000,
+      rateLimit: 5,
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 10_000,
     });
     return this.transport;
   }
