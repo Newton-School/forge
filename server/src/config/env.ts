@@ -39,6 +39,9 @@ const schema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().optional(), // e.g. "Forge <no-reply@…>"; falls back to SMTP_USER
+  // IP family for the SMTP socket. Default 4 (force IPv4) — avoids the broken-IPv6-egress
+  // ETIMEDOUT seen on Render/Fly. Set to 6 or 0 (auto) only if your host needs it.
+  SMTP_FAMILY: z.coerce.number().int().refine((n) => n === 0 || n === 4 || n === 6, "SMTP_FAMILY must be 0, 4 or 6").default(4),
 
   // Comma-separated CC list for concern notifications (the organizing team).
   // The "to" is always the LCC; this just adds the org team on CC.
