@@ -27,6 +27,9 @@ export function buildSession(): ReturnType<typeof session> {
       // SameSite=Lax IS sent on the SPA's cross-origin API calls and keeps CSRF
       // protection. (Only truly cross-site domains would need "none".)
       sameSite: "lax",
+      // Share the cookie across *.taj.works when client + API are split subdomains, so the
+      // client's SSR session check (forge.taj.works) can read & forward it to the API.
+      domain: env.COOKIE_DOMAIN || undefined,
       maxAge: 1000 * 60 * 60 * 8, // 8h absolute
       path: "/",
     },
