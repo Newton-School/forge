@@ -159,5 +159,10 @@ export function useTesting() {
 
   const resetDomain = React.useCallback((d: DomainKey) => update(d, () => emptyDomain()), [update]);
 
-  return { state, ready, setTester, markDone, skip, goTo, reportIssue, resetDomain };
+  // Mark a domain finished (End Testing): every step counts as handled so its status becomes
+  // Completed. Issues are kept. The server recomputes status COMPLETED from done == all steps.
+  const completeDomain = React.useCallback((d: DomainKey, stepIds: string[]) =>
+    update(d, (p) => ({ ...p, done: [...new Set(stepIds)], skipped: [], current: Math.max(stepIds.length - 1, 0) })), [update]);
+
+  return { state, ready, setTester, markDone, skip, goTo, reportIssue, resetDomain, completeDomain };
 }

@@ -9,6 +9,10 @@ import { DOMAIN_COOKIE_NAME } from "@/lib/presentation";
 const SERVER_ORIGIN = process.env.API_PROXY_TARGET ?? "http://localhost:4000";
 const SESSION_COOKIE = "forge.sid";
 const CSRF_COOKIE = "forge_csrf";
+/** Cookie scope — must MATCH how the server set them, or the delete won't clear them. When the
+ *  client + API are on split subdomains, the session/CSRF cookies are scoped to the shared
+ *  parent (e.g. ".taj.works"); a host-only delete would leave them in place. Unset on localhost. */
+const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined;
 
 /**
  * Sign out and return to the public landing page.
@@ -35,8 +39,10 @@ export async function signOut(): Promise<void> {
     } catch {
       // best-effort — clear locally and redirect regardless
     }
-    store.delete(SESSION_COOKIE);
-    store.delete(CSRF_COOKIE);
+    // Delete with the SAME domain/path the cookies were set with, else a host-only delete
+    // leaves a parent-domain (".taj.works") cookie in place and the user stays signed in.
+    store.delete({ name: SESSION_COOKIE, domain: COOKIE_DOMAIN, path: "/" });
+    store.delete({ name: CSRF_COOKIE, domain: COOKIE_DOMAIN, path: "/" });
   } else {
     store.delete(ROLE_COOKIE_NAME);
     store.delete(DOMAIN_COOKIE_NAME);

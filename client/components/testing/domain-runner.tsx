@@ -43,7 +43,7 @@ function StepIcon({ s }: { s: "done" | "skipped" | "current" | "todo" }) {
 }
 
 export function DomainRunner({ domain }: { domain: DomainKey }) {
-  const { state, ready, markDone, skip, goTo, reportIssue, resetDomain } = useTesting();
+  const { state, ready, markDone, skip, goTo, reportIssue, resetDomain, completeDomain } = useTesting();
   const { plans, ready: plansReady } = usePlans();
   const [started, setStarted] = React.useState<string | null>(null);
 
@@ -112,7 +112,7 @@ export function DomainRunner({ domain }: { domain: DomainKey }) {
         actions={
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" asChild><Link href="/testing"><ArrowLeft /> Testing Portal</Link></Button>
-            <EndTestingButton />
+            <EndTestingButton onEnded={() => completeDomain(domain, steps.map((s) => s.id))} />
           </div>
         }
       />
@@ -256,21 +256,22 @@ export function DomainRunner({ domain }: { domain: DomainKey }) {
 
 /**
  * End Testing — tears down the active domain's provisioned environment (production: deletes
- * the tester accounts + their data, keeping Shaik/LCC and the testing report). Confirmed
- * because it's destructive; on success returns to the Testing Portal. Presentation → no-op.
+ * the tester accounts + their data, keeping Shaik/LCC and the testing report), then marks the
+ * domain Completed so the portal shows it as done (not "Resume"). Confirmed because destructive.
  */
-function EndTestingButton() {
+function EndTestingButton({ onEnded }: { onEnded: () => void }) {
   const router = useRouter();
   return (
     <ConfirmDialog
       trigger={<Button variant="destructive" size="sm"><Trash2 /> End Testing</Button>}
       title="End testing & clear this domain?"
-      description="Deletes the provisioned tester accounts and their data so another domain can be tested. Shaik (Admin), LCC, and the testing report are kept. In presentation mode nothing is deleted."
+      description="Marks this domain Completed and deletes the provisioned tester accounts + their data so another domain can be tested. Shaik (Admin), LCC, and the testing report are kept. In presentation mode nothing is deleted."
       confirmLabel="End & clear"
       destructive
       onConfirm={async () => {
         const r = await endTesting();
         if (!r.ok) throw new Error(r.message ?? "Could not end testing.");
+        onEnded(); // mark the domain Completed (status persists in the report)
         router.push("/testing");
       }}
     />

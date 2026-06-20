@@ -6,8 +6,9 @@
  * Email-client-safe: table layout, inline CSS, hosted logo with alt-text + wordmark
  * fallback. The `test` flag injects the TEST banner + a `[TEST]` subject for previews.
  */
+import { LOGO_URL } from "./branding.js";
+
 export const SUPPORT_EMAIL = "learnercareercouncil@nst.rishihood.edu.in";
-const LOGO_URL = "https://res.cloudinary.com/doexqrehm/image/upload/v1781667863/images_hllr4y.png";
 const SENDER = "Learner Career Council (LCC) <learnercareercouncil@nst.rishihood.edu.in>";
 
 const PROD_SUBJECT = "Welcome to the Profile Building Drive Portal";
@@ -55,10 +56,10 @@ function html(f: { fullName: string; role: string; domain: string; team: string;
 ${test ? TEST_BANNER : ""}
 <tr><td class="px" style="padding:28px 36px 22px;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-    <td style="width:40px;height:40px;vertical-align:middle;"><img src="${LOGO_URL}" width="40" height="40" alt="Newton School of Technology" style="display:block;width:40px;height:40px;border-radius:9px;border:1px solid #e4e4e7;object-fit:cover;"/></td>
+    <td style="width:40px;height:40px;vertical-align:middle;"><img src="${LOGO_URL}" width="40" height="40" alt="Forge" style="display:block;width:40px;height:40px;border-radius:9px;border:1px solid #e4e4e7;object-fit:cover;"/></td>
     <td style="padding-left:12px;vertical-align:middle;">
-      <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#18181b;line-height:1.2;">Newton School of Technology</div>
-      <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#71717a;line-height:1.4;margin-top:2px;">Learner Career Council &nbsp;&times;&nbsp; Forge</div>
+      <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#18181b;line-height:1.2;">Forge</div>
+      <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#71717a;line-height:1.4;margin-top:2px;">LCC &nbsp;&times;&nbsp; NST</div>
     </td></tr></table>
 </td></tr>
 <tr><td style="border-top:1px solid #e4e4e7;font-size:0;line-height:0;">&nbsp;</td></tr>
@@ -103,7 +104,7 @@ ${test ? TEST_BANNER : ""}
 <tr><td class="px" style="padding:24px 36px 28px;border-top:1px solid #e4e4e7;">
   <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;color:#18181b;">Learner Career Council (LCC)</div>
   <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#71717a;margin-top:2px;">Newton School of Technology<br/><a href="mailto:${SUPPORT_EMAIL}" style="color:#71717a;text-decoration:underline;">${SUPPORT_EMAIL}</a></div>
-  <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:11px;color:#a1a1aa;margin-top:12px;">Powered by <strong style="color:#52525b;">Forge</strong> &nbsp;·&nbsp; Learner Career Council &times; Forge<br/>This is an automated invitation. If you weren't expecting it, you can ignore this email.</div>
+  <div style="font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:11px;color:#a1a1aa;margin-top:12px;">Powered by <strong style="color:#52525b;">Forge</strong> &nbsp;·&nbsp; LCC &times; NST<br/>This is an automated invitation. If you weren't expecting it, you can ignore this email.</div>
 </td></tr>
 </table></td></tr></table>${pixel}</body></html>`;
 }
@@ -111,7 +112,7 @@ ${test ? TEST_BANNER : ""}
 function text(f: { fullName: string; role: string; domain: string; team: string; portalUrl: string }, test: boolean): string {
   const head = test ? "[TEST EMAIL — For Review & Validation Purposes Only]\n\n" : "";
   return `${head}WELCOME TO THE PROFILE BUILDING DRIVE PORTAL
-Learner Career Council (LCC) x Forge — Newton School of Technology
+Forge — LCC x NST
 
 Hi ${f.fullName},
 
