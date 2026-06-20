@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { AuthUser, RoleKey, Scope, ScopeType } from "@/lib/types";
 import { type DomainKey, DOMAIN_KEYS, DOMAIN_COOKIE_NAME } from "@/lib/presentation";
+import { serverOrigin } from "@/lib/server-origin";
 
 /**
  * Session resolution. In **presentation** mode it's the dev cookie switcher (a
@@ -12,8 +13,8 @@ import { type DomainKey, DOMAIN_KEYS, DOMAIN_COOKIE_NAME } from "@/lib/presentat
  */
 const PRESENTATION =
   (process.env.NEXT_PUBLIC_APP_MODE ?? process.env.APP_MODE ?? "presentation") === "presentation";
-/** Backend origin for the server-side session check (same value as the API proxy target). */
-const SERVER_ORIGIN = process.env.API_PROXY_TARGET ?? "http://localhost:4000";
+/** Backend origin for the server-side session check (API_PROXY_TARGET, else derived from NEXT_PUBLIC_API_URL). */
+const SERVER_ORIGIN = serverOrigin();
 
 const ROLE_COOKIE = "forge_role";
 
@@ -45,12 +46,19 @@ function toAuthUser(su: ServerSessionUser): AuthUser {
 async function fetchServerUser(): Promise<AuthUser | null> {
   const store = await cookies();
   const cookieHeader = store.getAll().map((c) => `${c.name}=${c.value}`).join("; ");
+  const hasSession = store.getAll().some((c) => c.name === "forge.sid");
   try {
     const res = await fetch(`${SERVER_ORIGIN}/api/auth/me`, { headers: { cookie: cookieHeader }, cache: "no-store" });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // eslint-disable-next-line no-console
+      console.warn(`[session] /auth/me ${res.status} via ${SERVER_ORIGIN} (forge.sid forwarded: ${hasSession})`);
+      return null;
+    }
     const data = (await res.json()) as { user?: ServerSessionUser };
     return data.user ? toAuthUser(data.user) : null;
-  } catch {
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(`[session] /auth/me fetch to ${SERVER_ORIGIN} failed (forge.sid present: ${hasSession})`, e);
     return null;
   }
 }

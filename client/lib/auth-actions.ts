@@ -4,9 +4,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isPresentation, ROLE_COOKIE_NAME } from "@/lib/session";
 import { DOMAIN_COOKIE_NAME } from "@/lib/presentation";
+import { serverOrigin } from "@/lib/server-origin";
 
-/** Backend origin for the server-side logout call (same value as the API proxy target). */
-const SERVER_ORIGIN = process.env.API_PROXY_TARGET ?? "http://localhost:4000";
+/** Backend origin for the server-side logout call (API_PROXY_TARGET, else from NEXT_PUBLIC_API_URL). */
+const SERVER_ORIGIN = serverOrigin();
 const SESSION_COOKIE = "forge.sid";
 const CSRF_COOKIE = "forge_csrf";
 /** Cookie scope — must MATCH how the server set them, or the delete won't clear them. When the

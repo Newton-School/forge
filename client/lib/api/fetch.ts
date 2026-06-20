@@ -10,11 +10,12 @@
  * Keeping this split in one place means accessors don't care where they run.
  */
 import { fetchRetry } from "@/lib/http";
+import { serverOrigin } from "@/lib/server-origin";
 
 /** Public API base for browser requests (proxied to the backend by the Next rewrite). */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api";
-/** Absolute backend origin for server-side requests (same value as the API proxy target). */
-const SERVER_ORIGIN = process.env.API_PROXY_TARGET ?? "http://localhost:4000";
+/** Absolute backend origin for server-side requests (API_PROXY_TARGET, else from NEXT_PUBLIC_API_URL). */
+const SERVER_ORIGIN = serverOrigin();
 
 /** GET `path` (e.g. "/users") as JSON, forwarding the session cookie when run server-side. */
 export async function fetchJson<T>(path: string): Promise<T> {
