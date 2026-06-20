@@ -12,6 +12,17 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 export const TESTING_PRESENTATION =
   (process.env.NEXT_PUBLIC_APP_MODE ?? process.env.APP_MODE ?? "presentation") === "presentation";
 
+/**
+ * Double-submit CSRF: the server sets a readable `forge_csrf` cookie and requires it echoed in
+ * the `x-csrf-token` header on every state-changing request. Without this, POST/PUT here are
+ * rejected with 403 (which the UI would misreport as "not allowed").
+ */
+function csrfHeader(): Record<string, string> {
+  if (typeof document === "undefined") return {};
+  const m = document.cookie.match(/(?:^|;\s*)forge_csrf=([^;]+)/);
+  return m ? { "x-csrf-token": decodeURIComponent(m[1]) } : {};
+}
+
 /** Map the store's lowercase UI status to the server enum. */
 const STATUS_TO_SERVER: Record<DomainStatus, string> = {
   not_started: "NOT_STARTED",
@@ -61,14 +72,20 @@ export const fetchEnvironment = (domain: DomainKey) => getJson<DomainEnvironment
 async function send(path: string, method: "PUT" | "POST", body: unknown): Promise<void> {
   if (TESTING_PRESENTATION) return;
   try {
-    await fetch(`${API_BASE}${path}`, {
+    const res = await fetch(`${API_BASE}${path}`, {
       method,
       credentials: "include",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...csrfHeader() },
       body: JSON.stringify(body),
     });
-  } catch {
-    /* best-effort — localStorage remains the source of truth */
+    if (!res.ok) {
+      // Best-effort, but surface failures (e.g. validation 400) instead of swallowing them.
+      // eslint-disable-next-line no-console
+      console.warn(`[testing] ${method} ${path} → ${res.status}`, await res.text().catch(() => ""));
+    }
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn(`[testing] ${method} ${path} failed`, e);
   }
 }
 
@@ -101,7 +118,7 @@ export async function provisionDomain(domain: DomainKey): Promise<ProvisionResul
     const res = await fetch(`${API_BASE}/testing/provision/${domain}`, {
       method: "POST",
       credentials: "include",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...csrfHeader() },
       body: "{}",
     });
     if (!res.ok) {
@@ -159,7 +176,7 @@ export async function endTesting(): Promise<EndResult> {
     const res = await fetch(`${API_BASE}/testing/teardown`, {
       method: "POST",
       credentials: "include",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...csrfHeader() },
       body: "{}",
     });
     if (!res.ok) {
@@ -182,6 +199,7 @@ export function syncIssue(body: ReportIssueBody): Promise<void> {
     stepId: body.stepId,
     title: body.title,
     description: body.description,
-    severity: body.severity,
+    // Server expects the uppercase enum (LOW/MEDIUM/HIGH/CRITICAL); the UI uses "Medium".
+    severity: body.severity.toUpperCase(),
   });
 }

@@ -40,6 +40,10 @@ const schema = z.object({
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().optional(), // e.g. "Forge <no-reply@…>"; falls back to SMTP_USER
 
+  // Comma-separated CC list for concern notifications (the organizing team).
+  // The "to" is always the LCC; this just adds the org team on CC.
+  CONCERN_CC_EMAILS: z.string().optional(),
+
   // GitHub integration — webhook HMAC secret + read token + the AI-domain org slug.
   GITHUB_WEBHOOK_SECRET: z.string().optional(),
   GITHUB_API_TOKEN: z.string().optional(),

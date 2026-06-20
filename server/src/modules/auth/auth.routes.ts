@@ -49,7 +49,9 @@ authRouter.post("/logout", (req: Request, res: Response, next: NextFunction) => 
   req.logout((err) => {
     if (err) return next(err);
     req.session?.destroy(() => {
-      res.clearCookie("forge.sid");
+      // Match the domain the cookie was set with (parent domain on split subdomains), else
+      // the clear is a no-op for a ".taj.works"-scoped cookie.
+      res.clearCookie("forge.sid", { path: "/", domain: env.COOKIE_DOMAIN || undefined });
       res.json({ ok: true });
     });
   });

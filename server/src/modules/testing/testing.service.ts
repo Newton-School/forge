@@ -3,6 +3,7 @@ import { logger } from "../../lib/logger.js";
 import { audit } from "../../lib/audit.js";
 import type { AuthContext } from "../../rbac/types.js";
 import { emailProvider } from "../email/email.provider.js";
+import { buildIssueEmail } from "../email/issue-report.js";
 import { inviteUser } from "../invitations/invitations.service.js";
 import { testingRepo } from "./testing.repository.js";
 import { isTester, isTestingAdmin, TESTING_ADMIN_EMAIL } from "./testing.allowlist.js";
@@ -57,17 +58,17 @@ export async function reportIssue(ctx: AuthContext, input: ReportIssueInput) {
     description: input.description ?? null,
     severity: input.severity,
   });
-  // Best-effort notification to the Testing Admin — never block issue capture on email.
+  // Best-effort branded notification to the Testing Admin — never block capture on email.
+  const mail = buildIssueEmail({
+    title: input.title,
+    description: input.description,
+    severity: input.severity,
+    domainKey: input.domainKey,
+    stepId: input.stepId,
+    reporterEmail: ctx.email,
+  });
   void emailProvider()
-    .send({
-      to: [TESTING_ADMIN_EMAIL],
-      subject: `[Forge Testing] ${input.severity} · ${input.domainKey} · ${input.title}`,
-      html:
-        `<p><strong>${input.title}</strong> &middot; ${input.severity}</p>` +
-        `<p>Domain: ${input.domainKey}${input.stepId ? ` &middot; Step: ${input.stepId}` : ""}</p>` +
-        `<p>Reporter: ${ctx.email}</p>` +
-        (input.description ? `<p>${input.description}</p>` : ""),
-    })
+    .send({ to: [TESTING_ADMIN_EMAIL], subject: mail.subject, html: mail.html, text: mail.text })
     .catch((err) => logger.warn({ err }, "testing issue email failed (recorded anyway)"));
   return issue;
 }

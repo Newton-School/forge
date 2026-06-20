@@ -8,7 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { api } from "@/lib/api";
 
 export default async function AdminOverviewPage() {
-  const [AUDIT_LOGS, DOMAINS] = await Promise.all([api.auditLogs(), api.domains()]);
+  const [AUDIT_LOGS, DOMAINS, USERS, TEAMS] = await Promise.all([
+    api.auditLogs(), api.domains(), api.users(), api.teams(),
+  ]);
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -17,10 +19,10 @@ export default async function AdminOverviewPage() {
       />
 
       <StatGrid>
-        <StatCard label="Total Users" value={240} sub="across all roles" icon={<Users />} />
+        <StatCard label="Total Users" value={USERS.length} sub="across all roles" icon={<Users />} />
         <StatCard label="Domains" value={DOMAINS.length} sub={DOMAINS.map((d) => d.key).join(" · ")} icon={<Boxes />} />
-        <StatCard label="Teams" value={44} sub="pods, groups & squads" icon={<Network />} />
-        <StatCard label="Active Integrations" value="3 / 3" sub="GitHub · Discord · Calendar" icon={<Plug />} />
+        <StatCard label="Teams" value={TEAMS.length} sub="pods, groups & squads" icon={<Network />} />
+        <StatCard label="Active Integrations" value="GitHub · Discord · Calendar" sub="manage on Integrations" icon={<Plug />} />
       </StatGrid>
 
       <SectionCard

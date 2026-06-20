@@ -1,10 +1,19 @@
 import { Errors } from "../../lib/errors.js";
 import { audit } from "../../lib/audit.js";
+import { logger } from "../../lib/logger.js";
+import { env } from "../../config/env.js";
 import { scopeWhere } from "../../rbac/scope.js";
 import type { AuthContext } from "../../rbac/types.js";
+import { emailProvider } from "../email/email.provider.js";
+import { buildConcernEmail } from "../email/concern-notify.js";
 import { concernsRepo, type ConcernWithEvents } from "./concerns.repository.js";
 import type { CreateConcernInput, ListConcernsQuery, TransitionInput } from "./concerns.schema.js";
 import { allowedTransitions, canTransition } from "./concerns.state.js";
+
+/** Concern notifications go to the LCC; the organizing team is CC'd via env. */
+const LCC_EMAIL = "learnercareercouncil@nst.rishihood.edu.in";
+const concernCc = () =>
+  (env.CONCERN_CC_EMAILS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 
 function toDto(c: ConcernWithEvents) {
   return {
@@ -71,7 +80,22 @@ export async function getConcern(ctx: AuthContext, id: string) {
 export async function raiseConcern(ctx: AuthContext, input: CreateConcernInput, ip?: string) {
   const created = await concernsRepo.create(input, ctx.id);
   await audit(ctx, { action: "concern:raise", entityType: "Concern", entityId: created.id, after: { category: input.category, severity: input.severity }, ip });
-  // (Phase: also enqueue the LCC + organizing-team notification email here.)
+
+  // Best-effort notification to the LCC (CC: organizing team) — never block raising on email.
+  const mail = buildConcernEmail({
+    title: input.title,
+    description: input.description,
+    category: input.category,
+    severity: input.severity,
+    raisedBy: input.anonymous ? "Anonymous" : ctx.fullName,
+    raisedByEmail: input.anonymous ? null : ctx.email,
+    concernUrl: `${env.APP_BASE_URL.replace(/\/$/, "")}/concerns/${created.id}`,
+  });
+  const cc = concernCc();
+  void emailProvider()
+    .send({ to: [LCC_EMAIL], cc: cc.length ? cc : undefined, subject: mail.subject, html: mail.html, text: mail.text })
+    .catch((err) => logger.warn({ err, concernId: created.id }, "concern notification email failed (recorded anyway)"));
+
   return toDto(created);
 }
 

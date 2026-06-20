@@ -30,7 +30,7 @@ export type TransitionInput = z.infer<typeof transitionSchema>;
 export const listConcernsQuery = z.object({
   status: ConcernStatusEnum.optional(),
   domain: z.string().optional(), // domainId filter (further narrowed by scope)
-  take: z.coerce.number().int().min(1).max(200).default(50),
+  take: z.coerce.number().int().min(1).max(500).default(50),
   skip: z.coerce.number().int().min(0).default(0),
 });
 export type ListConcernsQuery = z.infer<typeof listConcernsQuery>;

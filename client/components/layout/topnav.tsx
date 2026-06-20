@@ -128,11 +128,11 @@ export function TopNav({ user, domain, presentation = false }: { user: AuthUser;
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild><Link href="/profile"><User className="size-4" />Profile</Link></DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              {/* Real sign-out: revokes the server session (prod) or clears demo cookies, then → /landing. */}
-              <form action={signOut}>
-                <button type="submit" className="flex w-full items-center gap-2"><LogOut className="size-4" />Sign out</button>
-              </form>
+            {/* Real sign-out: revokes the server session (prod) or clears demo cookies, then → /landing.
+                Called from onSelect — a <form> nested in a DropdownMenuItem is unmounted on select
+                before it can submit, so the action never ran (no logout reached the server). */}
+            <DropdownMenuItem className="gap-2" onSelect={() => { void signOut(); }}>
+              <LogOut className="size-4" />Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -131,6 +131,20 @@ export async function apiMutate<T>(path: string, method: string, body?: unknown)
   return (await res.json()) as T;
 }
 
+export interface RaiseConcernInput {
+  title: string;
+  description: string;
+  category: string;
+  severity: string;
+  anonymous?: boolean;
+}
+
+/** Raise a concern — creates the tracked ticket and emails the LCC server-side. */
+export async function raiseConcern(input: RaiseConcernInput): Promise<{ id: string }> {
+  if (PRESENTATION) return { id: "demo-concern" }; // demo mode: no backend write
+  return apiMutate<{ id: string }>("/concerns", "POST", input);
+}
+
 export interface SessionUser {
   id: string;
   email: string;

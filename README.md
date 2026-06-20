@@ -36,7 +36,7 @@ Frontend and backend are **subdomains of the same site** (`taj.works`), so sessi
 | Var | Value |
 |---|---|
 | `NEXT_PUBLIC_API_URL` | `https://forge.server.taj.works/api` |
-| `APP_MODE` | `production` |
+| `NEXT_PUBLIC_APP_MODE` | `production` (must be `NEXT_PUBLIC_*` so the browser sees it — plain `APP_MODE` is server-only) |
 
 > After deploying, add both production URLs to the provider consoles: **Google OAuth** (authorized redirect URI = the backend `…/api/auth/google/callback`; authorized JS origin = the backend) and any **GitHub OAuth** app callback. Email links resolve from `APP_BASE_URL`, so setting it to the Vercel URL makes onboarding/notification links point at the live app.
 
