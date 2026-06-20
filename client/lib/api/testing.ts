@@ -7,21 +7,11 @@
  * never block the UI — localStorage stays authoritative for responsiveness.
  */
 import type { DomainKey, DomainStatus, Severity } from "@/lib/mock/testing";
+import { csrfHeaders } from "./csrf";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 export const TESTING_PRESENTATION =
   (process.env.NEXT_PUBLIC_APP_MODE ?? process.env.APP_MODE ?? "presentation") === "presentation";
-
-/**
- * Double-submit CSRF: the server sets a readable `forge_csrf` cookie and requires it echoed in
- * the `x-csrf-token` header on every state-changing request. Without this, POST/PUT here are
- * rejected with 403 (which the UI would misreport as "not allowed").
- */
-function csrfHeader(): Record<string, string> {
-  if (typeof document === "undefined") return {};
-  const m = document.cookie.match(/(?:^|;\s*)forge_csrf=([^;]+)/);
-  return m ? { "x-csrf-token": decodeURIComponent(m[1]) } : {};
-}
 
 /** Map the store's lowercase UI status to the server enum. */
 const STATUS_TO_SERVER: Record<DomainStatus, string> = {
@@ -71,13 +61,16 @@ export const fetchEnvironment = (domain: DomainKey) => getJson<DomainEnvironment
 
 async function send(path: string, method: "PUT" | "POST", body: unknown): Promise<void> {
   if (TESTING_PRESENTATION) return;
-  try {
-    const res = await fetch(`${API_BASE}${path}`, {
+  const doFetch = async (force = false) =>
+    fetch(`${API_BASE}${path}`, {
       method,
       credentials: "include",
-      headers: { "content-type": "application/json", ...csrfHeader() },
+      headers: { "content-type": "application/json", ...(await csrfHeaders(force)) },
       body: JSON.stringify(body),
     });
+  try {
+    let res = await doFetch();
+    if (res.status === 403) res = await doFetch(true); // refresh CSRF + retry once
     if (!res.ok) {
       // Best-effort, but surface failures (e.g. validation 400) instead of swallowing them.
       // eslint-disable-next-line no-console
@@ -114,19 +107,25 @@ export interface ProvisionResult {
  */
 export async function provisionDomain(domain: DomainKey): Promise<ProvisionResult> {
   if (TESTING_PRESENTATION) return { ok: true }; // simulation — no DB writes, no emails
-  try {
-    const res = await fetch(`${API_BASE}/testing/provision/${domain}`, {
+  const doFetch = async (force = false) =>
+    fetch(`${API_BASE}/testing/provision/${domain}`, {
       method: "POST",
       credentials: "include",
-      headers: { "content-type": "application/json", ...csrfHeader() },
+      headers: { "content-type": "application/json", ...(await csrfHeaders(force)) },
       body: "{}",
     });
+  try {
+    let res = await doFetch();
+    // A 403 may be a stale CSRF token rather than the admin gate — refresh + retry once.
+    if (res.status === 403) res = await doFetch(true);
     if (!res.ok) {
+      const reason = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
       return {
         ok: false,
         status: res.status,
         message: res.status === 403
-          ? "Only the Testing Admin can provision a domain — ask them to start it."
+          // After a CSRF retry, a real 403 is the admin gate (the server says so).
+          ? (reason?.error?.message ?? "Only the Testing Admin can provision a domain — ask them to start it.")
           : `Provisioning failed (${res.status}).`,
       };
     }
@@ -172,18 +171,24 @@ export interface EndResult { ok: boolean; status?: number; message?: string; dat
  */
 export async function endTesting(): Promise<EndResult> {
   if (TESTING_PRESENTATION) return { ok: true }; // simulation — nothing to clear
-  try {
-    const res = await fetch(`${API_BASE}/testing/teardown`, {
+  const doFetch = async (force = false) =>
+    fetch(`${API_BASE}/testing/teardown`, {
       method: "POST",
       credentials: "include",
-      headers: { "content-type": "application/json", ...csrfHeader() },
+      headers: { "content-type": "application/json", ...(await csrfHeaders(force)) },
       body: "{}",
     });
+  try {
+    let res = await doFetch();
+    if (res.status === 403) res = await doFetch(true); // refresh CSRF + retry once
     if (!res.ok) {
+      const reason = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
       return {
         ok: false,
         status: res.status,
-        message: res.status === 403 ? "Only the Testing Admin can end testing." : `End testing failed (${res.status}).`,
+        message: res.status === 403
+          ? (reason?.error?.message ?? "Only the Testing Admin can end testing.")
+          : `End testing failed (${res.status}).`,
       };
     }
     return { ok: true, data: await res.json() };
