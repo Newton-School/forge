@@ -39,6 +39,11 @@ class SmtpEmailProvider implements EmailProvider {
   readonly name = "smtp";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private transport: any;
+  // Verify the connection at most once per window (mirrors LinkUp's 5-min verify cache) so the
+  // FIRST send surfaces the real SMTP error (auth/conn/timeout) instead of failing opaquely, but
+  // steady-state sends don't pay a verify round-trip each time.
+  private verifiedAt = 0;
+  private static readonly VERIFY_TTL_MS = 5 * 60 * 1000;
 
   private async getTransport() {
     if (this.transport) return this.transport;
@@ -63,20 +68,56 @@ class SmtpEmailProvider implements EmailProvider {
       greetingTimeout: 10_000,
       socketTimeout: 10_000,
     });
+    logger.info(
+      { host: env.SMTP_HOST, port: env.SMTP_PORT, secure: env.SMTP_PORT === 465, family: env.SMTP_FAMILY || "auto" },
+      "[EMAIL] SMTP transport created",
+    );
     return this.transport;
+  }
+
+  /** verify() the connection at most once per TTL — first failure is logged with the real cause. */
+  private async verifyIfNeeded(transport: { verify: () => Promise<unknown> }) {
+    const now = Date.now();
+    if (now - this.verifiedAt < SmtpEmailProvider.VERIFY_TTL_MS) return;
+    const started = now;
+    try {
+      await transport.verify();
+      this.verifiedAt = now;
+      logger.info({ ms: Date.now() - started }, "[EMAIL] SMTP transport verified");
+    } catch (err) {
+      // Surface the underlying code (ETIMEDOUT/EAUTH/ECONNREFUSED) — the actionable signal.
+      const e = err as { code?: string; command?: string; message?: string };
+      logger.error(
+        { code: e?.code, command: e?.command, message: e?.message, host: env.SMTP_HOST, port: env.SMTP_PORT, family: env.SMTP_FAMILY || "auto" },
+        "[EMAIL] SMTP transport verification failed",
+      );
+      throw err;
+    }
   }
 
   async send(msg: EmailMessage): Promise<{ id?: string }> {
     const transport = await this.getTransport();
-    const info = await transport.sendMail({
-      from: msg.from ?? env.SMTP_FROM ?? env.SMTP_USER,
-      to: msg.to,
-      cc: msg.cc,
-      subject: msg.subject,
-      html: msg.html,
-      text: msg.text,
-    });
-    return { id: info?.messageId };
+    await this.verifyIfNeeded(transport);
+    const started = Date.now();
+    try {
+      const info = await transport.sendMail({
+        from: msg.from ?? env.SMTP_FROM ?? env.SMTP_USER,
+        to: msg.to,
+        cc: msg.cc,
+        subject: msg.subject,
+        html: msg.html,
+        text: msg.text,
+      });
+      logger.info({ to: msg.to, messageId: info?.messageId, ms: Date.now() - started }, "[EMAIL] sent");
+      return { id: info?.messageId };
+    } catch (err) {
+      const e = err as { code?: string; command?: string; message?: string };
+      logger.error(
+        { to: msg.to, code: e?.code, command: e?.command, message: e?.message, ms: Date.now() - started },
+        "[EMAIL] send failed",
+      );
+      throw err;
+    }
   }
 }
 
