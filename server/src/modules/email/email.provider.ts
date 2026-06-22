@@ -1,3 +1,4 @@
+import { promises as dns } from "node:dns";
 import { env, mailerConfigured } from "../../config/env.js";
 import { logger } from "../../lib/logger.js";
 
@@ -50,15 +51,31 @@ class SmtpEmailProvider implements EmailProvider {
     const spec = "nodemailer";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const nodemailer: any = await import(spec);
-    // Transport config mirrors the proven LinkUp setup (pool + rate limits + short timeouts),
-    // plus an IPv4 default for PaaS hosts (Render/Fly) whose IPv6 egress is broken — that's the
-    // usual cause of "works locally, ETIMEDOUT at CONN in prod". Set SMTP_FAMILY=0 to disable.
+
+    const realHost = env.SMTP_HOST!;
+    // nodemailer's `family: 4` option is NOT reliably honored — on Render it still resolved
+    // smtp.gmail.com to its AAAA (IPv6) record and got ENETUNREACH (no IPv6 egress). The robust
+    // fix: resolve the A (IPv4) record OURSELVES and connect by IP literal, while keeping the real
+    // hostname as the TLS servername so the cert still validates (SNI). When SMTP_FAMILY=4 fails
+    // to resolve, fall back to the hostname (auto). Set SMTP_FAMILY=0 to skip and let Node choose.
+    let connectHost = realHost;
+    if (env.SMTP_FAMILY === 4) {
+      try {
+        const [ipv4] = await dns.resolve4(realHost);
+        if (ipv4) connectHost = ipv4;
+      } catch (err) {
+        logger.warn({ host: realHost, err: (err as Error)?.message }, "[EMAIL] IPv4 resolve failed — using hostname");
+      }
+    }
+
+    // Transport config mirrors the proven LinkUp setup (pool + rate limits + short timeouts).
     this.transport = (nodemailer.default ?? nodemailer).createTransport({
-      host: env.SMTP_HOST,
+      host: connectHost, // IPv4 literal on Render; real hostname otherwise
       port: env.SMTP_PORT,
       secure: env.SMTP_PORT === 465, // 465 = implicit TLS; 587/2525 = STARTTLS
       auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
-      family: env.SMTP_FAMILY || undefined, // 4 = force IPv4; 0 → omit (auto)
+      // Connected by IP, so SNI + cert hostname must be pinned to the real host explicitly.
+      tls: { servername: realHost },
       pool: true,
       maxConnections: 1,
       maxMessages: 100,
@@ -69,7 +86,7 @@ class SmtpEmailProvider implements EmailProvider {
       socketTimeout: 10_000,
     });
     logger.info(
-      { host: env.SMTP_HOST, port: env.SMTP_PORT, secure: env.SMTP_PORT === 465, family: env.SMTP_FAMILY || "auto" },
+      { host: realHost, connectHost, port: env.SMTP_PORT, secure: env.SMTP_PORT === 465, family: env.SMTP_FAMILY || "auto" },
       "[EMAIL] SMTP transport created",
     );
     return this.transport;
