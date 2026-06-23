@@ -18,7 +18,37 @@ export async function listEvents(ctx: AuthContext, q: ListEventsQuery) {
   if (q.from || q.to) {
     where.startsAt = { ...(q.from ? { gte: q.from } : {}), ...(q.to ? { lte: q.to } : {}) };
   }
-  return { items: await calendarRepo.list(where, q.take, q.skip) };
+  const dbEvents = await calendarRepo.list(where, q.take, q.skip);
+
+  // Also surface the shared LCC Google Calendar (drive-wide, visible to everyone). Best-effort:
+  // a Google read failure must never break the portal calendar — fall back to DB events only.
+  let googleEvents: typeof dbEvents = [];
+  const provider = calendarProvider();
+  if (provider.name === "google") {
+    try {
+      const from = q.from ?? new Date(Date.now() - 7 * 86_400_000); // default window: last week → forward
+      const ext = await provider.listEvents(from, q.to);
+      googleEvents = ext.map((e) => ({
+        id: `g_${e.externalId}`,
+        scopeType: "GLOBAL",
+        scopeId: null,
+        title: e.title,
+        type: "EVENT" as const,
+        startsAt: e.startsAt,
+        endsAt: e.endsAt,
+        externalEventId: e.externalId,
+        attendees: null,
+      }));
+    } catch (err) {
+      logger.warn({ err }, "google calendar read failed — showing DB events only");
+    }
+  }
+
+  // Merge, dropping any Google event we already mirrored into the DB (same externalEventId).
+  const mirrored = new Set(dbEvents.map((e) => e.externalEventId).filter(Boolean));
+  const merged = [...dbEvents, ...googleEvents.filter((g) => !mirrored.has(g.externalEventId))]
+    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+  return { items: merged };
 }
 
 export async function createEvent(ctx: AuthContext, input: CreateEventInput, ip?: string) {

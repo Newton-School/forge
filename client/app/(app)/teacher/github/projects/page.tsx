@@ -1,16 +1,28 @@
-import { getActiveDomain } from "@/lib/session";
+import { getActiveDomain, getOrgAnalytics } from "@/lib/session";
 import { RepoDomainDashboard as RepoView } from "@/components/github/repo/views";
 import { Target, Users } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { Badge } from "@/components/ui/badge";
 import { TeamCompare } from "@/components/github/team-compare";
+import { OrgProjectsLive } from "@/components/github/org-projects-live";
 import { GH_PROJECTS, teamsForProject, teamAnalytics } from "@/lib/api";
 
 /** A project may span 1..N teams. For multi-team projects, the teacher compares them head-to-head. */
 export default async function TeacherProjectComparison() {
   const activeDomain = await getActiveDomain();
   if (activeDomain !== "AI") return <RepoView domain={activeDomain} basePath="/teacher/github" />;
+
+  // Production: real projects grouped from the org. Presentation/offline/empty: mock below.
+  const org = await getOrgAnalytics();
+  if (org && org.teamRows.length > 0) {
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHeader title="Project Comparison" description="Org team-repos grouped by project — live from GitHub" />
+        <OrgProjectsLive data={org} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">

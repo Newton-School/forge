@@ -22,6 +22,7 @@ export const STATE_COOKIE = "forge_gh_oauth";
 export interface StartParams {
   repo?: string;
   teamId?: string;
+  mine?: boolean;
 }
 export interface StartResult {
   url: string;
@@ -35,6 +36,7 @@ export function buildStart(p: StartParams): StartResult {
     n: nonce,
     repo: p.repo?.trim() || undefined,
     teamId: p.teamId?.trim() || undefined,
+    mine: p.mine || undefined,
   };
   return { url: authorizeUrl(encodeState(state), Boolean(state.repo)), nonce };
 }
@@ -83,8 +85,32 @@ export async function handleCallback(
   // Username-only connect (students, or a mentor without a repo to wire).
   if (!state.repo || !state.teamId) return { status: "connected", login: viewer.login };
 
-  // Repo binding is mentor/teacher/admin-only; an unauthorized attempt still links the
-  // identity but silently refuses the repo (no leak of which teams exist).
+  // PER_STUDENT (ML): the user binds their OWN repo to their membership. Anyone who is actually a
+  // member of that team may bind their own repo (self-scope) — no mentor/teacher gate.
+  if (state.mine) {
+    if (!(await githubRepo.isTeamMember(ctx.id, state.teamId))) {
+      logger.warn({ userId: ctx.id, teamId: state.teamId }, "github member-repo bind denied (not a team member)");
+      return { status: "connected", login: viewer.login };
+    }
+    const { owner, repo } = parseRepo(state.repo);
+    const fullName = `${owner}/${repo}`;
+    try {
+      const hook = await ensureRepoWebhook(token, owner, repo);
+      const readerAdded = await ensureReadCollaborator(token, owner, repo, env.GITHUB_READER_LOGIN);
+      await githubRepo.setMemberRepo(ctx.id, state.teamId, `https://github.com/${fullName}`);
+      await audit(ctx, {
+        action: "github.connectMemberRepo", entityType: "TeamMember", entityId: ctx.id,
+        after: { teamId: state.teamId, repo: fullName, webhookCreated: hook.created, readerAdded }, ip,
+      });
+      return { status: hook.created ? "repo_ok" : "repo_exists", login: viewer.login };
+    } catch (err) {
+      logger.error({ err, userId: ctx.id, repo: fullName }, "member repo webhook wiring failed");
+      return { status: "repo_error", login: viewer.login };
+    }
+  }
+
+  // SHARED (DVA/SDSE): repo binding is mentor/teacher/admin-only; an unauthorized attempt still
+  // links the identity but silently refuses the repo (no leak of which teams exist).
   if (!(await canBindTeam(ctx, state.teamId))) {
     logger.warn({ userId: ctx.id, teamId: state.teamId }, "github repo bind denied (not the team's mentor/teacher)");
     return { status: "connected", login: viewer.login };

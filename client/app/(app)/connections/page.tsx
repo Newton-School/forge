@@ -2,11 +2,11 @@ import { Suspense } from "react";
 import { ShieldCheck } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { ConnectionsPanel } from "@/components/integrations/connections-panel";
-import { getCurrentUser, getActiveDomain } from "@/lib/session";
+import { getCurrentUser, getActiveDomain, getConnections } from "@/lib/session";
+import { isPresentationMode } from "@/lib/config";
 import { TEAMS } from "@/lib/api";
 
-const PRESENTATION =
-  (process.env.NEXT_PUBLIC_APP_MODE ?? process.env.APP_MODE ?? "presentation") === "presentation";
+const PRESENTATION = isPresentationMode();
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
 export default async function ConnectionsPage() {
@@ -15,9 +15,12 @@ export default async function ConnectionsPage() {
   const team = TEAMS.find((t) => t.id === user.teamId);
   const local = user.email.split("@")[0];
 
-  // Identities are derived here to stand in for what the OAuth providers return.
-  const githubUsername = user.fullName.toLowerCase().replace(/\s+/g, "-");
-  const discordUsername = user.fullName.toLowerCase().replace(/\s+/g, "_");
+  // Production: real, server-verified status (identities come from the OAuth providers, repo from
+  // the DB). Presentation: derive representative values so the demo round-trip still reads well.
+  const conn = await getConnections();
+  const githubUsername = conn?.github.username ?? user.fullName.toLowerCase().replace(/\s+/g, "-");
+  const discordUsername = conn?.discord.username ?? user.fullName.toLowerCase().replace(/\s+/g, "_");
+  const boundRepo = conn?.repo.url ?? conn?.repo.name ?? team?.repo ?? "";
 
   return (
     <div className="flex flex-col gap-6">
@@ -40,13 +43,18 @@ export default async function ConnectionsPage() {
           fullName={user.fullName}
           githubUsername={githubUsername}
           discordUsername={discordUsername}
-          googleEmail={`${local}@nst.edu`}
-          repo={team?.repo ?? ""}
+          googleEmail={user.email}
+          repo={boundRepo}
           domainKey={domainKey}
           role={user.role}
-          teamId={user.teamId}
+          teamId={conn?.repo.teamId ?? user.teamId}
           presentation={PRESENTATION}
           apiBase={API_BASE}
+          githubConnected={conn?.github.connected ?? false}
+          discordConnected={conn?.discord.connected ?? false}
+          calendarInApp={Boolean(conn)}
+          repoMode={conn?.repo.mode}
+          repoCanConnect={conn?.repo.canConnect}
         />
       </Suspense>
 

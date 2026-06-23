@@ -60,15 +60,19 @@ export function TopNav({ user, domain, presentation = false }: { user: AuthUser;
 
         {/* Presentation/demo affordances — only when APP_MODE=presentation */}
         {presentation ? (
-          <>
-            <span className="hidden items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 sm:inline-flex"
-              title="Demo mode — showing seeded mock data">
-              <FlaskConical className="size-3" /> Presentation
-            </span>
-            <DomainSwitcher current={domain} />
-            <RoleSwitcher current={user.role} />
-          </>
+          <span className="hidden items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 sm:inline-flex"
+            title="Demo mode — showing seeded mock data">
+            <FlaskConical className="size-3" /> Presentation
+          </span>
         ) : null}
+        {/* Domain switcher — real feature for roles that span domains (Admin/LCC/Teacher); also shown
+            for everyone in presentation so the demo can preview each domain. Drives the GitHub/domain
+            dashboards via the forge_domain cookie. */}
+        {presentation || ["ADMIN", "LCC", "TEACHER"].includes(user.role) ? (
+          <DomainSwitcher current={domain} />
+        ) : null}
+        {/* Role switcher is demo-only (you can't change your real role in production). */}
+        {presentation ? <RoleSwitcher current={user.role} /> : null}
         <RaiseConcernDialog />
 
         {/* AI assist */}

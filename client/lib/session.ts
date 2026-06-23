@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import type { AuthUser, RoleKey, Scope, ScopeType } from "@/lib/types";
 import { type DomainKey, DOMAIN_KEYS, DOMAIN_COOKIE_NAME } from "@/lib/presentation";
 import { serverOrigin } from "@/lib/server-origin";
+import { isPresentationMode } from "@/lib/config";
 
 /**
  * Session resolution. In **presentation** mode it's the dev cookie switcher (a
@@ -11,8 +12,7 @@ import { serverOrigin } from "@/lib/server-origin";
  * thanks to the same-origin API proxy — see next.config) and unauthenticated visitors are
  * redirected out of the app shell to the public landing page.
  */
-const PRESENTATION =
-  (process.env.NEXT_PUBLIC_APP_MODE ?? process.env.APP_MODE ?? "presentation") === "presentation";
+const PRESENTATION = isPresentationMode();
 /** Backend origin for the server-side session check (API_PROXY_TARGET, else derived from NEXT_PUBLIC_API_URL). */
 const SERVER_ORIGIN = serverOrigin();
 
@@ -117,6 +117,145 @@ export async function getCurrentUser(): Promise<AuthUser> {
 }
 
 export const isPresentation = PRESENTATION;
+
+/** Real per-user integration status from the server (production only; null in presentation/offline). */
+export interface ConnectionsStatus {
+  github: { connected: boolean; username: string | null; connectedAt: string | null; configured: boolean };
+  discord: { connected: boolean; username: string | null; configured: boolean };
+  repo: { mode: "org" | "shared" | "per_student"; canConnect: boolean; teamId: string | null; url: string | null; name: string | null; orgMode: boolean };
+  calendar: { mode: "inapp" };
+}
+
+export async function getConnections(): Promise<ConnectionsStatus | null> {
+  if (PRESENTATION) return null;
+  const store = await cookies();
+  const cookieHeader = store.getAll().map((c) => `${c.name}=${c.value}`).join("; ");
+  try {
+    const res = await fetch(`${SERVER_ORIGIN}/api/integrations/connections`, { headers: { cookie: cookieHeader }, cache: "no-store" });
+    if (!res.ok) return null;
+    return (await res.json()) as ConnectionsStatus;
+  } catch {
+    return null;
+  }
+}
+
+/** Real AI-org GitHub analytics (production only; null in presentation/offline → caller falls back to mock). */
+export interface OrgAnalytics {
+  login: string;
+  name: string | null;
+  repos: number;
+  teams: number;
+  projects: number;
+  contributors: number;
+  commits: number;
+  openIssues: number;
+  closedIssues: number;
+  prs: number;
+  mergedPrs: number;
+  openPrs: number;
+  teamRows: {
+    repo: string; fullName: string; project: string; teamIndex: number; description: string | null;
+    commits: number; contributors: number; openIssues: number; closedIssues: number;
+    prs: number; mergedPrs: number; openPrs: number;
+  }[];
+}
+
+export async function getOrgAnalytics(): Promise<OrgAnalytics | null> {
+  if (PRESENTATION) return null;
+  const store = await cookies();
+  const cookieHeader = store.getAll().map((c) => `${c.name}=${c.value}`).join("; ");
+  try {
+    const res = await fetch(`${SERVER_ORIGIN}/api/integrations/github/org/analytics`, { headers: { cookie: cookieHeader }, cache: "no-store" });
+    if (!res.ok) return null;
+    return (await res.json()) as OrgAnalytics;
+  } catch {
+    return null;
+  }
+}
+
+/** Real detail for one AI-org repo (production only; null → caller falls back to mock / notFound). */
+export interface RepoDetailLiveDto {
+  repo: string;
+  issues: { number: number; title: string; state: string; labels: string[]; author: string | null; assignees: string[]; milestone: string | null; url: string; createdAt: string }[];
+  pulls: { number: number; title: string; state: string; author: string | null; additions: number; deletions: number; url: string; createdAt: string; mergedAt: string | null }[];
+  milestones: { number: number; title: string; state: string; progress: number; dueAt: string | null }[];
+  commits: number;
+  commitList: { sha: string; message: string; author: string | null; date: string | null }[];
+  contributors: string[];
+}
+
+export async function getRepoDetail(repo: string): Promise<RepoDetailLiveDto | null> {
+  if (PRESENTATION) return null;
+  const store = await cookies();
+  const cookieHeader = store.getAll().map((c) => `${c.name}=${c.value}`).join("; ");
+  try {
+    const res = await fetch(`${SERVER_ORIGIN}/api/integrations/github/repos/${encodeURIComponent(repo)}`, { headers: { cookie: cookieHeader }, cache: "no-store" });
+    if (!res.ok) return null;
+    return (await res.json()) as RepoDetailLiveDto;
+  } catch {
+    return null;
+  }
+}
+
+/** Real org-wide per-contributor leaderboard (production only; null → caller falls back to mock). */
+export interface OrgContributor {
+  login: string; commits: number; issuesOpened: number; prsRaised: number; prsMerged: number; repos: number; acceptanceRate: number;
+}
+
+export async function getOrgContributors(): Promise<OrgContributor[] | null> {
+  if (PRESENTATION) return null;
+  const store = await cookies();
+  const cookieHeader = store.getAll().map((c) => `${c.name}=${c.value}`).join("; ");
+  try {
+    const res = await fetch(`${SERVER_ORIGIN}/api/integrations/github/org/contributors`, { headers: { cookie: cookieHeader }, cache: "no-store" });
+    if (!res.ok) return null;
+    return ((await res.json()) as { items: OrgContributor[] }).items;
+  } catch {
+    return null;
+  }
+}
+
+/** Real org roster (mentor + students per team-repo) from GitHub Teams (production only). */
+export interface OrgRoster {
+  source: "github" | "derived";
+  reason?: string;
+  faculty: string[];
+  teams: { slug: string; name: string; repo: string | null; repos: string[]; mentor: string | null; mentors: string[]; students: string[] }[];
+}
+
+export async function getOrgRoster(): Promise<OrgRoster | null> {
+  if (PRESENTATION) return null;
+  const store = await cookies();
+  const cookieHeader = store.getAll().map((c) => `${c.name}=${c.value}`).join("; ");
+  try {
+    const res = await fetch(`${SERVER_ORIGIN}/api/integrations/github/teams`, { headers: { cookie: cookieHeader }, cache: "no-store" });
+    if (!res.ok) return null;
+    return ((await res.json()) as { items: OrgRoster }).items;
+  } catch {
+    return null;
+  }
+}
+
+/** The caller's OWN repo in AI org-mode (resolved via their GitHub login + roster). */
+export interface MyOrgRepo {
+  repo: string | null;
+  role: "mentor" | "student" | null;
+  team: string | null;
+  login: string | null;
+}
+
+export async function getMyOrgRepo(): Promise<MyOrgRepo | null> {
+  if (PRESENTATION) return null;
+  const store = await cookies();
+  const cookieHeader = store.getAll().map((c) => `${c.name}=${c.value}`).join("; ");
+  try {
+    const res = await fetch(`${SERVER_ORIGIN}/api/integrations/github/org/mine`, { headers: { cookie: cookieHeader }, cache: "no-store" });
+    if (!res.ok) return null;
+    return (await res.json()) as MyOrgRepo;
+  } catch {
+    return null;
+  }
+}
 
 export const ROLE_COOKIE_NAME = ROLE_COOKIE;
 

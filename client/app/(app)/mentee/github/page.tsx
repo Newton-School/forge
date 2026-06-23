@@ -1,4 +1,4 @@
-import { getActiveDomain } from "@/lib/session";
+import { getActiveDomain, getMyOrgRepo, getRepoDetail } from "@/lib/session";
 import { MenteeRepoView as RepoView } from "@/components/github/repo/views";
 import Link from "next/link";
 import { GitBranch, Target } from "lucide-react";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WorkflowPipeline } from "@/components/github/workflow-pipeline";
 import { MilestoneBar } from "@/components/github/milestone-bar";
+import { RepoDetailLive } from "@/components/github/repo-detail-live";
 import {
   DEMO, ghTeam, ghRepo, GH_PROJECTS, milestonesForRepo, studentAnalytics, personName,
 } from "@/lib/api";
@@ -16,6 +17,20 @@ import {
 export default async function MenteeRepository() {
   const activeDomain = await getActiveDomain();
   if (activeDomain !== "AI") return <RepoView domain={activeDomain} />;
+
+  // Production: the mentee's OWN team repo (resolved from the org roster) with live detail.
+  const mine = await getMyOrgRepo();
+  if (mine?.repo) {
+    const detail = await getRepoDetail(mine.repo);
+    if (detail) {
+      return (
+        <div className="flex flex-col gap-6">
+          <PageHeader title="Your project repository" description={`${mine.team ?? mine.repo} · @${mine.login}`} />
+          <RepoDetailLive data={detail} />
+        </div>
+      );
+    }
+  }
 
   const team = ghTeam(DEMO.teamId)!;
   const repo = ghRepo(team.repoId)!;

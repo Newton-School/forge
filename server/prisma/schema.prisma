@@ -427,6 +427,10 @@ model TeamMember {
   squadId     String?
   squad       Squad?  @relation(fields: [squadId], references: [id])
   githubPermission String?
+  // PER_STUDENT domains (e.g. ML): each member binds their OWN repo (the team is a grouping layer).
+  // SHARED/ORG domains use Team.githubRepoUrl / the org instead, so these stay null there.
+  githubRepoUrl  String?
+  githubRepoName String? // display name, e.g. "khushi-ml/forecasting"
 
   @@unique([teamId, userId])
   @@index([userId])

@@ -47,6 +47,7 @@ const CLIENT = env.APP_BASE_URL;
 const startQuery = z.object({
   repo: z.string().trim().max(200).optional(),
   teamId: z.string().trim().max(64).optional(),
+  mine: z.coerce.boolean().optional(), // PER_STUDENT (ML): bind the caller's own repo
 });
 
 /** Begin the consent flow. A mentor may pass ?repo=&teamId= to also wire the webhook. */
@@ -54,8 +55,8 @@ githubRouter.get(
   "/oauth/start",
   asyncHandler(async (req: Request, res: Response) => {
     if (!githubOAuthConfigured) return res.redirect(`${CLIENT}/connections?github=unconfigured`);
-    const { repo, teamId } = startQuery.parse(req.query);
-    const { url, nonce } = connect.buildStart({ repo, teamId });
+    const { repo, teamId, mine } = startQuery.parse(req.query);
+    const { url, nonce } = connect.buildStart({ repo, teamId, mine });
     res.cookie(connect.STATE_COOKIE, nonce, {
       httpOnly: true,
       sameSite: "lax",
@@ -116,6 +117,16 @@ const keyParam = z.object({ key: z.string().min(1).max(120) });
 
 githubRouter.get("/org", requirePermission("review:read"),
   asyncHandler(async (req, res: Response) => { await svc.assertAiOrgAccess(req.auth!); res.json(await githubRead.orgOverview()); }));
+
+githubRouter.get("/org/analytics", requirePermission("review:read"),
+  asyncHandler(async (req, res: Response) => { await svc.assertAiOrgAccess(req.auth!); res.json(await githubRead.orgAnalytics()); }));
+
+githubRouter.get("/org/contributors", requirePermission("review:read"),
+  asyncHandler(async (req, res: Response) => { await svc.assertAiOrgAccess(req.auth!); res.json({ items: await githubRead.orgContributors() }); }));
+
+// The caller's own org repo (resolved via their GitHub login + the org roster) — mentor/mentee views.
+githubRouter.get("/org/mine", requirePermission("review:read"),
+  asyncHandler(async (req, res: Response) => { await svc.assertAiOrgAccess(req.auth!); res.json(await svc.myOrgRepo(req.auth!)); }));
 
 githubRouter.get("/projects", requirePermission("review:read"),
   asyncHandler(async (req, res: Response) => { await svc.assertAiOrgAccess(req.auth!); res.json({ items: await githubRead.projects() }); }));

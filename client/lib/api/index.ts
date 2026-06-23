@@ -15,6 +15,7 @@
 import * as fixtures from "@/lib/mock/data";
 import * as repoMock from "@/lib/mock/github-repo";
 import { fetchRetry } from "@/lib/http";
+import { isPresentationMode } from "@/lib/config";
 import { fetchJson } from "./fetch";
 import { graphTeamToRepoTeam, type DomainTeamsDto, type GraphTeamDto } from "./github-repo-live";
 import {
@@ -37,9 +38,8 @@ export * from "@/lib/mock/github";
 export * from "@/lib/mock/github-repo";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api";
-// Demo mode is on unless explicitly disabled (NEXT_PUBLIC_* so it reaches the browser).
-const PRESENTATION =
-  (process.env.NEXT_PUBLIC_APP_MODE ?? process.env.APP_MODE ?? "presentation") === "presentation";
+// Demo mode — single source of truth (lib/config), so chrome + data never disagree.
+const PRESENTATION = isPresentationMode();
 
 /**
  * Typed GET against the backend; falls back to the fixture in presentation mode.

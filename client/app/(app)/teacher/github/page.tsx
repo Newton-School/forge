@@ -1,4 +1,4 @@
-import { getActiveDomain } from "@/lib/session";
+import { getActiveDomain, getOrgAnalytics } from "@/lib/session";
 import { RepoDomainDashboard as RepoView } from "@/components/github/repo/views";
 import Link from "next/link";
 import { GitBranch, Users, GitPullRequest, CircleDot, GitMerge, UsersRound } from "lucide-react";
@@ -9,24 +9,43 @@ import { Button } from "@/components/ui/button";
 import { WorkflowPipeline } from "@/components/github/workflow-pipeline";
 import { RepoCard } from "@/components/github/repo-card";
 import { ActivityFeed } from "@/components/github/activity-feed";
+import { OrgOverviewLive } from "@/components/github/org-overview-live";
 import { GH_ORG, GH_REPOS, orgAnalytics } from "@/lib/api";
 
 export default async function TeacherOrgDashboard() {
   const activeDomain = await getActiveDomain();
   if (activeDomain !== "AI") return <RepoView domain={activeDomain} basePath="/teacher/github" />;
 
+  const org = await getOrgAnalytics();
+  const header = (
+    <PageHeader
+      title="AI Domain — Org Dashboard"
+      description={`GitHub org @${org?.login ?? GH_ORG.login} · GitHub is the source of truth`}
+      actions={<Button asChild size="sm" variant="outline"><Link href="/teacher/github/teams">Compare teams</Link></Button>}
+    />
+  );
+  const pipeline = (
+    <SectionCard title="How work flows" description="Every contribution follows this path — issues drive milestones" bodyClassName="overflow-x-auto p-4">
+      <WorkflowPipeline />
+    </SectionCard>
+  );
+
+  // Production: real org analytics (only when the org actually has repos). Else: the mock dashboard.
+  if (org && org.repos > 0) {
+    return (
+      <div className="flex flex-col gap-6">
+        {header}
+        {pipeline}
+        <OrgOverviewLive data={org} />
+      </div>
+    );
+  }
+
   const a = orgAnalytics();
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="AI Domain — Org Dashboard"
-        description={`GitHub org @${GH_ORG.login} · GitHub is the source of truth`}
-        actions={<Button asChild size="sm" variant="outline"><Link href="/teacher/github/teams">Compare teams</Link></Button>}
-      />
-
-      <SectionCard title="How work flows" description="Every contribution follows this path — issues drive milestones" bodyClassName="overflow-x-auto p-4">
-        <WorkflowPipeline />
-      </SectionCard>
+      {header}
+      {pipeline}
 
       <StatGrid className="lg:grid-cols-4">
         <StatCard label="Repositories" value={a.repos} icon={<GitBranch />} />

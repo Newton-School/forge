@@ -1,4 +1,4 @@
-import { getActiveDomain } from "@/lib/session";
+import { getActiveDomain, getMyOrgRepo, getRepoDetail } from "@/lib/session";
 import { MentorTeamHome as RepoView } from "@/components/github/repo/views";
 import Link from "next/link";
 import { GitPullRequest, CircleDot, GitMerge, Users, Flag } from "lucide-react";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { MilestoneBar } from "@/components/github/milestone-bar";
 import { ActivityFeed } from "@/components/github/activity-feed";
 import { PRList } from "@/components/github/pr-list";
+import { RepoDetailLive } from "@/components/github/repo-detail-live";
 import {
   DEMO, ghTeam, ghRepo, teamAnalytics, milestonesForRepo, prsForRepo,
 } from "@/lib/api";
@@ -16,6 +17,20 @@ import {
 export default async function MentorTeamDashboard() {
   const activeDomain = await getActiveDomain();
   if (activeDomain !== "AI") return <RepoView domain={activeDomain} basePath="/mentor/github" />;
+
+  // Production: the mentor's OWN team repo resolved from the org roster, shown with live detail.
+  const mine = await getMyOrgRepo();
+  if (mine?.repo) {
+    const detail = await getRepoDetail(mine.repo);
+    if (detail) {
+      return (
+        <div className="flex flex-col gap-6">
+          <PageHeader title={`${mine.team ?? mine.repo} — Team Dashboard`} description={`Your team's repository · @${mine.login}`} />
+          <RepoDetailLive data={detail} />
+        </div>
+      );
+    }
+  }
 
   const team = ghTeam(DEMO.teamId)!;
   const repo = ghRepo(team.repoId)!;
