@@ -7,9 +7,10 @@ import * as svc from "./demerits.service.js";
 
 export const demeritsRouter = Router();
 
-// List — authenticated; scope-filtered in the service (subject sees own).
+// List — scope-filtered in the service (subject sees own; supervisors see their scope).
 demeritsRouter.get(
   "/",
+  requirePermission("demerit:read"),
   asyncHandler(async (req: Request, res: Response) => {
     res.json(await svc.listDemerits(req.auth!, listDemeritsQuery.parse(req.query)));
   }),

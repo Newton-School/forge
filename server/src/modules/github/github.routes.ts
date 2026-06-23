@@ -107,30 +107,33 @@ githubRouter.get(
   }),
 );
 
-// ── AI-domain read endpoints (read-through to GitHub; scoping hardened in Phase 3) ──
+// ── AI-domain read endpoints (read-through to the shared AI GitHub org) ──
+// Permission gate (review:read) is held by every role, so it does NOT isolate domains. The
+// service-level asserts below are the real gate: org-wide reads require AI-domain access; per-repo
+// reads require access to that repo's team (or AI-domain for unmapped org repos).
 const repoParam = z.object({ repo: z.string().min(1).max(120) });
 const keyParam = z.object({ key: z.string().min(1).max(120) });
 
 githubRouter.get("/org", requirePermission("review:read"),
-  asyncHandler(async (_req, res: Response) => res.json(await githubRead.orgOverview())));
+  asyncHandler(async (req, res: Response) => { await svc.assertAiOrgAccess(req.auth!); res.json(await githubRead.orgOverview()); }));
 
 githubRouter.get("/projects", requirePermission("review:read"),
-  asyncHandler(async (_req, res: Response) => res.json({ items: await githubRead.projects() })));
+  asyncHandler(async (req, res: Response) => { await svc.assertAiOrgAccess(req.auth!); res.json({ items: await githubRead.projects() }); }));
 
 githubRouter.get("/projects/:key", requirePermission("review:read"),
-  asyncHandler(async (req, res: Response) => res.json(await githubRead.projectComparison(keyParam.parse(req.params).key))));
+  asyncHandler(async (req, res: Response) => { await svc.assertAiOrgAccess(req.auth!); res.json(await githubRead.projectComparison(keyParam.parse(req.params).key)); }));
 
 githubRouter.get("/repos/:repo", requirePermission("review:read"),
-  asyncHandler(async (req, res: Response) => res.json(await githubRead.repoDetail(repoParam.parse(req.params).repo))));
+  asyncHandler(async (req, res: Response) => { const { repo } = repoParam.parse(req.params); await svc.assertRepoAccess(req.auth!, repo); res.json(await githubRead.repoDetail(repo)); }));
 
 githubRouter.get("/repos/:repo/analytics", requirePermission("review:read"),
-  asyncHandler(async (req, res: Response) => res.json(await githubRead.repoAnalytics(repoParam.parse(req.params).repo))));
+  asyncHandler(async (req, res: Response) => { const { repo } = repoParam.parse(req.params); await svc.assertRepoAccess(req.auth!, repo); res.json(await githubRead.repoAnalytics(repo)); }));
 
 githubRouter.get("/repos/:repo/contributors", requirePermission("review:read"),
-  asyncHandler(async (req, res: Response) => res.json({ items: await githubRead.repoContributors(repoParam.parse(req.params).repo) })));
+  asyncHandler(async (req, res: Response) => { const { repo } = repoParam.parse(req.params); await svc.assertRepoAccess(req.auth!, repo); res.json({ items: await githubRead.repoContributors(repo) }); }));
 
 githubRouter.get("/teams", requirePermission("review:read"),
-  asyncHandler(async (_req, res: Response) => res.json({ items: await githubRead.teams() })));
+  asyncHandler(async (req, res: Response) => { await svc.assertAiOrgAccess(req.auth!); res.json({ items: await githubRead.teams() }); }));
 
 // ── Repository-mode read endpoints (ML/DVA/SDSE — public repos, no org) ─────────────
 const ownerRepo = z.object({

@@ -1,0 +1,32 @@
+# Copy to terraform.tfvars and edit. Secrets are NOT set here — Terraform creates
+# empty Secrets Manager containers you fill out-of-band (console/CLI).
+
+aws_region  = "ap-south-1"
+environment = "prod"
+app_origin  = "https://forge.taj.works"
+
+# DNS/TLS via Cloudflare (export CLOUDFLARE_API_TOKEN in the environment).
+manage_dns         = true
+cloudflare_zone_id = "REPLACE_WITH_ZONE_ID"
+
+# CI deploy role trust — your GitHub repo.
+github_repository = "your-org/forge"
+github_deploy_ref = "*" # or "ref:refs/heads/main" to restrict to main
+
+# Operational alert email (confirm the SNS subscription after first apply).
+alert_email = "learnercareercouncil@nst.rishihood.edu.in"
+
+# Outbound email identity (the verified SES domain). SMTP_FROM should also use
+# learnercareercouncil@nst.rishihood.edu.in. Set "" to skip the SES grant (Gmail SMTP).
+ses_identity_domain = "nst.rishihood.edu.in"
+
+# Cost/scale knobs (sensible production-small defaults shown).
+# db_instance_class   = "db.t4g.micro"
+# redis_node_type     = "cache.t4g.micro"
+# single_nat_gateway  = true
+# server_desired_count = 2
+# client_desired_count = 2
+
+# If the account already has a GitHub OIDC provider, reuse it:
+# create_github_oidc_provider = false
+# github_oidc_provider_arn     = "arn:aws:iam::<acct>:oidc-provider/token.actions.githubusercontent.com"

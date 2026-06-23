@@ -1,4 +1,5 @@
 import { scopeWhere } from "../../rbac/scope.js";
+import { effectiveScope } from "../../rbac/policy.js";
 import type { AuthContext } from "../../rbac/types.js";
 import { analyticsRepo } from "./analytics.repository.js";
 import { rollupDomains, totals, avgCompletionBy, statusFromCompletion, percent, type TeamRow } from "./analytics.logic.js";
@@ -13,6 +14,19 @@ const concernScope = (ctx: AuthContext) =>
 const reviewScope = (ctx: AuthContext) => scopeWhere(ctx, { domainField: "domainId", ownerField: "menteeId" });
 const deliverableScope = (ctx: AuthContext) =>
   scopeWhere(ctx, { domainField: "project.team.domainId", teamField: "project.teamId" });
+// A mentee update exposes domain via its team relation; owner is the updating user.
+const updateScope = (ctx: AuthContext) =>
+  scopeWhere(ctx, { domainField: "team.domainId", teamField: "teamId", ownerField: "userId" });
+// User rows expose scope through team MEMBERSHIP (needs `some`, which scopeWhere can't express).
+function userScope(ctx: AuthContext): Record<string, unknown> {
+  const s = effectiveScope(ctx);
+  if (s.global) return {};
+  const or: Record<string, unknown>[] = [];
+  if (s.domainIds.length) or.push({ teamMemberships: { some: { team: { domainId: { in: s.domainIds } } } } });
+  if (s.teamIds.length) or.push({ teamMemberships: { some: { teamId: { in: s.teamIds } } } });
+  if (s.self) or.push({ id: ctx.id });
+  return or.length ? (or.length === 1 ? or[0]! : { OR: or }) : { id: "__never__" };
+}
 
 async function loadRollups(ctx: AuthContext) {
   const [domains, teams] = await Promise.all([
@@ -36,8 +50,8 @@ export async function overview(ctx: AuthContext) {
       analyticsRepo.countPendingDeliverables(deliverableScope(ctx)),
       analyticsRepo.countEscalatedConcerns(concernScope(ctx)),
       analyticsRepo.countBlockedTasks(deliverableScope(ctx)),
-      analyticsRepo.userStatusCounts(),
-      analyticsRepo.recentUpdaterCount(since),
+      analyticsRepo.userStatusCounts(userScope(ctx)),
+      analyticsRepo.recentUpdaterCount(since, updateScope(ctx)),
     ]);
 
   const compByTeam = avgCompletionBy(ms, (m) => m.project?.teamId);

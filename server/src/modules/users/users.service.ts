@@ -3,6 +3,7 @@ import { audit } from "../../lib/audit.js";
 import type { AuthContext, RoleGrant } from "../../rbac/types.js";
 import { usersRepo, type DerivedScope, type UserWithRoles } from "./users.repository.js";
 import { inviteUser, resendForUser, type InviteLabels } from "../invitations/invitations.service.js";
+import { roleKeys } from "../../rbac/policy.js";
 import type { AssignRoleInput, CreateUserInput, ListUsersQuery, RoleEnum, UpdateUserInput } from "./users.schema.js";
 import type { z } from "zod";
 
@@ -22,6 +23,18 @@ function deriveScope(input: CreateUserInput, teamId: string | null): DerivedScop
   if (input.role === "TEACHER" && input.domainId) return { scopeType: "DOMAIN", scopeId: input.domainId };
   if ((input.role === "MENTOR" || input.role === "MENTEE") && teamId) return { scopeType: "TEAM", scopeId: teamId };
   return { scopeType: "SELF", scopeId: null };
+}
+
+/**
+ * Privilege-escalation guard: the route gate (`user:create`/`role:assign`) only confirms the actor
+ * MAY onboard — it doesn't bound WHAT they may grant. Both ADMIN and LCC pass that gate, but an LCC
+ * must not be able to mint an Admin or any GLOBAL-scoped principal (which would elevate past their
+ * tier). Only an actual Admin may grant the Admin role or GLOBAL scope.
+ */
+function assertCanGrant(actor: AuthContext, role: string, scopeType: string | undefined): void {
+  if (roleKeys(actor).includes("ADMIN")) return; // Admin may grant anything
+  if (role === "ADMIN") throw Errors.forbidden("Only an Admin can grant the Admin role");
+  if (scopeType === "GLOBAL") throw Errors.forbidden("Only an Admin can grant global scope");
 }
 
 /** Onboarding-email labels from an existing user's role grant (resend path). */
@@ -71,6 +84,7 @@ export async function createUser(actor: AuthContext, input: CreateUserInput, ip?
   let teamId = input.teamId ?? null;
   if (!teamId && input.mentorId) teamId = await usersRepo.mentorTeamId(input.mentorId);
   const scope = deriveScope(input, teamId);
+  assertCanGrant(actor, input.role, scope.scopeType); // an LCC cannot mint an Admin / GLOBAL user
 
   const created = await usersRepo.create(input, scope, teamId, actor.id);
   await audit(actor, {
@@ -111,6 +125,7 @@ export async function updateUser(actor: AuthContext, id: string, input: UpdateUs
 export async function assignRole(actor: AuthContext, id: string, input: AssignRoleInput, ip?: string) {
   const user = await usersRepo.findById(id);
   if (!user) throw Errors.notFound("User not found");
+  assertCanGrant(actor, input.role, input.scopeType); // an LCC cannot elevate anyone to Admin / GLOBAL
   await usersRepo.addRole(id, input);
   await audit(actor, { action: "role:assign", entityType: "User", entityId: id, after: input, ip });
   return getUser(id);

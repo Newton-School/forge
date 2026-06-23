@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Forge — AWS Deployment Runbook</title>
+<style>
+  :root {
+    --bg: #fafafa; --surface: #ffffff; --border: #e4e4e7; --ink: #18181b;
+    --muted: #71717a; --faint: #a1a1aa; --indigo: #4f46e5; --indigo-bg: #eef2ff;
+    --green: #16a34a; --amber: #d97706; --red: #dc2626; --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.6; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 48px 24px 120px; }
+  header.hero { border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding: 28px 32px; margin-bottom: 32px; }
+  header.hero h1 { margin: 0 0 6px; font-size: 26px; letter-spacing: -0.02em; }
+  header.hero p { margin: 0; color: var(--muted); }
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--indigo); background: var(--indigo-bg); padding: 3px 9px; border-radius: 999px; margin-bottom: 14px; }
+  h2 { font-size: 20px; margin: 40px 0 14px; padding-top: 12px; letter-spacing: -0.01em; }
+  h3 { font-size: 16px; margin: 26px 0 8px; }
+  p { margin: 10px 0; }
+  a { color: var(--indigo); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font-family: var(--mono); font-size: 12.5px; background: #f4f4f5; border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; }
+  pre { font-family: var(--mono); font-size: 12.5px; background: #18181b; color: #e4e4e7; border-radius: 10px; padding: 16px 18px; overflow-x: auto; line-height: 1.55; }
+  pre .c { color: #71717a; }
+  pre .k { color: #93c5fd; }
+  pre .s { color: #86efac; }
+  ol.toc { columns: 2; gap: 28px; padding-left: 20px; margin: 0; }
+  ol.toc li { margin: 4px 0; break-inside: avoid; }
+  .phase { border: 1px solid var(--border); background: var(--surface); border-radius: 12px; padding: 4px 26px 22px; margin: 18px 0; }
+  .phase > h2 { border: 0; margin-top: 22px; }
+  .pill { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 13.5px; }
+  th, td { border: 1px solid var(--border); padding: 8px 11px; text-align: left; vertical-align: top; }
+  th { background: #f4f4f5; font-weight: 600; }
+  td code { background: #fff; }
+  .note, .warn, .ok { border-radius: 10px; padding: 12px 16px; margin: 14px 0; border: 1px solid; font-size: 14px; }
+  .note { background: var(--indigo-bg); border-color: #c7d2fe; }
+  .warn { background: #fffbeb; border-color: #fde68a; }
+  .ok { background: #f0fdf4; border-color: #bbf7d0; }
+  .note b, .warn b, .ok b { display: block; margin-bottom: 2px; }
+  .step { counter-reset: none; }
+  ul.checks { list-style: none; padding-left: 0; }
+  ul.checks li { padding: 4px 0 4px 28px; position: relative; }
+  ul.checks li::before { content: "☐"; position: absolute; left: 4px; color: var(--faint); font-size: 16px; }
+  footer { margin-top: 50px; color: var(--faint); font-size: 12.5px; text-align: center; }
+  .kvs { font-size: 13px; }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="badge">Production Runbook</div>
+    <h1>Deploying Forge on AWS (ECS Fargate)</h1>
+    <p>Step-by-step deployment of the split <strong>client (Next.js SSR)</strong> + <strong>server (Express API)</strong> platform onto AWS, per <code>CLAUDE.md</code> &amp; <code>docs/infra-ecs.md</code>. Companion artifacts live in <code>infra/terraform/</code>, <code>infra/ecs/</code>, <code>infra/aws/</code>, <code>docker/</code>, and <code>.github/workflows/deploy.yml</code>.</p>
+  </header>
+
+  <div class="note">
+    <b>Why AWS fixes the email problem for free</b>
+    Unlike Render's free tier (which blocks outbound SMTP 25/465/587), AWS ECS/Fargate leaves <strong>587/465/2525 open</strong> — only port 25 is throttled. So Gmail SMTP on 587 connects fine here, and the natural choice is <strong>Amazon SES</strong> (cheap, high limits, native). See <a href="#phase-7">Phase 7</a>.
+  </div>
+
+  <div class="ok">
+    <b>This is now real Terraform — the phases below are the manual/click-ops equivalent</b>
+    <code>infra/terraform/</code> provisions <strong>everything</strong> in these phases (VPC · NAT · SGs · KMS · RDS · Redis · ECR · Secrets · IAM + the GitHub OIDC deploy role · ACM+Cloudflare · ALB path routing · ECS cluster/services · CloudWatch alarms + SNS email) wired by reference, <code>terraform validate</code> ✓. The phases below stay as the conceptual map (and the by-hand path). Fastest route to production:
+    <pre><span class="c"># 0. one-time state backend — VERSIONED S3 + DynamoDB lock (separate root module)</span>
+<span class="k">cd</span> infra/terraform/bootstrap &amp;&amp; terraform init &amp;&amp; terraform apply
+<span class="c"># 1. init the main module against that backend, then apply</span>
+<span class="k">cd</span> .. &amp;&amp; terraform init -backend-config=... &amp;&amp; terraform apply</pre>
+    Full steps in <code>infra/terraform/README.md</code>. After apply: fill the external secrets, confirm the SNS alert email, and copy the outputs into the GitHub Actions vars (<a href="#phase-12">Phase 12</a>).
+  </div>
+
+  <h2>Contents</h2>
+  <ol class="toc">
+    <li><a href="#phase-0">Prerequisites</a></li>
+    <li><a href="#phase-1">Network &amp; account isolation</a></li>
+    <li><a href="#phase-2">Data: RDS Postgres + ElastiCache Redis</a></li>
+    <li><a href="#phase-3">Secrets Manager</a></li>
+    <li><a href="#phase-4">ECR + build &amp; push images</a></li>
+    <li><a href="#phase-5">IAM roles</a></li>
+    <li><a href="#phase-6">ALB + ACM (TLS) + routing</a></li>
+    <li><a href="#phase-7">Email (SES / Gmail)</a></li>
+    <li><a href="#phase-8">ECS task defs + services</a></li>
+    <li><a href="#phase-9">DNS: Route 53 + Cloudflare</a></li>
+    <li><a href="#phase-10">OAuth redirect URIs &amp; app config</a></li>
+    <li><a href="#phase-11">DB schema (Prisma) + seed</a></li>
+    <li><a href="#phase-12">CI/CD: GitHub Actions OIDC</a></li>
+    <li><a href="#phase-13">Verify &amp; smoke test</a></li>
+    <li><a href="#phase-14">Observability, audit &amp; email alerts</a></li>
+  </ol>
+
+  <!-- PHASE 0 -->
+  <section class="phase" id="phase-0">
+    <h2>Phase 0 · Prerequisites <span class="pill">~30 min</span></h2>
+    <ul class="checks">
+      <li>An AWS account with admin access (or a dedicated <em>Forge</em> account — recommended for blast-radius isolation per CLAUDE.md §6).</li>
+      <li>AWS CLI v2 configured: <code>aws configure</code> (set default region, e.g. <code>ap-south-1</code>).</li>
+      <li>Docker installed locally (for the first manual image build).</li>
+      <li>Terraform ≥ 1.6 — <code>infra/terraform/</code> is a complete, validated module that provisions every phase below. Strongly preferred over click-ops.</li>
+      <li>Domain in Cloudflare (<code>taj.works</code>) — you already have this. For automated DNS, a scoped <code>CLOUDFLARE_API_TOKEN</code> (DNS:Edit) + the zone ID.</li>
+      <li>Pick the production app tag used everywhere: <code>app=forge</code>, <code>env=prod</code>.</li>
+    </ul>
+    <div class="note">
+      <b>One-time: the Terraform state backend (versioned S3 + DynamoDB lock)</b>
+      Remote state lives in an S3 bucket with <strong>versioning on</strong> (recover from a bad apply), KMS encryption, and full public-access block; locking uses a <strong>DynamoDB</strong> table. It's a separate root module (<code>infra/terraform/bootstrap/</code>) with local state — the bucket that holds state can't hold the state of the run that creates it. Run it once before the main module.
+    </div>
+    <div class="note">
+      <b>Single ALB, path-based routing (the AWS-canonical topology)</b>
+      On AWS the recommended layout is <strong>one domain</strong> (e.g. <code>forge.taj.works</code>) behind one ALB that routes <code>/api/*</code> → server and everything else → client. This removes the cross-subdomain cookie complexity you hit on Render/Vercel — the browser sees one origin, so <code>SameSite=Lax</code> first-party cookies "just work" and you can drop <code>COOKIE_DOMAIN</code>.
+    </div>
+  </section>
+
+  <!-- PHASE 1 -->
+  <section class="phase" id="phase-1">
+    <h2>Phase 1 · Network &amp; account isolation</h2>
+    <p>Provision a <strong>dedicated VPC</strong> — never share with other apps (CLAUDE.md §6).</p>
+    <ul class="checks">
+      <li>VPC with 2 AZs. Public subnets (ALB + NAT GW) and private subnets (ECS tasks, RDS, Redis).</li>
+      <li>1 NAT Gateway per AZ (or 1 to save cost) so private tasks have <strong>IPv4 egress</strong> (this is what makes SMTP/Google/GitHub calls work).</li>
+      <li>Security groups (least-privilege):
+        <ul>
+          <li><code>sg-alb</code> ← inbound 443 from Cloudflare IP ranges only.</li>
+          <li><code>sg-ecs</code> ← inbound from <code>sg-alb</code> on 3000 &amp; 4000.</li>
+          <li><code>sg-rds</code> ← inbound 5432 from <code>sg-ecs</code> only.</li>
+          <li><code>sg-redis</code> ← inbound 6379 from <code>sg-ecs</code> only.</li>
+        </ul>
+      </li>
+    </ul>
+    <p>All of this is in <code>infra/terraform/network.tf</code> + <code>security_groups.tf</code> (with the ALB SG locked to Cloudflare's published IPv4 ranges). Run <code>terraform plan</code> and read it before <code>apply</code>.</p>
+  </section>
+
+  <!-- PHASE 2 -->
+  <section class="phase" id="phase-2">
+    <h2>Phase 2 · Data — RDS Postgres + ElastiCache Redis</h2>
+    <h3>RDS for PostgreSQL</h3>
+    <ul class="checks">
+      <li>Engine: PostgreSQL 16. Instance: start <code>db.t4g.micro</code> (scale later).</li>
+      <li><strong>Not publicly accessible</strong>; private subnets only; <code>sg-rds</code>.</li>
+      <li>Storage encrypted with the Forge KMS CMK. Automated backups on.</li>
+      <li>Create the database + app user. Capture the connection string:</li>
+    </ul>
+    <pre><span class="c"># Prisma runtime (pooled) + direct (for db push). sslmode=require is mandatory.</span>
+DATABASE_URL=<span class="s">postgresql://forge:&lt;pw&gt;@&lt;rds-endpoint&gt;:5432/forge?sslmode=require</span>
+DIRECT_URL=<span class="s">postgresql://forge:&lt;pw&gt;@&lt;rds-endpoint&gt;:5432/forge?sslmode=require</span></pre>
+    <div class="ok">
+      <b>This solves your session-eviction pain</b>
+      RDS + ElastiCache are persistent, so sessions and data survive restarts — no more intermittent 401s from Render's ephemeral free Redis.
+    </div>
+    <h3>ElastiCache Redis</h3>
+    <ul class="checks">
+      <li>Redis (cluster mode disabled is fine to start), 1 node, private subnets, <code>sg-redis</code>.</li>
+      <li>Capture <code>REDIS_URL=redis://&lt;primary-endpoint&gt;:6379</code> (used for server-side sessions).</li>
+    </ul>
+  </section>
+
+  <!-- PHASE 3 -->
+  <section class="phase" id="phase-3">
+    <h2>Phase 3 · Secrets Manager</h2>
+    <p>Store every secret under the namespace <code>/forge/prod/*</code> — never bake into images or commit. The task definitions inject these at runtime.</p>
+    <table>
+      <tr><th>Secret</th><th>Purpose</th></tr>
+      <tr><td><code>/forge/prod/DATABASE_URL</code></td><td>RDS pooled connection</td></tr>
+      <tr><td><code>/forge/prod/DIRECT_URL</code></td><td>RDS direct (db push)</td></tr>
+      <tr><td><code>/forge/prod/REDIS_URL</code></td><td>ElastiCache endpoint</td></tr>
+      <tr><td><code>/forge/prod/SESSION_SECRET</code></td><td>Session signing (≥ 16 chars)</td></tr>
+      <tr><td><code>/forge/prod/GOOGLE_OAUTH_CLIENT_ID</code> / <code>_SECRET</code></td><td>Google OIDC login</td></tr>
+      <tr><td><code>/forge/prod/SMTP_HOST</code> / <code>_PORT</code> / <code>_USER</code> / <code>_PASS</code> / <code>_FROM</code></td><td>Email (SES or Gmail)</td></tr>
+      <tr><td><code>/forge/prod/GITHUB_*</code>, <code>DISCORD_*</code>, <code>GROQ_API_KEY</code></td><td>Integrations (optional)</td></tr>
+    </table>
+    <div class="warn">
+      <b>Rotate first</b>
+      Any key shared in chat/logs (DB password, SESSION_SECRET, Google/GitHub secrets, SMTP_PASS) must be <strong>rotated</strong> before going to production, then stored here.
+    </div>
+  </section>
+
+  <!-- PHASE 4 -->
+  <section class="phase" id="phase-4">
+    <h2>Phase 4 · ECR + build &amp; push images</h2>
+    <p>Create two ECR repos and push the first images manually (CI takes over afterwards).</p>
+    <pre><span class="k">aws</span> ecr create-repository --repository-name forge/client
+<span class="k">aws</span> ecr create-repository --repository-name forge/server
+
+<span class="c"># authenticate docker to ECR</span>
+<span class="k">aws</span> ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ACCT.dkr.ecr.$REGION.amazonaws.com
+
+<span class="c"># build (Dockerfiles already exist in docker/)</span>
+docker build -f docker/server.Dockerfile -t $ACCT.dkr.ecr.$REGION.amazonaws.com/forge/server:latest portal/server
+docker build -f docker/client.Dockerfile -t $ACCT.dkr.ecr.$REGION.amazonaws.com/forge/client:latest portal/client \
+  --build-arg NEXT_PUBLIC_API_URL=/api --build-arg APP_MODE=production
+
+docker push $ACCT.dkr.ecr.$REGION.amazonaws.com/forge/server:latest
+docker push $ACCT.dkr.ecr.$REGION.amazonaws.com/forge/client:latest</pre>
+    <p>The client builds with <code>output: "standalone"</code> and is configured at build time with <code>NEXT_PUBLIC_API_URL=/api</code> + <code>APP_MODE=production</code> (it's UI-only — no secrets).</p>
+  </section>
+
+  <!-- PHASE 5 -->
+  <section class="phase" id="phase-5">
+    <h2>Phase 5 · IAM roles</h2>
+    <p>Two roles per the JSON in <code>infra/aws/</code>:</p>
+    <ul class="checks">
+      <li><strong>Execution role</strong> (<code>iam-ecs-execution-role.json</code>) — lets ECS pull from ECR, write CloudWatch logs, and read the <code>/forge/prod/*</code> secrets.</li>
+      <li><strong>Server task role</strong> (<code>iam-server-task-role.json</code>) — the app's own runtime permissions (e.g. SES <code>ses:SendEmail</code> if you use SES, scoped to your verified identity).</li>
+    </ul>
+    <p>Scope every policy to Forge ARNs + <code>aws:ResourceTag/app = forge</code>; no wildcard <code>Resource: "*"</code> (the only allowed exception is <code>ecr:GetAuthorizationToken</code>).</p>
+  </section>
+
+  <!-- PHASE 6 -->
+  <section class="phase" id="phase-6">
+    <h2>Phase 6 · ALB + ACM (TLS) + routing</h2>
+    <ul class="checks">
+      <li>Request an <strong>ACM certificate</strong> for <code>forge.taj.works</code> (DNS-validated).</li>
+      <li>Create an <strong>Application Load Balancer</strong> (internet-facing, public subnets, <code>sg-alb</code>).</li>
+      <li>Two target groups: <code>tg-client</code> (port 3000) and <code>tg-server</code> (port 4000), both <code>ip</code> target type.</li>
+      <li>HTTPS:443 listener (ACM cert). Rules:
+        <ul>
+          <li><code>/api/*</code> → <code>tg-server</code></li>
+          <li>default → <code>tg-client</code></li>
+        </ul>
+      </li>
+      <li>Health checks: server → <code>GET /api/health</code> (200); client → <code>/</code> (200).</li>
+    </ul>
+    <div class="note">
+      <b>Cookie simplification</b>
+      Because client &amp; server are now the same origin (<code>forge.taj.works</code>), set <code>COOKIE_DOMAIN</code> empty (host-only cookies) and the client's <code>API_PROXY_TARGET</code> can be the internal ALB / <code>http://localhost:4000</code>-equivalent. The cross-subdomain CSRF/session workarounds you needed on Render are no longer required.
+    </div>
+  </section>
+
+  <!-- PHASE 7 -->
+  <section class="phase" id="phase-7">
+    <h2>Phase 7 · Email — Amazon SES (recommended) or Gmail</h2>
+    <p>SMTP egress works on AWS, so you have two clean options. <strong>No application code changes</strong> — only env/secrets differ (the nodemailer transport already handles any host/port + IPv4 resolution).</p>
+    <table>
+      <tr><th></th><th>Amazon SES (recommended)</th><th>Gmail SMTP</th></tr>
+      <tr><td>Limits</td><td>62k/mo free from within AWS, then $0.10/1,000</td><td>~500/day, app-password</td></tr>
+      <tr><td>Host / Port</td><td><code>email-smtp.&lt;region&gt;.amazonaws.com</code> : <code>587</code></td><td><code>smtp.gmail.com</code> : <code>587</code></td></tr>
+      <tr><td>Setup</td><td>Verify domain/sender, request production access (out of sandbox), create SMTP creds</td><td>Already have it</td></tr>
+    </table>
+    <p>Either way, the runtime env (in Secrets Manager) is:</p>
+    <pre>SMTP_HOST=<span class="s">email-smtp.ap-south-1.amazonaws.com</span>   <span class="c"># or smtp.gmail.com</span>
+SMTP_PORT=<span class="s">587</span>
+SMTP_USER=<span class="s">&lt;SES SMTP username / Gmail address&gt;</span>
+SMTP_PASS=<span class="s">&lt;SES SMTP password / Gmail app password&gt;</span>
+SMTP_FROM=<span class="s">Forge &lt;learnercareercouncil@nst.rishihood.edu.in&gt;</span>
+SMTP_FAMILY=<span class="s">4</span>                              <span class="c"># harmless; forces IPv4 (Fargate egresses via IPv4 NAT)</span>
+APP_BASE_URL=<span class="s">https://forge.taj.works</span></pre>
+    <div class="ok">
+      <b>Verify after deploy</b>
+      The server logs <code>[EMAIL] SMTP transport verified</code> then <code>[EMAIL] sent</code> with a <code>messageId</code> on success. If SES is still in sandbox, recipients must be verified — request production access to send to anyone.
+    </div>
+  </section>
+
+  <!-- PHASE 8 -->
+  <section class="phase" id="phase-8">
+    <h2>Phase 8 · ECS task definitions + services</h2>
+    <ul class="checks">
+      <li>Create the ECS <strong>Fargate cluster</strong> (<code>forge-prod</code>).</li>
+      <li>Register the two task defs from <code>infra/ecs/task-def.client.json</code> and <code>task-def.server.json</code> — fill in the rendered image URIs, the execution/task role ARNs, the <code>/forge/prod/*</code> secret ARNs, and the log group.</li>
+      <li>Containers run <strong>non-root</strong> with <code>dumb-init</code> as PID 1 (already in the Dockerfiles).</li>
+      <li>Create two ECS <strong>services</strong> (client → <code>tg-client</code>, server → <code>tg-server</code>), desired count 2 each, in private subnets with <code>sg-ecs</code>. Enable the deployment circuit breaker (auto-rollback).</li>
+    </ul>
+    <p>Key non-secret server env (the rest come from Secrets Manager):</p>
+    <pre>NODE_ENV=<span class="s">production</span>
+PORT=<span class="s">4000</span>
+ALLOWED_HOSTED_DOMAIN=<span class="s">rishihood.edu.in</span>
+GOOGLE_OAUTH_REDIRECT_URI=<span class="s">https://forge.taj.works/api/auth/google/callback</span>
+APP_BASE_URL=<span class="s">https://forge.taj.works</span></pre>
+  </section>
+
+  <!-- PHASE 9 -->
+  <section class="phase" id="phase-9">
+    <h2>Phase 9 · DNS — Route 53 + Cloudflare</h2>
+    <ul class="checks">
+      <li>In Cloudflare, point <code>forge.taj.works</code> (CNAME) at the ALB DNS name.</li>
+      <li>Proxy status: <strong>proxied</strong> (orange cloud) so Cloudflare WAF/DDoS sits in front, per the topology.</li>
+      <li>SSL/TLS mode: <strong>Full (strict)</strong> — Cloudflare ↔ ALB over the ACM cert.</li>
+      <li>Lock <code>sg-alb</code> inbound 443 to <a href="https://www.cloudflare.com/ips/">Cloudflare IP ranges</a> only, so nobody bypasses the proxy.</li>
+    </ul>
+  </section>
+
+  <!-- PHASE 10 -->
+  <section class="phase" id="phase-10">
+    <h2>Phase 10 · OAuth redirect URIs &amp; app config</h2>
+    <ul class="checks">
+      <li><strong>Google Cloud Console</strong> → Credentials → your OAuth client → Authorized redirect URIs: add <code>https://forge.taj.works/api/auth/google/callback</code>. Authorized JS origins: <code>https://forge.taj.works</code>.</li>
+      <li><strong>GitHub OAuth App</strong> (if used) → callback URL → <code>https://forge.taj.works/api/integrations/github/oauth/callback</code>.</li>
+      <li>Webhooks (GitHub/Discord) → point at <code>https://forge.taj.works/api/integrations/.../webhook</code>.</li>
+    </ul>
+  </section>
+
+  <!-- PHASE 11 -->
+  <section class="phase" id="phase-11">
+    <h2>Phase 11 · Database schema (Prisma) + seed</h2>
+    <p>Forge uses <code>prisma db push</code> (not migrations). Run it once against RDS — from a one-off ECS task, a bastion, or locally through a tunnel using <code>DIRECT_URL</code>:</p>
+    <pre><span class="k">cd</span> portal/server
+npx prisma generate
+npx prisma db push          <span class="c"># creates the schema on RDS</span>
+npm run db:seed             <span class="c"># seeds roles / allowlisted users</span></pre>
+    <div class="warn">
+      <b>Allowlist is the gate</b>
+      Google login only succeeds if the email's <code>hd</code> is <code>rishihood.edu.in</code> <em>and</em> the user already exists in the DB. Seed (or admin-provision) the initial admin before first login, or nobody can get in.
+    </div>
+  </section>
+
+  <!-- PHASE 12 -->
+  <section class="phase" id="phase-12">
+    <h2>Phase 12 · CI/CD — GitHub Actions OIDC</h2>
+
+    <p><strong>What this file is.</strong> <code>.github/workflows/deploy.yml</code> is the deployment pipeline for Forge — the single automation that turns a commit on <code>main</code> into a running production release on ECS. It authenticates to AWS with <strong>GitHub OIDC</strong> (a short-lived token, <em>no static AWS keys in the repo</em>), builds both app images, syncs the database schema, and performs a zero-downtime rolling deploy. After it's wired up, shipping is just: <strong>merge to <code>main</code> → CI ships it</strong> — the same trigger model you used on Render/Vercel.</p>
+
+    <p><strong>What it does, in order.</strong> The workflow runs three dependent jobs:</p>
+    <ul class="checks">
+      <li><b>1 · terraform</b> — converges infrastructure with <code>terraform apply</code> (idempotent — a no-op when nothing changed). It <em>auto-detects</em> whether <code>infra/terraform/*.tf</code> exists: if the infra is already provisioned (or you set <code>skip_terraform</code>), it skips straight to deploy. So it handles both "stand up the infra" and "infra is ready — just deploy".</li>
+      <li><b>2 · build</b> — assumes the AWS deploy role, ensures the two ECR repos exist (<code>forge-server</code>, <code>forge-client</code>), then builds both Dockerfiles and pushes images tagged with the commit SHA (plus <code>latest</code>). The client image is built with <code>--build-arg NEXT_PUBLIC_API_URL=/api</code> so the single-origin API URL is baked into the browser bundle.</li>
+      <li><b>3 · release</b> — renders the <code>infra/ecs/*.json</code> task definitions (fills <code>&lt;ACCOUNT_ID&gt;</code>, <code>&lt;REGION&gt;</code>, <code>&lt;ENV&gt;</code>, <code>&lt;APP_ORIGIN&gt;</code> and strips the JSON comment keys), injects the freshly-pushed images, runs <code>prisma db push</code> as a <em>one-off ECS task inside the VPC</em> (RDS is private — the runner can't reach it directly), then calls <code>aws ecs update-service</code> for server and client with <strong>wait-for-stability + the deployment circuit breaker (auto-rollback)</strong>.</li>
+    </ul>
+
+    <div class="ok">
+      <b>Idempotent &amp; safe to re-run</b>
+      Re-running on the same commit converges to the same state: <code>terraform apply</code> no-ops, the ECR-repo check no-ops, <code>prisma db push</code> only applies real schema drift, and <code>update-service</code> is a no-op when the task definition is unchanged. A failed rollout auto-rolls-back via the circuit breaker — it never leaves the service half-updated.
+    </div>
+
+    <p><strong>Wire it up (one-time).</strong></p>
+    <ul class="checks">
+      <li>Create a GitHub <strong>OIDC identity provider + a deploy role</strong> in IAM (trust policy scoped to this repo); put its ARN in <code>AWS_DEPLOY_ROLE_ARN</code>. No static AWS keys.</li>
+      <li>Confirm the ECS <strong>cluster + services</strong> exist (<code>forge-&lt;env&gt;</code>, <code>forge-server-&lt;env&gt;</code>, <code>forge-client-&lt;env&gt;</code>) — the pipeline <em>updates</em> services, it does not create them (that's Terraform / Phase 8).</li>
+      <li>Add the repo <strong>Secrets &amp; Variables</strong> below, then push to <code>main</code> (or run it manually via <em>workflow_dispatch</em>).</li>
+    </ul>
+
+    <p><strong>Repo configuration</strong> — <em>Settings → Secrets and variables → Actions</em>:</p>
+    <table>
+      <tr><th>Kind</th><th>Name</th><th>Example / purpose</th></tr>
+      <tr><td>Secret</td><td><code>AWS_DEPLOY_ROLE_ARN</code></td><td>IAM role the workflow assumes via OIDC</td></tr>
+      <tr><td>Variable</td><td><code>AWS_REGION</code></td><td><code>ap-south-1</code></td></tr>
+      <tr><td>Variable</td><td><code>AWS_ACCOUNT_ID</code></td><td><code>123456789012</code></td></tr>
+      <tr><td>Variable</td><td><code>APP_ORIGIN</code></td><td><code>https://forge.taj.works</code> — drives <code>APP_BASE_URL</code> + OAuth redirect URIs</td></tr>
+      <tr><td>Variable</td><td><code>PRIVATE_SUBNET_IDS</code></td><td>comma-separated subnets for the migration task</td></tr>
+      <tr><td>Variable</td><td><code>SERVER_SECURITY_GROUP_ID</code></td><td><code>sg-…</code> attached to the migration task</td></tr>
+      <tr><td>Variable <span class="pill">optional</span></td><td><code>ECS_CLUSTER</code> · <code>SERVER_SERVICE</code> · <code>CLIENT_SERVICE</code></td><td>override the <code>forge-*-&lt;env&gt;</code> defaults</td></tr>
+      <tr><td>Variable <span class="pill">optional</span></td><td><code>DB_DEPLOY_CMD</code></td><td>default <code>prisma db push</code></td></tr>
+      <tr><td>Variable <span class="pill">optional</span></td><td><code>TF_STATE_BUCKET</code> · <code>TF_STATE_KEY</code> · <code>TF_STATE_LOCK_TABLE</code></td><td>Terraform remote-state backend</td></tr>
+    </table>
+
+    <div class="note">
+      <b>The migration runs in the VPC, not on the runner</b>
+      Because RDS is <em>not</em> publicly accessible, the schema sync (<code>prisma db push</code>) is executed as a short-lived Fargate task on the private subnets using the server image — so it inherits the same <code>DATABASE_URL</code>/<code>DIRECT_URL</code> secrets. The workflow waits for it, checks the container exit code, and fails the deploy if the migration failed (before any service is updated). <b>Seeding</b> (<code>npm run db:seed</code>) is a deliberate one-off (Phase 11), not part of every deploy.
+    </div>
+
+    <div class="warn">
+      <b>Prerequisite, not optional</b>
+      Phase 8's task definitions inject the <code>/forge/&lt;env&gt;/SMTP_*</code>, Google, GitHub, Discord and Groq secrets at start-up. If a referenced secret doesn't exist in Secrets Manager (Phase 3), the ECS task fails to start. Create every secret the task def lists <em>before</em> the first deploy.
+    </div>
+  </section>
+
+  <!-- PHASE 13 -->
+  <section class="phase" id="phase-13">
+    <h2>Phase 13 · Verify &amp; smoke test</h2>
+    <ul class="checks">
+      <li><code>curl https://forge.taj.works/api/health</code> → 200.</li>
+      <li>Load <code>https://forge.taj.works</code> → landing renders; public stats load.</li>
+      <li>Google login as a seeded user → lands on the dashboard (no redirect-to-landing loop).</li>
+      <li>Raise a concern → server logs <code>[EMAIL] sent</code>; the LCC receives the mail.</li>
+      <li>Start Testing (as Testing Admin) → tester accounts created + invites emailed.</li>
+      <li>Restart a task → session survives (ElastiCache), confirming persistence.</li>
+      <li>CloudWatch: structured pino logs flowing; ALB target health all green.</li>
+    </ul>
+    <div class="ok">
+      <b>Done</b>
+      You now have the CLAUDE.md production topology: Cloudflare → ALB → ECS Fargate (client + server) → RDS + ElastiCache, secrets in Secrets Manager, OIDC CI/CD, and working email via SES — single origin, persistent sessions, no port blocks.
+    </div>
+  </section>
+
+  <!-- PHASE 14 -->
+  <section class="phase" id="phase-14">
+    <h2>Phase 14 · Observability, audit &amp; email alerts</h2>
+    <p>"What went wrong, when, and why" is covered at three layers, and you get an <strong>email when anything breaks</strong>. All provisioned in <code>infra/terraform/monitoring.tf</code> + <code>logs.tf</code>.</p>
+
+    <table>
+      <tr><th>Layer</th><th>Answers</th><th>Where</th></tr>
+      <tr><td><strong>App audit log</strong> (immutable)</td><td><em>who</em> did <em>what</em>, <em>when</em>, with <strong>before/after</strong> + IP</td><td><code>AuditLog</code> table → <code>server/src/lib/audit.ts</code> (every privileged/mutating action calls it)</td></tr>
+      <tr><td><strong>App error logs</strong> (pino, structured JSON)</td><td><em>why</em> a request failed — stack + context</td><td>CloudWatch <code>/ecs/forge/prod/server</code></td></tr>
+      <tr><td><strong>Infra / deploy events</strong></td><td>crash loops, failed rollouts, circuit-breaker rollbacks, target health</td><td>ECS service events + CloudWatch alarms</td></tr>
+    </table>
+
+    <h3>Email alerts (SNS → your inbox)</h3>
+    <p>An SNS topic with an email subscription fires on the failure modes below. Set <code>alert_email</code> and <strong>confirm the subscription</strong> (AWS emails a one-time link after the first apply).</p>
+    <ul class="checks">
+      <li><strong>Any server error/fatal log line</strong> — a CloudWatch log-metric filter on <code>{ $.level &gt;= 50 }</code> (pino error=50/fatal=60). The broadest net: if the app logs an error, you hear about it.</li>
+      <li><strong>ECS running tasks &lt; desired</strong> — crash loop or a deploy that couldn't stabilise.</li>
+      <li><strong>ALB 5xx spike</strong> and <strong>unhealthy targets</strong>.</li>
+      <li><strong>RDS</strong> CPU high / free storage low; <strong>Redis</strong> CPU high.</li>
+      <li><strong>Failed deploys</strong> — GitHub Actions emails you on any red workflow run (separate from SNS).</li>
+    </ul>
+
+    <pre><span class="c"># terraform.tfvars</span>
+alert_email = <span class="s">"learnercareercouncil@nst.rishihood.edu.in"</span>
+<span class="c"># SMTP_FROM secret + (optional) SES verified identity use the same address</span>
+ses_identity_domain = <span class="s">"nst.rishihood.edu.in"</span></pre>
+
+    <div class="note">
+      <b>Container Insights is on</b>
+      The ECS cluster enables Container Insights, so per-service CPU/memory/task-count metrics (and the alarms above) are available out of the box in CloudWatch.
+    </div>
+    <h3>AWS-API audit — CloudTrail</h3>
+    <p><code>infra/terraform/cloudtrail.tf</code> provisions the fourth layer: <strong>who changed what in the AWS account itself</strong> (console + API). It's a <strong>multi-region</strong> trail with <strong>log-file validation</strong>, a versioned/locked-down S3 sink, and a CloudWatch Logs stream so security events alarm to the same SNS email:</p>
+    <ul class="checks">
+      <li><strong>Root account usage</strong> — any API/console call made as root.</li>
+      <li><strong>Unauthorized / denied API calls</strong> — a spike of <code>AccessDenied</code>/<code>UnauthorizedOperation</code> (misconfig or probing).</li>
+      <li>All management events (read + write) retained in S3 for a year for forensic lookup.</li>
+    </ul>
+    <div class="note">
+      <b>Already have an org-level trail?</b>
+      Set <code>enable_cloudtrail = false</code> to skip the trail (avoids a duplicate + cost) — the bucket, CW Logs stream, and the two security alarms are created together, so disabling turns off the whole block cleanly.
+    </div>
+  </section>
+
+  <h2>Quick reference — what changes vs. Render/Vercel</h2>
+  <table>
+    <tr><th>Concern</th><th>Render/Vercel (now)</th><th>AWS (this guide)</th></tr>
+    <tr><td>Topology</td><td>2 hosts, 2 subdomains</td><td>1 ALB, 1 origin, path routing</td></tr>
+    <tr><td>Cookies/CSRF</td><td>cross-subdomain workarounds</td><td>first-party, simple</td></tr>
+    <tr><td>SMTP egress</td><td>blocked on free Render</td><td>open (587/465/2525)</td></tr>
+    <tr><td>Email provider</td><td>Brevo 2525 (workaround)</td><td>Amazon SES (native)</td></tr>
+    <tr><td>Sessions</td><td>ephemeral Redis → evictions</td><td>persistent ElastiCache</td></tr>
+    <tr><td>Secrets</td><td>dashboard env vars</td><td>Secrets Manager</td></tr>
+    <tr><td>Deploy</td><td>git push → host builds</td><td>OIDC CI → ECR → ECS</td></tr>
+  </table>
+
+  <footer>
+    Forge · AWS Deployment Runbook · companion to <code>docs/infra-ecs.md</code> &amp; <code>CLAUDE.md</code>.<br/>
+    Generated for the Forge platform. Treat every credential as a secret; rotate anything ever shared.
+  </footer>
+
+</div>
+</body>
+</html>

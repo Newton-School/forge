@@ -21,8 +21,11 @@
       "environment": [
         { "name": "NODE_ENV", "value": "production" },
         { "name": "PORT", "value": "4000" },
-        { "name": "APP_BASE_URL", "value": "https://app.<your-domain>" },
+        { "name": "APP_BASE_URL", "value": "<APP_ORIGIN>" },
+        { "name": "GOOGLE_OAUTH_REDIRECT_URI", "value": "<APP_ORIGIN>/api/auth/google/callback" },
+        { "name": "GITHUB_OAUTH_REDIRECT_URI", "value": "<APP_ORIGIN>/api/integrations/github/oauth/callback" },
         { "name": "ALLOWED_HOSTED_DOMAIN", "value": "rishihood.edu.in" },
+        { "name": "SMTP_FAMILY", "value": "4" },
         { "name": "GROQ_MODEL", "value": "llama-3.1-8b-instant" }
       ],
       "secrets": [
@@ -32,6 +35,11 @@
         { "name": "SESSION_SECRET",              "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/SESSION_SECRET" },
         { "name": "GOOGLE_OAUTH_CLIENT_ID",      "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/GOOGLE_OAUTH_CLIENT_ID" },
         { "name": "GOOGLE_OAUTH_CLIENT_SECRET",  "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/GOOGLE_OAUTH_CLIENT_SECRET" },
+        { "name": "SMTP_HOST",                   "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/SMTP_HOST" },
+        { "name": "SMTP_PORT",                   "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/SMTP_PORT" },
+        { "name": "SMTP_USER",                   "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/SMTP_USER" },
+        { "name": "SMTP_PASS",                   "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/SMTP_PASS" },
+        { "name": "SMTP_FROM",                   "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/SMTP_FROM" },
         { "name": "GITHUB_APP_PRIVATE_KEY",      "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/GITHUB_APP_PRIVATE_KEY" },
         { "name": "GITHUB_WEBHOOK_SECRET",       "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/GITHUB_WEBHOOK_SECRET" },
         { "name": "DISCORD_BOT_TOKEN",           "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/DISCORD_BOT_TOKEN" },

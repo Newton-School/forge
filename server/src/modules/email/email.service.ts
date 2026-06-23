@@ -2,6 +2,7 @@ import { Errors } from "../../lib/errors.js";
 import { audit } from "../../lib/audit.js";
 import { logger } from "../../lib/logger.js";
 import { env } from "../../config/env.js";
+import { effectiveScope } from "../../rbac/policy.js";
 import type { AuthContext } from "../../rbac/types.js";
 import { emailRepo } from "./email.repository.js";
 import { emailProvider } from "./email.provider.js";
@@ -72,9 +73,27 @@ function targetFromScope(input: AnnouncementInput): TargetInput {
   return {};
 }
 
+/**
+ * A non-global caller (Teacher/Mentor hold announcement:send) may only broadcast WITHIN their
+ * scope. Reject a GLOBAL/empty target or a domain/team outside their reach — otherwise a Teacher
+ * scoped to one domain could email/notify every user in another domain (or everyone).
+ */
+function assertCanTarget(ctx: AuthContext, target: TargetInput): void {
+  const s = effectiveScope(ctx);
+  if (s.global) return;
+  if (target.teamId) {
+    if (!s.teamIds.includes(target.teamId)) throw Errors.forbidden("That team is outside your scope");
+  } else if (target.domainId) {
+    if (!s.domainIds.includes(target.domainId)) throw Errors.forbidden("That domain is outside your scope");
+  } else {
+    throw Errors.forbidden("You cannot send a global announcement — target a domain or team in your scope");
+  }
+}
+
 export async function sendAnnouncement(ctx: AuthContext, input: AnnouncementInput, ip?: string) {
-  const announcement = await emailRepo.createAnnouncement(ctx.id, input);
   const target = targetFromScope(input);
+  assertCanTarget(ctx, target); // bound the broadcast to the caller's scope before persisting/sending
+  const announcement = await emailRepo.createAnnouncement(ctx.id, input);
 
   let notified = 0;
   if (input.channels.includes("inapp")) {

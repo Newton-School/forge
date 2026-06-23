@@ -51,11 +51,11 @@ export const analyticsRepo = {
   countBlockedTasks: (where: Record<string, unknown>) =>
     prisma.task.count({ where: { ...where, status: "BLOCKED" } }),
 
-  /** Onboarding signal: how many provisioned users have actually activated. */
-  userStatusCounts: () =>
-    prisma.user.groupBy({ by: ["status"], where: { deletedAt: null }, _count: { _all: true } }),
+  /** Onboarding signal: how many provisioned users have activated — scope-filtered by the caller. */
+  userStatusCounts: (where: Record<string, unknown> = {}) =>
+    prisma.user.groupBy({ by: ["status"], where: { deletedAt: null, ...where }, _count: { _all: true } }),
 
-  /** Distinct mentees who logged an update since `since` (weekly-compliance numerator). */
-  recentUpdaterCount: async (since: Date): Promise<number> =>
-    (await prisma.menteeUpdate.findMany({ where: { date: { gte: since } }, distinct: ["userId"], select: { userId: true } })).length,
+  /** Distinct mentees who logged an update since `since` (weekly-compliance numerator), in scope. */
+  recentUpdaterCount: async (since: Date, where: Record<string, unknown> = {}): Promise<number> =>
+    (await prisma.menteeUpdate.findMany({ where: { ...where, date: { gte: since } }, distinct: ["userId"], select: { userId: true } })).length,
 };

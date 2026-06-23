@@ -22,7 +22,7 @@
         { "name": "NODE_ENV", "value": "production" },
         { "name": "PORT", "value": "3000" },
         { "name": "APP_MODE", "value": "production" },
-        { "name": "NEXT_PUBLIC_API_URL", "value": "https://app.<your-domain>/api" }
+        { "name": "NEXT_PUBLIC_API_URL", "value": "/api" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",

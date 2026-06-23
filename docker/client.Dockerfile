@@ -24,6 +24,13 @@ CMD ["npm", "run", "dev"]
 # ---- builder ----
 FROM base AS builder
 ENV NEXT_TELEMETRY_DISABLED=1
+# NEXT_PUBLIC_* is inlined into the browser bundle at BUILD time, so it must be an
+# ARG here — a runtime task-def env alone won't reach client-side code. Single-origin
+# AWS topology: the ALB routes /api/* to the server, so the browser calls "/api".
+ARG NEXT_PUBLIC_API_URL=/api
+ARG APP_MODE=production
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV APP_MODE=$APP_MODE
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

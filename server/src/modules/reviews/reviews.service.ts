@@ -49,7 +49,9 @@ export async function submitUpdate(ctx: AuthContext, input: SubmitUpdateInput, i
 }
 
 export async function listUpdates(ctx: AuthContext, q: ListUpdatesQuery) {
-  const where = { ...updatesScope(ctx), ...(q.menteeId ? { userId: q.menteeId } : {}) };
+  // AND the ?menteeId filter WITH the scope — spreading it would overwrite a mentee's self-scope
+  // `{ userId: ctx.id }` and leak another mentee's updates. AND can only narrow within scope.
+  const where = { AND: [updatesScope(ctx), ...(q.menteeId ? [{ userId: q.menteeId }] : [])] };
   const rows = await reviewsRepo.listUpdates(where, q.take, q.skip);
   // Display-ready: join the mentee name + their team's domain key + squad name.
   const items = rows.map((u) => {

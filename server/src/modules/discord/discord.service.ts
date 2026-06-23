@@ -59,7 +59,9 @@ async function activityScope(ctx: AuthContext): Promise<Record<string, unknown>>
 }
 
 export async function listActivity(ctx: AuthContext, q: { teamId?: string; take: number; skip: number }) {
-  const where = { ...(await activityScope(ctx)), ...(q.teamId ? { teamId: q.teamId } : {}) };
+  // AND the ?teamId filter WITH the scope — spreading it would overwrite a single-team scope and
+  // leak another team's activity. AND can only narrow within scope.
+  const where = { AND: [await activityScope(ctx), ...(q.teamId ? [{ teamId: q.teamId }] : [])] };
   return { items: await discordRepo.list(where, q.take, q.skip) };
 }
 

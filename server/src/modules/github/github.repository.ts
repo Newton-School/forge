@@ -49,6 +49,21 @@ export const githubRepo = {
     return teams.map((t) => t.id);
   },
 
+  /** Resolve a domain id from its key (e.g. "AI") — for the AI org-mode access check. */
+  domainIdByKey: async (key: string): Promise<string | null> => {
+    const d = await prisma.domain.findFirst({ where: { key }, select: { id: true } });
+    return d?.id ?? null;
+  },
+
+  /** Does the user belong to ANY team in this domain (as mentor or member)? */
+  userInDomain: async (userId: string, domainId: string): Promise<boolean> => {
+    const team = await prisma.team.findFirst({
+      where: { domainId, OR: [{ mentorId: userId }, { members: { some: { userId } } }] },
+      select: { id: true },
+    });
+    return team !== null;
+  },
+
   list: (where: Record<string, unknown>, take: number, skip: number) =>
     prisma.githubActivity.findMany({ where, orderBy: { occurredAt: "desc" }, take, skip }),
 
