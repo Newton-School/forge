@@ -3,6 +3,7 @@ import { audit } from "../../lib/audit.js";
 import { logger } from "../../lib/logger.js";
 import { env } from "../../config/env.js";
 import { scopeWhere } from "../../rbac/scope.js";
+import { effectiveScope } from "../../rbac/policy.js";
 import type { AuthContext } from "../../rbac/types.js";
 import { emailProvider } from "../email/email.provider.js";
 import { buildConcernEmail } from "../email/concern-notify.js";
@@ -39,10 +40,14 @@ function toDto(c: ConcernWithEvents) {
 /** Visible concerns for the caller (scope-filtered at the query layer). */
 export async function listConcerns(ctx: AuthContext, q: ListConcernsQuery) {
   const scope = scopeWhere(ctx, { domainField: "domainId", teamField: "teamId", ownerField: "raisedById" });
+  // AND filters WITH scope — spreading `?domain=` over a domain-scope `{ domainId: { in: [...] } }`
+  // would overwrite it and leak another domain's concerns. AND can only narrow within scope.
   const where = {
-    ...scope,
-    ...(q.status ? { status: q.status } : {}),
-    ...(q.domain ? { domainId: q.domain } : {}),
+    AND: [
+      scope,
+      ...(q.status ? [{ status: q.status }] : []),
+      ...(q.domain ? [{ domainId: q.domain }] : []),
+    ],
   };
   const [rows, total] = await Promise.all([concernsRepo.list(where, q.take, q.skip), concernsRepo.count(where)]);
   const domainIds = [...new Set(rows.map((c) => c.domainId).filter(Boolean) as string[])];
@@ -78,6 +83,19 @@ export async function getConcern(ctx: AuthContext, id: string) {
 
 /** Raise a concern. Anyone may raise; it is owned by the raiser. */
 export async function raiseConcern(ctx: AuthContext, input: CreateConcernInput, ip?: string) {
+  // A caller may only attribute a concern to a domain/team they actually belong to — otherwise a
+  // mentee could file a concern tagged to an unrelated team/domain. Reachable = scope grants
+  // (teachers/mentors) ∪ own memberships (mentees, whose grant is SELF-only). Global bypasses.
+  if (input.domainId || input.teamId) {
+    const s = effectiveScope(ctx);
+    if (!s.global) {
+      const mem = await concernsRepo.callerMemberships(ctx.id);
+      const domains = new Set([...s.domainIds, ...mem.domainIds]);
+      const teams = new Set([...s.teamIds, ...mem.teamIds]);
+      if (input.domainId && !domains.has(input.domainId)) throw Errors.forbidden("You cannot raise a concern for that domain");
+      if (input.teamId && !teams.has(input.teamId)) throw Errors.forbidden("You cannot raise a concern for that team");
+    }
+  }
   const created = await concernsRepo.create(input, ctx.id);
   await audit(ctx, { action: "concern:raise", entityType: "Concern", entityId: created.id, after: { category: input.category, severity: input.severity }, ip });
 

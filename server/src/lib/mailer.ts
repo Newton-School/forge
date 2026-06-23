@@ -1,3 +1,4 @@
+import { promises as dns } from "node:dns";
 import nodemailer, { type Transporter } from "nodemailer";
 import { env, mailerConfigured } from "../config/env.js";
 import { logger } from "./logger.js";
@@ -10,15 +11,29 @@ import { logger } from "./logger.js";
  */
 let transporter: Transporter | null = null;
 
-function getTransporter(): Transporter {
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: env.SMTP_HOST,
-      port: env.SMTP_PORT,
-      secure: env.SMTP_PORT === 465, // 465 = implicit TLS; 587 = STARTTLS
-      auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
-    });
+async function getTransporter(): Promise<Transporter> {
+  if (transporter) return transporter;
+  const realHost = env.SMTP_HOST!;
+  // Same IPv4 workaround as the email module's provider: nodemailer's `family` option isn't
+  // reliably honored, so on PaaS hosts with no IPv6 egress (Render) it picks the AAAA record and
+  // gets ENETUNREACH. Resolve the A record ourselves and connect by IP, pinning tls.servername to
+  // the real host so the cert validates. SMTP_FAMILY=0 disables this and lets Node choose.
+  let connectHost = realHost;
+  if (env.SMTP_FAMILY === 4) {
+    try {
+      const [ipv4] = await dns.resolve4(realHost);
+      if (ipv4) connectHost = ipv4;
+    } catch (err) {
+      logger.warn({ host: realHost, err: (err as Error)?.message }, "SMTP IPv4 resolve failed — using hostname");
+    }
   }
+  transporter = nodemailer.createTransport({
+    host: connectHost,
+    port: env.SMTP_PORT,
+    secure: env.SMTP_PORT === 465, // 465 = implicit TLS; 587/2525 = STARTTLS
+    auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
+    tls: { servername: realHost },
+  });
   return transporter;
 }
 
@@ -45,7 +60,8 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
     );
     return { skipped: true };
   }
-  const info = await getTransporter().sendMail({
+  const transport = await getTransporter();
+  const info = await transport.sendMail({
     from: env.SMTP_FROM ?? env.SMTP_USER,
     ...input,
   });
@@ -57,7 +73,8 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
 export async function verifyMailer(): Promise<boolean> {
   if (!mailerConfigured) return false;
   try {
-    await getTransporter().verify();
+    const transport = await getTransporter();
+    await transport.verify();
     logger.info("SMTP transport verified");
     return true;
   } catch (err) {

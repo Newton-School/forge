@@ -23,6 +23,18 @@ export const concernsRepo = {
 
   count: (where: Record<string, unknown>) => prisma.concern.count({ where }),
 
+  /** The caller's own team ids + the domains those teams belong to — to validate concern targets. */
+  callerMemberships: async (userId: string): Promise<{ teamIds: string[]; domainIds: string[] }> => {
+    const rows = await prisma.teamMember.findMany({
+      where: { userId },
+      select: { teamId: true, team: { select: { domainId: true } } },
+    });
+    return {
+      teamIds: rows.map((r) => r.teamId),
+      domainIds: [...new Set(rows.map((r) => r.team.domainId))],
+    };
+  },
+
   findById: (id: string) => prisma.concern.findUnique({ where: { id }, include: withEvents }),
 
   create: (input: CreateConcernInput, raisedById: string) =>

@@ -20,6 +20,7 @@ feedbackRouter.post(
 // List 360° feedback in scope (mentor sees own; domain roles see their mentors).
 feedbackRouter.get(
   "/mentor",
+  requirePermission("mentorFeedback:read"),
   asyncHandler(async (req: Request, res: Response) => {
     res.json(await svc.listMentorFeedback(req.auth!, listMentorFeedbackQuery.parse(req.query)));
   }),

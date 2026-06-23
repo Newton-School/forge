@@ -35,11 +35,15 @@ function toTaskDto(
 }
 
 export async function listTasks(ctx: AuthContext, q: ListTasksQuery) {
+  // AND filters WITH scope — spreading `?assigneeId=` over a self-scope `{ assigneeId: ctx.id }`
+  // would overwrite it and leak another user's tasks. AND can only narrow within scope.
   const where = {
-    ...taskScope(ctx),
-    ...(q.projectId ? { projectId: q.projectId } : {}),
-    ...(q.assigneeId ? { assigneeId: q.assigneeId } : {}),
-    ...(q.status ? { status: q.status } : {}),
+    AND: [
+      taskScope(ctx),
+      ...(q.projectId ? [{ projectId: q.projectId }] : []),
+      ...(q.assigneeId ? [{ assigneeId: q.assigneeId }] : []),
+      ...(q.status ? [{ status: q.status }] : []),
+    ],
   };
   const items = await tasksRepo.list(where, q.take, q.skip);
   const ids = [...new Set(items.flatMap((t) => [t.assigneeId, t.assignedById]).filter(Boolean) as string[])];

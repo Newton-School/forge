@@ -17,10 +17,15 @@ function projectScope(ctx: AuthContext): Record<string, unknown> {
 }
 
 export async function listProjects(ctx: AuthContext, q: ListProjectsQuery) {
+  // AND the caller's filters WITH the scope — never spread them over the top, or a single-key
+  // scope (e.g. a mentor's `{ teamId: { in: [...] } }`) gets overwritten by `?teamId=` and leaks
+  // another team's projects. AND can only narrow within scope.
   const where = {
-    ...projectScope(ctx),
-    ...(q.teamId ? { teamId: q.teamId } : {}),
-    ...(q.type ? { type: q.type } : {}),
+    AND: [
+      projectScope(ctx),
+      ...(q.teamId ? [{ teamId: q.teamId }] : []),
+      ...(q.type ? [{ type: q.type }] : []),
+    ],
   };
   const items = await projectsRepo.list(where, q.take, q.skip);
   return { items };

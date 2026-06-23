@@ -118,7 +118,9 @@ async function activityScope(ctx: AuthContext): Promise<Record<string, unknown>>
 
 /** Scope-filtered read of recorded GitHub activity, shaped for the UI feed. */
 export async function listActivity(ctx: AuthContext, q: { teamId?: string; take: number; skip: number }) {
-  const where = { ...(await activityScope(ctx)), ...(q.teamId ? { teamId: q.teamId } : {}) };
+  // AND the ?teamId filter WITH the scope — spreading it would overwrite a single-team scope and
+  // leak another team's activity. AND can only narrow within scope.
+  const where = { AND: [await activityScope(ctx), ...(q.teamId ? [{ teamId: q.teamId }] : [])] };
   const rows = await githubRepo.list(where, q.take, q.skip);
   const userIds = [...new Set(rows.map((a) => a.userId).filter(Boolean) as string[])];
   const teamIds = [...new Set(rows.map((a) => a.teamId).filter(Boolean) as string[])];
@@ -164,6 +166,31 @@ export async function assertTeamAccess(ctx: AuthContext, teamId: string): Promis
   if (!teamAccessAllowed(effectiveScope(ctx), team, ctx.id)) {
     throw Errors.forbidden("You don't have access to this team's repository");
   }
+}
+
+/**
+ * Authorize an AI org-wide read (the shared-org dashboards): the caller must be able to see the
+ * AI domain — global, an AI-domain grant (teacher), or membership of any AI team (mentor/mentee,
+ * whose grant is SELF-only so isn't in effectiveScope). Closes the cross-domain leak where an
+ * ML/DVA/SDSE user could read the whole AI org.
+ */
+export async function assertAiOrgAccess(ctx: AuthContext): Promise<void> {
+  const s = effectiveScope(ctx);
+  if (s.global) return;
+  const aiDomainId = await githubRepo.domainIdByKey("AI");
+  if (aiDomainId && s.domainIds.includes(aiDomainId)) return;
+  if (aiDomainId && (await githubRepo.userInDomain(ctx.id, aiDomainId))) return;
+  throw Errors.forbidden("This view is limited to the AI domain.");
+}
+
+/**
+ * Authorize a single-repo read: if the repo maps to a team, use team access; otherwise it's an
+ * unmapped AI org repo, so fall back to AI-domain access. Never an open read by arbitrary name.
+ */
+export async function assertRepoAccess(ctx: AuthContext, repo: string): Promise<void> {
+  const teamId = await githubRepo.teamIdByRepo(repo);
+  if (teamId) return assertTeamAccess(ctx, teamId);
+  return assertAiOrgAccess(ctx);
 }
 
 /** Integration status for the admin connections view. */

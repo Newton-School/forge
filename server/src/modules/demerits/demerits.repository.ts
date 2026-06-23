@@ -26,9 +26,9 @@ export const demeritsRepo = {
   /** Find one demerit constrained by the caller's scope (out-of-scope → null). */
   findInScope: (where: Record<string, unknown>) => prisma.demerit.findFirst({ where }),
 
-  /** Does the target user exist? (validate the subject before issuing) */
-  userExists: async (userId: string): Promise<boolean> => {
-    const u = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+  /** Does the target user exist AND fall within the caller's scope? (validate before issuing) */
+  userExists: async (userId: string, scope: Record<string, unknown> = {}): Promise<boolean> => {
+    const u = await prisma.user.findFirst({ where: { id: userId, ...scope }, select: { id: true } });
     return u !== null;
   },
 

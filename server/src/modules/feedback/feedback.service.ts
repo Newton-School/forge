@@ -39,7 +39,9 @@ export async function submitMentorFeedback(ctx: AuthContext, input: SubmitMentor
 }
 
 export async function listMentorFeedback(ctx: AuthContext, q: ListMentorFeedbackQuery) {
-  const where = { ...(await feedbackScope(ctx)), ...(q.mentorId ? { mentorId: q.mentorId } : {}) };
+  // AND the ?mentorId filter WITH the scope — spreading it would overwrite a mentor's own-feedback
+  // scope `{ mentorId: ctx.id }` and leak another mentor's 360°. AND can only narrow within scope.
+  const where = { AND: [await feedbackScope(ctx), ...(q.mentorId ? [{ mentorId: q.mentorId }] : [])] };
   const items = await feedbackRepo.list(where, q.take, q.skip);
   return { items };
 }

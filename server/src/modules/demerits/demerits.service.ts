@@ -18,10 +18,14 @@ function demeritScope(ctx: AuthContext): Record<string, unknown> {
 }
 
 export async function listDemerits(ctx: AuthContext, q: ListDemeritsQuery) {
+  // AND filters WITH scope — spreading `?userId=` over a self-scope `{ userId: ctx.id }` would
+  // overwrite it and leak another user's demerits. AND can only narrow within scope.
   const where = {
-    ...demeritScope(ctx),
-    ...(q.userId ? { userId: q.userId } : {}),
-    ...(q.escalated !== undefined ? { escalated: q.escalated } : {}),
+    AND: [
+      demeritScope(ctx),
+      ...(q.userId ? [{ userId: q.userId }] : []),
+      ...(q.escalated !== undefined ? [{ escalated: q.escalated }] : []),
+    ],
   };
   const rows = await demeritsRepo.list(where, q.take, q.skip);
   const issuerIds = [...new Set(rows.map((d) => d.issuedById).filter(Boolean) as string[])];
@@ -39,8 +43,20 @@ export async function listDemerits(ctx: AuthContext, q: ListDemeritsQuery) {
   return { items };
 }
 
+/** The target user (subject of a demerit) must fall within the caller's scope. Global → no-op. */
+function userInScope(ctx: AuthContext): Record<string, unknown> {
+  const s = effectiveScope(ctx);
+  if (s.global) return {};
+  const or: Record<string, unknown>[] = [];
+  if (s.domainIds.length) or.push({ teamMemberships: { some: { team: { domainId: { in: s.domainIds } } } } });
+  if (s.teamIds.length) or.push({ teamMemberships: { some: { teamId: { in: s.teamIds } } } });
+  if (s.self) or.push({ id: ctx.id });
+  return or.length ? (or.length === 1 ? or[0]! : { OR: or }) : { id: "__never__" };
+}
+
 export async function issueDemerit(ctx: AuthContext, input: IssueDemeritInput, ip?: string) {
-  if (!(await demeritsRepo.userExists(input.userId))) throw Errors.notFound("User not found");
+  // Layer 2/3: the subject must be within the caller's scope (no-op for global Admin/LCC).
+  if (!(await demeritsRepo.userExists(input.userId, userInScope(ctx)))) throw Errors.notFound("User not found");
   const demerit = await demeritsRepo.create(input, ctx.id);
   await audit(ctx, {
     action: "demerit:issue", entityType: "Demerit", entityId: demerit.id,

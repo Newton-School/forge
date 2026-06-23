@@ -14,10 +14,11 @@ export type Permission =
   | "mentorStatus:submit"
   | "weeklyReview:l3Submit" | "weeklyReview:l4Submit"
   | "gate:decide"
-  | "mentorFeedback:submit"
+  | "mentorFeedback:submit" | "mentorFeedback:read"
   | "task:assign" | "task:updateOwn"
   | "deliverable:submit" | "deliverable:review"
   | "concern:read" | "concern:raise" | "concern:triage" | "concern:resolve"
+  | "demerit:read"
   | "email:send" | "email:bulkSend" | "emailTemplate:manage" | "announcement:send"
   | "analytics:global" | "analytics:domain" | "analytics:team" | "analytics:self"
   | "report:generate"
@@ -36,7 +37,7 @@ export const ROLE_PERMISSIONS: Record<RoleKey, Permission[]> = {
     "task:assign", "deliverable:review", "concern:read", "concern:raise", "concern:triage",
     "concern:resolve", "email:send", "email:bulkSend", "emailTemplate:manage", "announcement:send",
     "analytics:global", "analytics:domain", "analytics:team", "analytics:self", "report:generate",
-    "auditLog:read", "integration:manage", "demerit:manage",
+    "auditLog:read", "integration:manage", "demerit:manage", "demerit:read", "mentorFeedback:read",
   ],
   LCC: [
     "review:read",
@@ -45,7 +46,7 @@ export const ROLE_PERMISSIONS: Record<RoleKey, Permission[]> = {
     "concern:read", "concern:raise", "concern:triage", "concern:resolve",
     "email:send", "email:bulkSend", "emailTemplate:manage", "announcement:send",
     "analytics:global", "analytics:domain", "analytics:team", "analytics:self",
-    "report:generate", "auditLog:read", "demerit:manage",
+    "report:generate", "auditLog:read", "demerit:manage", "demerit:read", "mentorFeedback:read",
   ],
   TEACHER: [
     "review:read",
@@ -53,18 +54,19 @@ export const ROLE_PERMISSIONS: Record<RoleKey, Permission[]> = {
     "weeklyReview:l4Submit", "gate:decide", "task:assign", "deliverable:review",
     "concern:read", "concern:raise", "concern:triage", "concern:resolve",
     "email:send", "announcement:send", "analytics:domain", "analytics:team",
-    "analytics:self", "report:generate",
+    "analytics:self", "report:generate", "demerit:read", "mentorFeedback:read",
   ],
   MENTOR: [
     "review:read",
     "team:read", "project:manage", "mentorStatus:submit", "weeklyReview:l3Submit", "task:assign",
     "deliverable:submit", "deliverable:review", "concern:read", "concern:raise",
     "email:send", "announcement:send", "analytics:team", "analytics:self", "report:generate",
+    "demerit:read", "mentorFeedback:read",
   ],
   MENTEE: [
     "review:read",
     "menteeUpdate:submit", "mentorFeedback:submit", "task:updateOwn", "deliverable:submit",
-    "concern:read", "concern:raise", "analytics:self",
+    "concern:read", "concern:raise", "analytics:self", "demerit:read", "mentorFeedback:read",
   ],
 };
 

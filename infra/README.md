@@ -1,17 +1,23 @@
 # infra/
 
-Infrastructure-as-design for the AWS ECS deployment. Full rationale in [`../docs/infra-ecs.md`](../docs/infra-ecs.md).
+Infrastructure for the AWS ECS deployment. Full rationale in [`../docs/infra-ecs.md`](../docs/infra-ecs.md); step-by-step runbook in [`../docs/aws/index.html`](../docs/aws/index.html).
 
 ```
 infra/
 ├── ecs/
-│   ├── task-def.server.json     # Fargate task def — Express API (secrets from Secrets Manager)
+│   ├── task-def.server.json     # Fargate task def — used by CI (deploy.yml) for rollouts
 │   └── task-def.client.json     # Fargate task def — Next.js SSR (no secrets)
 ├── aws/
-│   ├── iam-ecs-execution-role.json   # pull ECR + inject secrets + logs (scoped)
-│   └── iam-server-task-role.json     # app runtime perms (scoped: secrets /forge/*, app KMS, SES)
-└── terraform/                   # (placeholder) VPC, ECS, ALB, RDS, SGs, Secrets, KMS as code
+│   ├── iam-ecs-execution-role.json   # reference copy of the scoped execution policy
+│   └── iam-server-task-role.json     # reference copy of the scoped task policy
+└── terraform/                   # REAL production IaC (terraform validate ✓) — VPC, NAT, SGs,
+                                 # KMS, RDS, Redis, ECR, Secrets, IAM (+ GitHub OIDC deploy role),
+                                 # ACM+Cloudflare, ALB path routing, ECS cluster/services,
+                                 # CloudWatch alarms + SNS email alerts, CloudTrail (AWS-API audit),
+                                 # and bootstrap/ (S3+DynamoDB state). See terraform/README.md.
 ```
+
+> The `ecs/*.json` and `aws/*.json` files are the **CI deployment artifacts + reference policies**. The authoritative provisioning is now **`terraform/`** — it defines the same roles/task shells natively (no placeholders), and the ECS services `ignore_changes` on the task definition so CI owns rollouts while Terraform owns the infra.
 
 ## Placeholders to fill
 `<ACCOUNT_ID>` · `<REGION>` · `<ENV>` (staging|prod) · `<IMAGE_TAG>` · `<FORGE_CMK_ID>` · `<your-domain>`
