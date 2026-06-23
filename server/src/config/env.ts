@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { z } from "zod";
 
 /** Zod-validated environment — fail fast on misconfiguration (no silent undefineds). */
@@ -71,12 +72,24 @@ const schema = z.object({
   // Discord integration — interactions public key (Ed25519) + optional bot token.
   DISCORD_PUBLIC_KEY: z.string().optional(),
   DISCORD_BOT_TOKEN: z.string().optional(),
+  DISCORD_GUILD_ID: z.string().optional(),
+  // Discord OAuth2 app (same application) — powers per-user "Connect with Discord": verifies the
+  // user's real Discord handle + permanent id. Optional: when unset, the Connect flow is unavailable.
+  DISCORD_CLIENT_ID: z.string().optional(),
+  DISCORD_CLIENT_SECRET: z.string().optional(),
+  DISCORD_OAUTH_REDIRECT_URI: z
+    .string()
+    .url()
+    .default("http://localhost:4000/api/integrations/discord/oauth/callback"),
 
-  // Google Calendar (service account) — outbound event push. Optional: when unset,
-  // events are stored locally only (no external sync).
+  // Google Calendar (service account) — reads the shared LCC calendar + pushes events. The SA can
+  // be supplied three ways (first that resolves wins): split fields, an inline JSON blob, or a path
+  // to the downloaded JSON key file.
   GOOGLE_CALENDAR_ID: z.string().optional(),
   GOOGLE_SA_CLIENT_EMAIL: z.string().optional(),
   GOOGLE_SA_PRIVATE_KEY: z.string().optional(), // PEM; literal "\n" sequences are normalized
+  GOOGLE_SA_KEY: z.string().optional(), // inline service-account JSON
+  GOOGLE_SA_KEY_FILE: z.string().optional(), // path to the service-account JSON key file
 
   // Groq (AI) — optional API key for the assistant adapter.
   GROQ_API_KEY: z.string().optional(),
@@ -123,10 +136,45 @@ export const githubOAuthConfigured = Boolean(
 );
 /** Discord interactions are only verified when the app public key is configured. */
 export const discordConfigured = Boolean(env.DISCORD_PUBLIC_KEY);
-/** Google Calendar push is wired only when the service-account + calendar id exist. */
-export const googleCalendarConfigured = Boolean(
-  env.GOOGLE_CALENDAR_ID && env.GOOGLE_SA_CLIENT_EMAIL && env.GOOGLE_SA_PRIVATE_KEY,
+/** The "Connect with Discord" OAuth flow is wired only when the app id + secret exist. */
+export const discordOAuthConfigured = Boolean(
+  env.DISCORD_CLIENT_ID && env.DISCORD_CLIENT_SECRET,
 );
+/**
+ * Resolve the Google service-account credentials from (in order): explicit split env fields, an
+ * inline JSON blob (GOOGLE_SA_KEY), or a JSON key file (GOOGLE_SA_KEY_FILE). Returns null when none
+ * resolve. Cached; reads the file once at boot.
+ */
+let saCache: { client_email: string; private_key: string } | null | undefined;
+export function googleServiceAccount(): { client_email: string; private_key: string } | null {
+  if (saCache !== undefined) return saCache;
+  if (env.GOOGLE_SA_CLIENT_EMAIL && env.GOOGLE_SA_PRIVATE_KEY) {
+    saCache = { client_email: env.GOOGLE_SA_CLIENT_EMAIL, private_key: env.GOOGLE_SA_PRIVATE_KEY.replace(/\\n/g, "\n") };
+    return saCache;
+  }
+  let raw = env.GOOGLE_SA_KEY;
+  if (!raw && env.GOOGLE_SA_KEY_FILE) {
+    try {
+      raw = readFileSync(env.GOOGLE_SA_KEY_FILE, "utf8");
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn(`[env] GOOGLE_SA_KEY_FILE could not be read (${env.GOOGLE_SA_KEY_FILE}): ${(err as Error).message}`);
+    }
+  }
+  if (raw) {
+    try {
+      const j = JSON.parse(raw) as { client_email?: string; private_key?: string };
+      if (j.client_email && j.private_key) { saCache = { client_email: j.client_email, private_key: j.private_key }; return saCache; }
+    } catch {
+      // eslint-disable-next-line no-console
+      console.warn("[env] GOOGLE_SA_KEY / key file is not valid JSON");
+    }
+  }
+  saCache = null;
+  return saCache;
+}
+/** Google Calendar is wired when a calendar id + a resolvable service account both exist. */
+export const googleCalendarConfigured = Boolean(env.GOOGLE_CALENDAR_ID) && googleServiceAccount() !== null;
 /** Groq is wired only when an API key is present. */
 export const groqConfigured = Boolean(env.GROQ_API_KEY);
 export const isProd = env.NODE_ENV === "production";

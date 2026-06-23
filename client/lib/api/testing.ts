@@ -7,11 +7,11 @@
  * never block the UI — localStorage stays authoritative for responsiveness.
  */
 import type { DomainKey, DomainStatus, Severity } from "@/lib/mock/testing";
+import { isPresentationMode } from "@/lib/config";
 import { csrfHeaders } from "./csrf";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api";
-export const TESTING_PRESENTATION =
-  (process.env.NEXT_PUBLIC_APP_MODE ?? process.env.APP_MODE ?? "presentation") === "presentation";
+export const TESTING_PRESENTATION = isPresentationMode();
 
 /** Map the store's lowercase UI status to the server enum. */
 const STATUS_TO_SERVER: Record<DomainStatus, string> = {

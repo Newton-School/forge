@@ -9,6 +9,17 @@ export const discordRepo = {
     return u?.id ?? null;
   },
 
+  /** Persist the verified Discord identity on the connecting user (display name + permanent id). */
+  setDiscordIdentity: (userId: string, username: string, discordUserId: string) =>
+    prisma.user.update({ where: { id: userId }, data: { discordUsername: username, discordUserId } }),
+
+  /** Free a Discord identity from any other user before binding it (the @unique id can't collide). */
+  clearDiscordIdentityElsewhere: (discordUserId: string, keepUserId: string) =>
+    prisma.user.updateMany({
+      where: { discordUserId, NOT: { id: keepUserId } },
+      data: { discordUsername: null, discordUserId: null },
+    }),
+
   teamIdByChannel: async (channelId: string | null): Promise<string | null> => {
     if (!channelId) return null;
     const t = await prisma.team.findFirst({ where: { discordChannelId: channelId }, select: { id: true } });

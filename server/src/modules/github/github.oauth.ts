@@ -19,6 +19,7 @@ export interface OAuthState {
   n: string; // nonce — matched against the httpOnly state cookie
   repo?: string; // optional repo to wire (owner/repo or URL)
   teamId?: string; // team the repo binds to
+  mine?: boolean; // PER_STUDENT (ML): bind to the caller's OWN membership, not the shared team repo
 }
 
 export function newNonce(): string {

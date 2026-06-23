@@ -31,6 +31,7 @@ import { invitationsRouter } from "./modules/invitations/invitations.routes.js";
 import { githubRouter, githubWebhookRouter } from "./modules/github/github.routes.js";
 import { discordRouter, discordWebhookRouter } from "./modules/discord/discord.routes.js";
 import { calendarRouter } from "./modules/calendar/calendar.routes.js";
+import { connectionsRouter } from "./modules/integrations/connections.routes.js";
 import { assistantRouter } from "./modules/assistant/assistant.routes.js";
 import { jobsRouter } from "./modules/jobs/jobs.routes.js";
 import { testingRouter } from "./modules/testing/testing.routes.js";
@@ -96,6 +97,7 @@ export function buildApp(): Express {
   app.use("/api/email", requireAuth, emailRouter);
   app.use("/api/integrations/github", requireAuth, githubRouter);
   app.use("/api/integrations/discord", requireAuth, discordRouter);
+  app.use("/api/integrations/connections", requireAuth, connectionsRouter);
   app.use("/api/calendar", requireAuth, calendarRouter);
   app.use("/api/assistant", requireAuth, assistantRouter);
   app.use("/api/jobs", requireAuth, jobsRouter);

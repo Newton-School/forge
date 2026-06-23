@@ -90,6 +90,25 @@ export const githubRepo = {
 
   /** Bind a repo URL to a team (matched later by the webhook's repo full-name).
    *  Also stores the "owner/repo" display name for dashboards. */
+  /** The user's verified GitHub login (null if they haven't connected). */
+  githubLogin: async (userId: string): Promise<string | null> => {
+    const u = await prisma.user.findUnique({ where: { id: userId }, select: { githubUsername: true } });
+    return u?.githubUsername ?? null;
+  },
+
+  /** Is this user a member of this team? (gate for binding one's own PER_STUDENT repo) */
+  isTeamMember: async (userId: string, teamId: string): Promise<boolean> => {
+    const m = await prisma.teamMember.findFirst({ where: { userId, teamId }, select: { id: true } });
+    return m !== null;
+  },
+
+  /** PER_STUDENT (ML): bind the caller's own repo to their team membership. */
+  setMemberRepo: (userId: string, teamId: string, repoUrl: string) =>
+    prisma.teamMember.updateMany({
+      where: { userId, teamId },
+      data: { githubRepoUrl: repoUrl, githubRepoName: repoFullName(repoUrl) },
+    }),
+
   setTeamRepo: (teamId: string, repoUrl: string) =>
     prisma.team.update({
       where: { id: teamId },

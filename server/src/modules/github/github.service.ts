@@ -193,6 +193,23 @@ export async function assertRepoAccess(ctx: AuthContext, repo: string): Promise<
   return assertAiOrgAccess(ctx);
 }
 
+/**
+ * Resolve the caller's OWN repo in AI org-mode by matching their verified GitHub login against the
+ * org roster (mentor of a team-repo, or a student in one). Powers the mentor/mentee org dashboards.
+ * Returns nulls when the login isn't connected or the Teams API can't be read (graceful fallback).
+ */
+export async function myOrgRepo(ctx: AuthContext): Promise<{ repo: string | null; role: "mentor" | "student" | null; team: string | null; login: string | null }> {
+  const login = await githubRepo.githubLogin(ctx.id);
+  if (!login) return { repo: null, role: null, team: null, login: null };
+  const { githubRead } = await import("./github.read.js");
+  const roster = await githubRead.teams();
+  for (const t of roster.teams) {
+    if (t.mentor === login || t.mentors.includes(login)) return { repo: t.repo, role: "mentor", team: t.name, login };
+    if (t.students.includes(login)) return { repo: t.repo, role: "student", team: t.name, login };
+  }
+  return { repo: null, role: null, team: null, login };
+}
+
 /** Integration status for the admin connections view. */
 export function status() {
   return {

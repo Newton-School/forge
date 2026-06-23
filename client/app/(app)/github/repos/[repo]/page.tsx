@@ -7,6 +7,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MilestoneBar } from "@/components/github/milestone-bar";
 import { IssueList } from "@/components/github/issue-list";
 import { PRList } from "@/components/github/pr-list";
+import { RepoDetailLive } from "@/components/github/repo-detail-live";
+import { getRepoDetail } from "@/lib/session";
 import { initials } from "@/lib/utils";
 import {
   ghRepo, teamOfRepo, ghPerson, personName, milestonesForRepo, issuesForRepo, prsForRepo,
@@ -18,6 +20,12 @@ const DOC_LABELS: Record<string, string> = {
 
 export default async function RepoDetail({ params }: { params: Promise<{ repo: string }> }) {
   const { repo: repoId } = await params;
+
+  // Production: real repo detail from the GitHub org (repoId is the live repo name). The dashboard
+  // links here, so this must read live. Presentation/offline: the mock fixture below.
+  const live = await getRepoDetail(repoId);
+  if (live) return <RepoDetailLive data={live} />;
+
   const repo = ghRepo(repoId);
   if (!repo) notFound();
   const team = teamOfRepo(repo.id);

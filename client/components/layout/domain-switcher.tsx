@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
-/** DEV ONLY — Phase 1 preview switcher. Sets the domain cookie and refreshes. */
+/** Domain switcher for multi-domain roles (Admin/LCC/Teacher) + the presentation preview. Sets the
+ *  forge_domain cookie (read by getActiveDomain) and refreshes so the domain dashboards re-render. */
 export function DomainSwitcher({ current }: { current: DomainKey }) {
   const router = useRouter();
   const [pending, start] = useTransition();

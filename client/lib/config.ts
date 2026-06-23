@@ -14,7 +14,9 @@
  * reaches the runtime.
  */
 export function appMode(): string {
-  return process.env.APP_MODE ?? process.env.NODE_ENV ?? "development";
+  // NEXT_PUBLIC_APP_MODE (client bundle) → APP_MODE (server) → NODE_ENV → development. The single
+  // source of truth: every presentation check derives from this so chrome + data never disagree.
+  return process.env.NEXT_PUBLIC_APP_MODE ?? process.env.APP_MODE ?? process.env.NODE_ENV ?? "development";
 }
 
 export function isPresentationMode(): boolean {

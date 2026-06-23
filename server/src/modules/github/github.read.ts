@@ -64,6 +64,23 @@ function toSummary(r: Awaited<ReturnType<typeof githubApi.listRepos>>[number]): 
 
 const onlyIssues = (items: GhIssue[]) => items.filter((i) => !i.pull_request);
 
+/**
+ * Process-level read-through cache. The AI org's GitHub data is shared (not per-user), and the
+ * aggregates fan out to dozens of API calls, so we memoize each result for a short TTL and dedupe
+ * concurrent callers by caching the in-flight Promise. Failures are NOT cached (deleted on reject)
+ * so a transient GitHub error retries on the next request.
+ */
+const CACHE_TTL_MS = 60_000;
+const _cache = new Map<string, { at: number; val: Promise<unknown> }>();
+function cached<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const now = Date.now();
+  const hit = _cache.get(key);
+  if (hit && now - hit.at < CACHE_TTL_MS) return hit.val as Promise<T>;
+  const val = fn().catch((err) => { _cache.delete(key); throw err; });
+  _cache.set(key, { at: now, val });
+  return val as Promise<T>;
+}
+
 export const githubRead = {
   /** Org headline — cheap: a single repo listing (counts are on each repo). */
   orgOverview: async () => {
@@ -81,6 +98,62 @@ export const githubRead = {
     };
   },
 
+  /**
+   * Org-level analytics — the headline dashboard. Aggregates per-repo reads (issues, PRs,
+   * commits, contributors) into org totals + a per-team row for the comparison table. One pass
+   * over the org's repos; cost scales with repo count (a handful for the AI domain).
+   */
+  orgAnalytics: () => cached("orgAnalytics", async () => {
+    const [org, repos] = await Promise.all([githubApi.getOrg(), githubApi.listRepos()]);
+    const summaries = repos.map(toSummary);
+    const details = await Promise.all(summaries.map(async (r) => ({ s: r, d: await githubRead.repoDetail(r.name) })));
+
+    const contributors = new Set<string>();
+    let commits = 0, openIssues = 0, closedIssues = 0, prs = 0, mergedPrs = 0, openPrs = 0;
+    const teamRows = details.map(({ s, d }) => {
+      d.contributors.forEach((c) => contributors.add(c));
+      const oi = d.issues.filter((i) => i.state === "open").length;
+      const ci = d.issues.filter((i) => i.state === "closed").length;
+      const merged = d.pulls.filter((p) => p.state === "merged").length;
+      const open = d.pulls.filter((p) => p.state === "open").length;
+      commits += d.commits; openIssues += oi; closedIssues += ci; prs += d.pulls.length; mergedPrs += merged; openPrs += open;
+      return {
+        repo: s.name, fullName: s.fullName, project: s.projectKey, teamIndex: s.teamIndex,
+        description: s.description, commits: d.commits, contributors: d.contributors.length,
+        openIssues: oi, closedIssues: ci, prs: d.pulls.length, mergedPrs: merged, openPrs: open,
+      };
+    });
+
+    return {
+      login: org.login, name: org.name,
+      repos: summaries.length, teams: summaries.length, projects: new Set(summaries.map((s) => s.projectKey)).size,
+      contributors: contributors.size, commits, openIssues, closedIssues, prs, mergedPrs, openPrs,
+      teamRows: teamRows.sort((a, b) => a.project.localeCompare(b.project) || a.teamIndex - b.teamIndex),
+    };
+  }),
+
+  /**
+   * Org-wide per-contributor leaderboard — the "student contributions" view. Aggregates each
+   * login's commits / issues / PRs (raised + merged) across every repo, with how many repos they
+   * touched and their PR acceptance rate. Real attribution, populates as students contribute.
+   */
+  orgContributors: () => cached("orgContributors", async () => {
+    const repos = (await githubApi.listRepos()).map(toSummary);
+    const perRepo = await Promise.all(repos.map((r) => githubRead.repoContributors(r.name)));
+    type Agg = { login: string; commits: number; issuesOpened: number; prsRaised: number; prsMerged: number; repos: number };
+    const map = new Map<string, Agg>();
+    for (const list of perRepo) {
+      for (const s of list) {
+        let a = map.get(s.login);
+        if (!a) { a = { login: s.login, commits: 0, issuesOpened: 0, prsRaised: 0, prsMerged: 0, repos: 0 }; map.set(s.login, a); }
+        a.commits += s.commits; a.issuesOpened += s.issuesOpened; a.prsRaised += s.prsRaised; a.prsMerged += s.prsMerged; a.repos += 1;
+      }
+    }
+    return [...map.values()]
+      .map((s) => ({ ...s, acceptanceRate: s.prsRaised ? Math.round((s.prsMerged / s.prsRaised) * 100) : 0 }))
+      .sort((a, b) => b.commits + b.prsRaised - (a.commits + a.prsRaised));
+  }),
+
   /** Repos grouped into projects (each project = N team-repos). */
   projects: async (): Promise<ProjectSummary[]> => {
     const repos = (await githubApi.listRepos()).map(toSummary);
@@ -92,7 +165,7 @@ export const githubRead = {
   },
 
   /** Full detail for one repo — issues, PRs, milestones, commits, contributors. */
-  repoDetail: async (repo: string) => {
+  repoDetail: (repo: string) => cached(`repoDetail:${repo}`, async () => {
     const [issuesRaw, pulls, milestones, commits] = await Promise.all([
       githubApi.listIssues(repo),
       githubApi.listPulls(repo),
@@ -124,16 +197,23 @@ export const githubRead = {
         dueAt: m.due_on,
       })),
       commits: commits.length,
+      // Recent commit history (newest first; GitHub returns commits in reverse-chronological order).
+      commitList: commits.slice(0, 30).map((c) => ({
+        sha: c.sha.slice(0, 7),
+        message: (c.commit.message ?? "").split("\n")[0]!.slice(0, 140),
+        author: c.author?.login ?? c.commit.author?.name ?? null,
+        date: c.commit.author?.date ?? null,
+      })),
       contributors: [...contributors.keys()],
     };
-  },
+  }),
 
   /**
    * Per-contributor analytics for a repo, derived from real activity (commits, PRs,
    * issues) — works without org Teams/Members. This is the primary source of
    * student attribution; it populates as students actually commit and raise PRs.
    */
-  repoContributors: async (repo: string) => {
+  repoContributors: (repo: string) => cached(`repoContributors:${repo}`, async () => {
     const [issuesRaw, pulls, commits] = await Promise.all([
       githubApi.listIssues(repo), githubApi.listPulls(repo), githubApi.listCommits(repo),
     ]);
@@ -152,7 +232,7 @@ export const githubRead = {
     return [...map.values()]
       .map((s) => ({ ...s, acceptanceRate: s.prsRaised ? Math.round((s.prsMerged / s.prsRaised) * 100) : 0 }))
       .sort((a, b) => b.commits + b.prsRaised - (a.commits + a.prsRaised));
-  },
+  }),
 
   /** Per-repo (team) analytics rolled from the same reads. */
   repoAnalytics: async (repo: string) => {
