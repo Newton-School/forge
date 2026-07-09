@@ -6,6 +6,11 @@ const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(8000),
   APP_BASE_URL: z.string().url().default("http://localhost:3000"),
+  // Local dev HTTPS. When both files exist, the server serves TLS (so OAuth redirect URIs
+  // are https). Optional; unset/absent → plain http (prod terminates TLS at the ALB).
+  // Defaults to certs/localhost*.pem when unset — see server/README.md (mkcert).
+  HTTPS_KEY_FILE: z.string().optional(),
+  HTTPS_CERT_FILE: z.string().optional(),
 
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   DIRECT_URL: z.string().optional(),
