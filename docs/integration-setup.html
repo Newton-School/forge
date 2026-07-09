@@ -76,7 +76,7 @@
     <div class="domainbar">
       <label for="dom">Your production domain</label>
       <input id="dom" value="app.example.com" spellcheck="false" />
-      <span class="hint">Local dev always uses <code>http://localhost:4000</code>. Prod becomes <span class="mono">https://<span class="ph">app.example.com</span></span>.</span>
+      <span class="hint">Local dev always uses <code>http://localhost:8000</code>. Prod becomes <span class="mono">https://<span class="ph">app.example.com</span></span>.</span>
     </div>
   </div>
 </header>
@@ -102,7 +102,7 @@
     <li>Open <b>APIs &amp; Services → Credentials → Create credentials → OAuth client ID</b> → <b>Web application</b>.</li>
     <li>Add these <b>Authorized redirect URIs</b> (server callback):
       <div class="row"><span class="lbl">Production</span><span class="copy"><span class="u" data-tmpl="https://{host}/api/auth/google/callback"></span><button>copy</button></span></div>
-      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:4000/api/auth/google/callback</span><button>copy</button></span></div>
+      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:8000/api/auth/google/callback</span><button>copy</button></span></div>
     </li>
     <li>Copy the <b>Client ID</b> and <b>Client Secret</b>.</li>
   </ol>
@@ -135,7 +135,7 @@
     <li><span class="scope">now</span> <b>OAuth2 → reset secret</b> → copy the <b>Client Secret</b>.</li>
     <li><span class="scope">now</span> <b>OAuth2 → Redirects</b>, add (scope <span class="scope">identify</span> + optional <span class="scope">guilds</span> to check server membership). <code>localhost</code> is fine here — it's a browser redirect:
       <div class="row"><span class="lbl">Production</span><span class="copy"><span class="u" data-tmpl="https://{host}/api/integrations/discord/callback"></span><button>copy</button></span></div>
-      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:4000/api/integrations/discord/callback</span><button>copy</button></span></div>
+      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:8000/api/integrations/discord/callback</span><button>copy</button></span></div>
     </li>
     <li><span class="scope" style="color:#92400e;background:var(--amber-bg);border-color:#fcd34d">future</span> <b>Bot → Add Bot → Reset Token</b> → copy the <b>Bot Token</b> (highly sensitive). Also copy the <b>Public Key</b> from General Information.</li>
     <li><span class="scope" style="color:#92400e;background:var(--amber-bg);border-color:#fcd34d">future</span> Under <b>Bot → Privileged Gateway Intents</b>: enable <b>Server Members</b> (for onboarding/joins). Leave <b>Message Content</b> off unless you must read message text.</li>
@@ -189,7 +189,7 @@
       <li>On the <b>OAuth consent screen</b>, add scope <span class="scope">https://www.googleapis.com/auth/calendar.events</span>.</li>
       <li>Add the <b>Authorized redirect URIs</b> (<code>localhost</code> is fine — browser redirect):
         <div class="row"><span class="lbl">Production</span><span class="copy"><span class="u" data-tmpl="https://{host}/api/integrations/calendar/callback"></span><button>copy</button></span></div>
-        <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:4000/api/integrations/calendar/callback</span><button>copy</button></span></div>
+        <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:8000/api/integrations/calendar/callback</span><button>copy</button></span></div>
       </li>
       <li>Copy the <b>Client ID</b> + <b>Client Secret</b>; each organizer authorizes once. Calendar ID is each user's <code>primary</code>.</li>
     </ol>

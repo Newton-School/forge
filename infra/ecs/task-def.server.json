@@ -17,10 +17,10 @@
       "name": "server",
       "image": "<ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/forge-server:<IMAGE_TAG>",
       "essential": true,
-      "portMappings": [{ "containerPort": 4000, "protocol": "tcp" }],
+      "portMappings": [{ "containerPort": 8000, "protocol": "tcp" }],
       "environment": [
         { "name": "NODE_ENV", "value": "production" },
-        { "name": "PORT", "value": "4000" },
+        { "name": "PORT", "value": "8000" },
         { "name": "APP_BASE_URL", "value": "<APP_ORIGIN>" },
         { "name": "GOOGLE_OAUTH_REDIRECT_URI", "value": "<APP_ORIGIN>/api/auth/google/callback" },
         { "name": "GITHUB_OAUTH_REDIRECT_URI", "value": "<APP_ORIGIN>/api/integrations/github/oauth/callback" },
@@ -54,7 +54,7 @@
         }
       },
       "healthCheck": {
-        "command": ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/api/health || exit 1"],
+        "command": ["CMD-SHELL", "wget -qO- http://127.0.0.1:8000/api/health || exit 1"],
         "interval": 30, "timeout": 5, "retries": 3, "startPeriod": 15
       },
       "readonlyRootFilesystem": false,

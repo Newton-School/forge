@@ -25,7 +25,7 @@ portal/
 ## 2. Deployment topology (AWS ECS — the only target)
 ```
 Internet → Cloudflare (WAF / DDoS / DNS proxy) → Route 53 → Application Load Balancer (TLS via ACM)
-        → AWS ECS Fargate: client container (Next SSR :3000) + server container (Express :4000)
+        → AWS ECS Fargate: client container (Next SSR :3000) + server container (Express :8000)
         → Amazon RDS for PostgreSQL
    + ECR (images) · Secrets Manager (secrets) · CloudWatch (logs/metrics) · ElastiCache Redis (sessions/cache)
 ```

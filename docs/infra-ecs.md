@@ -61,7 +61,7 @@
    │   PRIVATE-APP subnets (AZ-a, AZ-b)   — assignPublicIp=DISABLED                    │
    │   ┌─────────────────────────────┐      ┌─────────────────────────────┐           │
    │   │ ECS Fargate svc: client     │      │ ECS Fargate svc: server     │           │
-   │   │ Next.js SSR  :3000          │◀────▶│ Express API  :4000          │           │
+   │   │ Next.js SSR  :3000          │◀────▶│ Express API  :8000          │           │
    │   │ TG health GET /healthz      │ Cloud│ TG health GET /api/health   │           │
    │   └─────────────────────────────┘  Map └──────────────┬──────────────┘           │
    │                                                        │ :5432 / :6379            │
@@ -253,10 +253,10 @@ Two families: `forge-prod-client` and `forge-prod-server`. Both `networkMode=aws
       "name": "server",
       "image": "111122223333.dkr.ecr.us-east-1.amazonaws.com/forge/server:GIT_SHA",
       "essential": true,
-      "portMappings": [{ "containerPort": 4000, "protocol": "tcp" }],
+      "portMappings": [{ "containerPort": 8000, "protocol": "tcp" }],
       "environment": [
         { "name": "NODE_ENV", "value": "production" },
-        { "name": "PORT", "value": "4000" },
+        { "name": "PORT", "value": "8000" },
         { "name": "APP_BASE_URL", "value": "https://forge.example.com" }
       ],
       "secrets": [
@@ -279,7 +279,7 @@ Two families: `forge-prod-client` and `forge-prod-server`. Both `networkMode=aws
         }
       },
       "healthCheck": {
-        "command": ["CMD-SHELL", "wget -qO- http://localhost:4000/api/health || exit 1"],
+        "command": ["CMD-SHELL", "wget -qO- http://localhost:8000/api/health || exit 1"],
         "interval": 30, "timeout": 5, "retries": 3, "startPeriod": 30
       }
     }
@@ -307,7 +307,7 @@ Same shape; key differences below (full file in `infra/ecs/`):
         { "name": "NODE_ENV", "value": "production" },
         { "name": "PORT", "value": "3000" },
         { "name": "NEXT_PUBLIC_API_BASE", "value": "https://forge.example.com/api" },
-        { "name": "INTERNAL_API_BASE", "value": "http://server.forge.internal:4000" }
+        { "name": "INTERNAL_API_BASE", "value": "http://server.forge.internal:8000" }
       ],
       "secrets": [
         { "name": "NEXTAUTH_SECRET", "valueFrom": "arn:aws:secretsmanager:us-east-1:111122223333:secret:/forge/prod/nextauth-secret" }
@@ -344,7 +344,7 @@ Two services in cluster `forge-prod`, both in **private-app subnets**, `assignPu
 | Subnets | private-app a/b | private-app a/b |
 | `assignPublicIp` | **DISABLED** | **DISABLED** |
 | Security group | `forge-prod-client-sg` | `forge-prod-server-sg` |
-| Target group | `forge-client-tg` :3000 | `forge-server-tg` :4000 |
+| Target group | `forge-client-tg` :3000 | `forge-server-tg` :8000 |
 | Deployment controller | ECS rolling | ECS rolling |
 | Circuit breaker | enabled + **rollback** | enabled + **rollback** |
 | Min / max healthy % | 100 / 200 | 100 / 200 |
@@ -366,7 +366,7 @@ aws ecs create-service \
       "securityGroups": ["sg-forge-prod-server"],
       "assignPublicIp": "DISABLED" } }' \
   --load-balancers '[{ "targetGroupArn":"arn:...:targetgroup/forge-server-tg/...",
-      "containerName":"server", "containerPort":4000 }]' \
+      "containerName":"server", "containerPort":8000 }]' \
   --health-check-grace-period-seconds 60 \
   --service-registries '[{ "registryArn":"arn:...:service/srv-server" }]' \
   --tags key=app,value=forge key=env,value=prod
@@ -424,7 +424,7 @@ Listener :443  →  ACM cert (forge.example.com), TLS policy ELBSecurityPolicy-T
 | Target group | Port | Protocol | Health check | Healthy/Unhealthy | Deregistration delay |
 |---|---|---|---|---|---|
 | `forge-client-tg` | 3000 | HTTP (target-type `ip`) | `GET /healthz` (200) | 2 / 3 | 30s |
-| `forge-server-tg` | 4000 | HTTP (target-type `ip`) | `GET /api/health` (200) | 2 / 3 | 30s |
+| `forge-server-tg` | 8000 | HTTP (target-type `ip`) | `GET /api/health` (200) | 2 / 3 | 30s |
 
 ```bash
 aws elbv2 create-rule --listener-arn $L443 --priority 10 \
@@ -449,10 +449,10 @@ Strict, SG-to-SG references (by SG-ID, all within Forge's VPC). **No `0.0.0.0/0`
 | **forge-prod-alb-sg** | ingress | 443 | **Cloudflare IPv4/IPv6 ranges** | NOT `0.0.0.0/0` — only Cloudflare edge |
 | | ingress | 80 | Cloudflare ranges | for the 80→443 redirect |
 | | egress | 3000 | → client-sg | to client tasks |
-| | egress | 4000 | → server-sg | to server tasks |
+| | egress | 8000 | → server-sg | to server tasks |
 | **forge-prod-client-sg** | ingress | 3000 | **alb-sg only** | no other source |
 | | egress | 443 | → 0.0.0.0/0 (NAT) | outbound (ECR/secrets via endpoints) |
-| **forge-prod-server-sg** | ingress | 4000 | **alb-sg only** | (+ client-sg if Cloud Map internal calls used) |
+| **forge-prod-server-sg** | ingress | 8000 | **alb-sg only** | (+ client-sg if Cloud Map internal calls used) |
 | | egress | 5432 | → rds-sg | DB |
 | | egress | 6379 | → redis-sg | cache/sessions |
 | | egress | 443 | → 0.0.0.0/0 (NAT) | GitHub/Discord/Google/Groq/SES |

@@ -15,10 +15,10 @@ npm install
 npm run prisma:generate
 npm run db:migrate:dev      # creates the schema
 npm run db:seed             # provisions the allowlist (admin@/teacher@/mentor@/mentee@<domain>)
-npm run dev                 # http://localhost:4000
+npm run dev                 # http://localhost:8000
 
-# docs:    http://localhost:4000/api/docs   (Swagger UI)
-# health:  http://localhost:4000/api/health
+# docs:    http://localhost:8000/api/docs   (Swagger UI)
+# health:  http://localhost:8000/api/health
 ```
 Log in by visiting the client and clicking **Continue with Google** (only seeded institute emails are allowed).
 

@@ -23,7 +23,7 @@ cd portal/server
 # .env needs DATABASE_URL / DIRECT_URL, REDIS_URL, GitHub token + org config, Google OAuth, SESSION_SECRET
 npx prisma db push          # apply the schema deltas above
 npm run db:seed             # domain repo models + non-AI teams/members/repos (ML per-student, DVA/SDSE shared)
-npm run dev                 # Express API on :4000
+npm run dev                 # Express API on :8000
 ```
 ```bash
 cd portal/client            # APP_MODE=production, NEXT_PUBLIC_API_URL=/api, API_PROXY_TARGET=<server origin>

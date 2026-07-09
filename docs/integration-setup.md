@@ -12,11 +12,11 @@ This guide documents the credential provisioning and configuration steps for **e
 - **Public base URL (example):** `https://app.<your-domain>` (Cloudflare → ALB → ECS).
   - Server API base: `https://app.<your-domain>/api`
   - Local client: `http://localhost:3000`
-  - Local server: `http://localhost:4000`
+  - Local server: `http://localhost:8000`
 
 Throughout this doc, replace `<your-domain>` with your real domain and `<env>` with the environment name (`dev`, `staging`, `prod`).
 
-> **Key principle:** Because the server owns every integration, all redirect URIs and webhook URLs use the **server** origin (`https://app.<your-domain>/api/...`) in production and `http://localhost:4000/api/...` locally — *never* the client origin (`:3000`).
+> **Key principle:** Because the server owns every integration, all redirect URIs and webhook URLs use the **server** origin (`https://app.<your-domain>/api/...`) in production and `http://localhost:8000/api/...` locally — *never* the client origin (`:3000`).
 
 ---
 
@@ -52,7 +52,7 @@ Any other email is rejected at the callback before a session is created.
 
    ```
    https://app.<your-domain>/api/auth/google/callback
-   http://localhost:4000/api/auth/google/callback
+   http://localhost:8000/api/auth/google/callback
    ```
 
 4. Create, then copy the **Client ID** and **Client secret**.
@@ -335,7 +335,7 @@ Commit this template (no real values). Copy to `server/.env` locally and fill in
 ```bash
 # ---- Runtime ----
 NODE_ENV=development
-APP_BASE_URL=http://localhost:4000
+APP_BASE_URL=http://localhost:8000
 
 # ---- Datastores ----
 DATABASE_URL=postgresql://user:pass@localhost:5432/forge
@@ -345,7 +345,7 @@ REDIS_URL=redis://localhost:6379
 # ---- Google OAuth (login) ----
 GOOGLE_OAUTH_CLIENT_ID=
 GOOGLE_OAUTH_CLIENT_SECRET=
-GOOGLE_OAUTH_REDIRECT_URI=http://localhost:4000/api/auth/google/callback
+GOOGLE_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/google/callback
 ALLOWED_HOSTED_DOMAIN=rishihood.edu.in
 SESSION_SECRET=
 

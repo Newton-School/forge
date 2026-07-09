@@ -2,7 +2,7 @@
 # Forge — AWS ECS deploy pipeline   (companion to docs/aws/index.html · CLAUDE.md)
 #
 # Topology deployed (single origin, path-routed — per the runbook):
-#   Cloudflare → ALB (forge.taj.works) → /api/* → server :4000 · default → client :3000
+#   Cloudflare → ALB (forge.taj.works) → /api/* → server :8000 · default → client :3000
 #   → RDS Postgres + ElastiCache Redis · Secrets Manager · CloudWatch
 #
 # Flow:  assume AWS via GitHub OIDC (no static keys)

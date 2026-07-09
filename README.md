@@ -82,14 +82,14 @@ Requires Docker, Node ≥ 20.9.
 # Full stack (client + server + postgres + redis)
 docker compose up --build
 #   client → http://localhost:3000
-#   server → http://localhost:4000/api/health
+#   server → http://localhost:8000/api/health
 ```
 
 Or run each app directly:
 
 ```bash
 cd client && npm install && npm run dev     # http://localhost:3000
-cd server && cp .env.example .env && npm install && npm run dev   # http://localhost:4000
+cd server && cp .env.example .env && npm install && npm run dev   # http://localhost:8000
 ```
 
 Fill credentials per [`docs/integration-setup.md`](docs/integration-setup.md). In production, secrets come from **AWS Secrets Manager** — never commit them.

@@ -17,7 +17,7 @@ ENV NODE_ENV=development
 COPY package.json package-lock.json* ./
 RUN npm install
 COPY . .
-EXPOSE 4000
+EXPOSE 8000
 # Prisma 7 has no built-in engine — generate the client against the (bind-mounted)
 # schema at each start before launching the watcher.
 CMD ["sh", "-c", "npx prisma generate && npm run dev"]
@@ -35,7 +35,7 @@ RUN npm run build
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=4000
+ENV PORT=8000
 RUN apk add --no-cache dumb-init \
   && addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 express
@@ -44,9 +44,9 @@ COPY --from=builder --chown=express:nodejs /app/dist ./dist
 COPY --from=builder --chown=express:nodejs /app/prisma ./prisma
 COPY --chown=express:nodejs package.json ./
 USER express
-EXPOSE 4000
+EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:4000/api/health >/dev/null 2>&1 || exit 1
+  CMD wget -qO- http://127.0.0.1:8000/api/health >/dev/null 2>&1 || exit 1
 # dumb-init = proper PID 1 / signal handling
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "dist/index.js"]

@@ -3,7 +3,7 @@
 Production Terraform for the Forge AWS topology (CLAUDE.md §2/§6, `docs/aws/index.html`):
 
 ```
-Cloudflare → ALB (forge.taj.works) → /api/* → server :4000 · default → client :3000
+Cloudflare → ALB (forge.taj.works) → /api/* → server :8000 · default → client :3000
            → ECS Fargate · RDS Postgres · ElastiCache Redis
            + ECR · Secrets Manager · KMS CMK · CloudWatch logs/alarms · SNS email alerts
 ```

@@ -24,7 +24,7 @@ locals {
 
   server_environment = [
     { name = "NODE_ENV", value = "production" },
-    { name = "PORT", value = "4000" },
+    { name = "PORT", value = "8000" },
     { name = "APP_BASE_URL", value = var.app_origin },
     { name = "GOOGLE_OAUTH_REDIRECT_URI", value = "${var.app_origin}/api/auth/google/callback" },
     { name = "GITHUB_OAUTH_REDIRECT_URI", value = "${var.app_origin}/api/integrations/github/oauth/callback" },
@@ -59,7 +59,7 @@ resource "aws_ecs_task_definition" "server" {
       name         = "server"
       image        = local.server_image
       essential    = true
-      portMappings = [{ containerPort = 4000, protocol = "tcp" }]
+      portMappings = [{ containerPort = 8000, protocol = "tcp" }]
       environment  = local.server_environment
       secrets      = local.server_secrets
       logConfiguration = {
@@ -71,7 +71,7 @@ resource "aws_ecs_task_definition" "server" {
         }
       }
       healthCheck = {
-        command     = ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/api/health || exit 1"]
+        command     = ["CMD-SHELL", "wget -qO- http://127.0.0.1:8000/api/health || exit 1"]
         interval    = 30
         timeout     = 5
         retries     = 3
@@ -156,7 +156,7 @@ resource "aws_ecs_service" "server" {
   load_balancer {
     target_group_arn = aws_lb_target_group.server.arn
     container_name   = "server"
-    container_port   = 4000
+    container_port   = 8000
   }
 
   deployment_circuit_breaker {

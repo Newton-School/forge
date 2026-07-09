@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Forge — AWS Architecture (for the product team)</title>
+<style>
+  :root {
+    --bg: #fafafa; --surface: #ffffff; --border: #e4e4e7; --ink: #18181b;
+    --muted: #71717a; --faint: #a1a1aa; --indigo: #4f46e5; --indigo-bg: #eef2ff;
+    --green: #16a34a; --green-bg:#f0fdf4; --amber: #d97706; --amber-bg:#fffbeb; --red: #dc2626;
+    --sky:#0284c7; --sky-bg:#f0f9ff; --violet:#7c3aed; --violet-bg:#f5f3ff;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.6; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 48px 24px 120px; }
+  header.hero { border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding: 28px 32px; margin-bottom: 28px; }
+  header.hero h1 { margin: 0 0 6px; font-size: 27px; letter-spacing: -0.02em; }
+  header.hero p { margin: 0; color: var(--muted); }
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--indigo); background: var(--indigo-bg); padding: 3px 9px; border-radius: 999px; margin-bottom: 14px; }
+  h2 { font-size: 20px; margin: 42px 0 14px; letter-spacing: -0.01em; }
+  h3 { font-size: 15px; margin: 22px 0 8px; }
+  p { margin: 10px 0; }
+  a { color: var(--indigo); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font-family: var(--mono); font-size: 12.5px; background: #f4f4f5; border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 13.5px; }
+  th, td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; vertical-align: top; }
+  th { background: #f4f4f5; font-weight: 600; }
+  td code { background: #fff; }
+  .note, .warn, .ok { border-radius: 10px; padding: 13px 16px; margin: 16px 0; border: 1px solid; font-size: 14px; }
+  .note { background: var(--indigo-bg); border-color: #c7d2fe; }
+  .warn { background: var(--amber-bg); border-color: #fde68a; }
+  .ok { background: var(--green-bg); border-color: #bbf7d0; }
+  .note b, .warn b, .ok b { display: block; margin-bottom: 2px; }
+  .lead { font-size: 16px; color: #3f3f46; }
+  ul.clean { list-style: none; padding-left: 0; }
+  ul.clean li { padding: 5px 0 5px 26px; position: relative; }
+  ul.clean li::before { content: "▹"; position: absolute; left: 4px; color: var(--indigo); }
+  footer { margin-top: 54px; color: var(--faint); font-size: 12.5px; text-align: center; }
+
+  /* ── diagram ─────────────────────────────────────────── */
+  .diagram { border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding: 26px 22px; margin: 20px 0; }
+  .layer { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+  .node { border: 1px solid var(--border); border-radius: 11px; background: #fff; padding: 12px 16px; min-width: 190px; max-width: 300px; }
+  .node .t { font-weight: 650; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .node .s { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .node .ic { font-size: 16px; }
+  .n-cf   { background: var(--amber-bg); border-color: #fcd34d; }
+  .n-user { background: #fafafa; }
+  .n-alb  { background: var(--indigo-bg); border-color: #c7d2fe; }
+  .n-app  { background: var(--sky-bg); border-color: #bae6fd; }
+  .n-data { background: var(--violet-bg); border-color: #ddd6fe; }
+  .conn { text-align: center; color: var(--faint); font-size: 12px; padding: 7px 0; }
+  .conn b { display:block; color: var(--muted); font-weight: 600; letter-spacing:.02em; }
+  .conn .arrow { font-size: 17px; color: #cbd5e1; }
+  .boundary { border: 1.5px dashed #a5b4fc; border-radius: 14px; padding: 14px 14px 18px; margin: 10px 0; position: relative; background: rgba(238,242,255,.35); }
+  .boundary > .blabel { position: absolute; top: -11px; left: 16px; background: var(--surface); padding: 0 8px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--indigo); }
+  .sublabel { text-align:center; font-size:11px; color:var(--faint); text-transform:uppercase; letter-spacing:.05em; margin: 4px 0 8px; }
+  .side-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 14px; }
+  .chip { border: 1px solid var(--border); border-radius: 9px; background:#fff; padding: 9px 12px; font-size: 12.5px; }
+  .chip b { font-size: 13px; }
+  .flow { counter-reset: step; list-style: none; padding-left: 0; }
+  .flow li { position: relative; padding: 8px 0 8px 42px; border-bottom: 1px solid var(--border); }
+  .flow li:last-child { border-bottom: 0; }
+  .flow li::before { counter-increment: step; content: counter(step); position: absolute; left: 0; top: 8px; width: 26px; height: 26px; border-radius: 50%; background: var(--indigo); color: #fff; font-size: 13px; font-weight: 700; display: grid; place-items: center; }
+  @media (max-width: 640px) { .node { min-width: 100%; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="badge">Architecture Overview · Product Team</div>
+    <h1>How Forge runs on AWS</h1>
+    <p>A plain-English tour of the production setup — what each piece does, how a request flows, how we ship changes, and how we stay secure and reliable. No AWS background needed.</p>
+  </header>
+
+  <p class="lead">Forge runs as <strong>two containers</strong> — the <strong>UI</strong> and the <strong>brain</strong> — behind a single web address, with a managed database and cache, on Amazon's managed container platform (<strong>ECS Fargate</strong>). It scales, heals itself, ships automatically, and emails us the moment something looks wrong.</p>
+
+  <div class="note">
+    <b>The 20-second version</b>
+    Users hit one address (<code>forge.taj.works</code>). Cloudflare shields it, a load balancer sends page requests to the <strong>frontend</strong> and <code>/api</code> requests to the <strong>backend</strong>. The backend holds all the logic and talks to the database (Postgres), the session store (Redis), and outside services (Google, GitHub, Discord). Everything sensitive is locked in a private network; nothing but Cloudflare can reach it.
+  </div>
+
+  <!-- ── DIAGRAM ─────────────────────────────────────────── -->
+  <h2>The big picture</h2>
+  <div class="diagram">
+    <div class="layer">
+      <div class="node n-user"><div class="t"><span class="ic">👤</span> Users</div><div class="s">Students · mentors · teachers · LCC · admins</div></div>
+    </div>
+    <div class="conn"><span class="arrow">↓</span><b>HTTPS · forge.taj.works</b></div>
+    <div class="layer">
+      <div class="node n-cf"><div class="t"><span class="ic">🛡️</span> Cloudflare</div><div class="s">DNS · TLS · WAF &amp; DDoS protection · hides the servers</div></div>
+    </div>
+    <div class="conn"><span class="arrow">↓</span><b>Encrypted, Cloudflare-only</b></div>
+
+    <div class="boundary">
+      <span class="blabel">AWS · dedicated private network (VPC)</span>
+
+      <div class="layer">
+        <div class="node n-alb"><div class="t"><span class="ic">🚦</span> Load Balancer (ALB)</div><div class="s">One entrance. Health-checks the apps. Routes by URL.</div></div>
+      </div>
+
+      <div class="conn"><span class="arrow">↓</span><b><code>/api/*</code> → backend &nbsp;·&nbsp; everything else → frontend</b></div>
+
+      <div class="sublabel">ECS Fargate — 2 copies of each, across availability zones</div>
+      <div class="layer">
+        <div class="node n-app"><div class="t"><span class="ic">🖥️</span> Client (Next.js)</div><div class="s">The UI. Renders pages. Holds no secrets, no data.</div></div>
+        <div class="node n-app"><div class="t"><span class="ic">⚙️</span> Server (Express)</div><div class="s">The brain: login, permissions, business logic, integrations.</div></div>
+      </div>
+
+      <div class="conn"><span class="arrow">↓</span><b>Private only — never exposed to the internet</b></div>
+
+      <div class="layer">
+        <div class="node n-data"><div class="t"><span class="ic">🗄️</span> RDS PostgreSQL</div><div class="s">System of record — users, teams, tasks, milestones. Encrypted + backed up.</div></div>
+        <div class="node n-data"><div class="t"><span class="ic">⚡</span> ElastiCache Redis</div><div class="s">Login sessions + cache. Persistent, so logins survive restarts.</div></div>
+      </div>
+    </div>
+
+    <div class="sublabel" style="margin-top:18px;">Supporting AWS services (behind the scenes)</div>
+    <div class="side-grid">
+      <div class="chip"><b>📦 ECR</b> — private store for the built app images</div>
+      <div class="chip"><b>🔑 Secrets Manager</b> — vault for passwords/API keys, injected at runtime</div>
+      <div class="chip"><b>🔐 KMS</b> — the encryption keys behind the DB &amp; vault</div>
+      <div class="chip"><b>📊 CloudWatch</b> — logs, metrics &amp; alarms</div>
+      <div class="chip"><b>📨 SNS + SES</b> — alert emails + the app's outbound email</div>
+      <div class="chip"><b>🧾 CloudTrail</b> — records every AWS account action (audit)</div>
+    </div>
+
+    <div class="sublabel" style="margin-top:18px;">The backend also talks out to</div>
+    <div class="side-grid">
+      <div class="chip"><b>🔓 Google</b> — sign-in (the only way to log in)</div>
+      <div class="chip"><b>🐙 GitHub</b> — repos, commits, PRs, reviews</div>
+      <div class="chip"><b>💬 Discord</b> — team activity</div>
+      <div class="chip"><b>🤖 Groq</b> — AI assistant features</div>
+    </div>
+  </div>
+
+  <!-- ── REQUEST FLOW ────────────────────────────────────── -->
+  <h2>What happens on a single request</h2>
+  <ol class="flow">
+    <li><strong>A user opens <code>forge.taj.works</code>.</strong> The request first hits <strong>Cloudflare</strong>, which blocks bad traffic, serves static assets fast, and forwards the rest.</li>
+    <li><strong>Cloudflare passes it to the Load Balancer</strong> over an encrypted connection. The load balancer is the only door into our AWS network.</li>
+    <li><strong>The load balancer decides where it goes by the URL:</strong> anything starting with <code>/api/</code> goes to the <strong>backend</strong>; every other page goes to the <strong>frontend</strong>. Same address, one origin — so logins and cookies "just work".</li>
+    <li><strong>The frontend renders the page</strong> and asks the backend for data through the same <code>/api</code> path.</li>
+    <li><strong>The backend does the real work:</strong> checks your session in Redis, confirms you're allowed to see it, reads/writes Postgres, and calls Google/GitHub/Discord when needed.</li>
+    <li><strong>The answer travels back up the chain</strong> to the user — all within a private, encrypted network.</li>
+  </ol>
+
+  <!-- ── WHY SPLIT ───────────────────────────────────────── -->
+  <h2>Why two apps instead of one</h2>
+  <table>
+    <tr><th>Frontend — “the UI”</th><th>Backend — “the brain”</th></tr>
+    <tr>
+      <td>Only draws screens. Never touches the database, never holds a secret, never calls GitHub/Google directly.</td>
+      <td>Owns <strong>everything that matters</strong>: authentication, who-can-see-what, business rules, integrations, email, audit logs.</td>
+    </tr>
+    <tr>
+      <td>If it's ever compromised, there's nothing sensitive to steal.</td>
+      <td>Locked in the private network; the only thing that enforces permissions. The frontend's UI checks are just hints.</td>
+    </tr>
+  </table>
+  <p>This separation is the core security decision: <strong>trust is enforced in one place</strong>, not scattered across the browser.</p>
+
+  <!-- ── COMPONENTS ──────────────────────────────────────── -->
+  <h2>The building blocks, in plain language</h2>
+  <table>
+    <tr><th>Piece</th><th>What it is</th><th>Why it matters</th></tr>
+    <tr><td><b>Cloudflare</b></td><td>The public front door + shield.</td><td>Hides our servers, absorbs attacks (WAF/DDoS), manages the domain and HTTPS.</td></tr>
+    <tr><td><b>Load Balancer (ALB)</b></td><td>Traffic director inside AWS.</td><td>One address for users; sends <code>/api</code> to the backend and pages to the frontend; checks the apps are healthy.</td></tr>
+    <tr><td><b>ECS Fargate</b></td><td>Runs our containers without us managing servers.</td><td>Keeps 2 copies of each app running, auto-restarts unhealthy ones, and scales up when busy.</td></tr>
+    <tr><td><b>RDS PostgreSQL</b></td><td>The managed database.</td><td>The permanent record of all data. Encrypted, automatically backed up, private.</td></tr>
+    <tr><td><b>ElastiCache Redis</b></td><td>A fast in-memory store.</td><td>Holds login sessions + caches. Being persistent means <strong>users don't get logged out on restarts</strong>.</td></tr>
+    <tr><td><b>ECR</b></td><td>Private image registry.</td><td>Stores the packaged app versions that ECS runs.</td></tr>
+    <tr><td><b>Secrets Manager + KMS</b></td><td>Encrypted vault + its keys.</td><td>Passwords and API keys live here, never in code, and are handed to the app only at runtime.</td></tr>
+    <tr><td><b>CloudWatch + SNS</b></td><td>Monitoring + notifications.</td><td>Collects logs/metrics and <strong>emails us</strong> when something breaks.</td></tr>
+    <tr><td><b>CloudTrail</b></td><td>An audit recorder for AWS itself.</td><td>Logs every action taken in the AWS account — for security &amp; compliance.</td></tr>
+    <tr><td><b>SES</b></td><td>Amazon's email service.</td><td>Sends the app's own emails (invites, notifications) reliably.</td></tr>
+  </table>
+
+  <!-- ── DEPLOY ──────────────────────────────────────────── -->
+  <h2>How a change goes live</h2>
+  <p>Shipping is automated — a developer merges code and the pipeline does the rest, with a safety net.</p>
+  <ol class="flow">
+    <li><strong>Code is merged</strong> (or the deploy is triggered manually).</li>
+    <li><strong>GitHub Actions logs into AWS securely</strong> using short-lived trust — no passwords or keys stored anywhere.</li>
+    <li><strong>It builds both apps</strong> into images and stores them in ECR.</li>
+    <li><strong>It updates the database structure</strong> safely, as a one-off task inside the private network.</li>
+    <li><strong>It rolls out the new version gradually.</strong> Each new container must pass a health check before old ones retire.</li>
+    <li><strong>If the new version is unhealthy, it automatically rolls back</strong> to the last good one — users never see a broken deploy.</li>
+  </ol>
+
+  <!-- ── RELIABILITY ─────────────────────────────────────── -->
+  <h2>Reliability &amp; “what if something breaks?”</h2>
+  <ul class="clean">
+    <li><strong>Two copies of everything, in different data centers</strong> (availability zones) — one failing doesn't take the app down.</li>
+    <li><strong>Self-healing</strong> — an unhealthy container is automatically replaced.</li>
+    <li><strong>Safe deploys</strong> — a bad release auto-rolls-back.</li>
+    <li><strong>Persistent sessions</strong> — restarts don't log users out.</li>
+    <li><strong>We get emailed</strong> the moment there's trouble: app errors, crash loops, error spikes, database/cache pressure, unusual AWS activity, or a failed deploy — all to <code>learnercareercouncil@nst.rishihood.edu.in</code>.</li>
+  </ul>
+
+  <!-- ── SECURITY ────────────────────────────────────────── -->
+  <h2>Security &amp; isolation, in one glance</h2>
+  <table>
+    <tr><th>Concern</th><th>How it's handled</th></tr>
+    <tr><td>Who can log in</td><td>Google sign-in only, restricted to the university domain <em>and</em> a pre-approved list. No passwords, no self-signup.</td></tr>
+    <tr><td>Database exposure</td><td>Postgres &amp; Redis sit in a private network — <strong>not reachable from the internet</strong> at all.</td></tr>
+    <tr><td>Blast radius</td><td>Forge runs in its <strong>own isolated network</strong>, separate from other apps in the AWS account — a problem here can't spread.</td></tr>
+    <tr><td>Secrets</td><td>Kept in an encrypted vault with a dedicated key; never in code or images.</td></tr>
+    <tr><td>Only Cloudflare gets in</td><td>The load balancer accepts traffic <strong>only from Cloudflare</strong>, so no one can bypass the shield.</td></tr>
+    <tr><td>Audit trail</td><td>Two layers: what users do <em>inside Forge</em> (immutable audit log) and what anyone does <em>in AWS</em> (CloudTrail).</td></tr>
+  </table>
+
+  <!-- ── SCALE / COST ────────────────────────────────────── -->
+  <h2>Scaling &amp; cost posture</h2>
+  <ul class="clean">
+    <li><strong>Small and cheap to start</strong> — modest database/cache sizes; a single shared internet gateway to keep costs down.</li>
+    <li><strong>Scales sideways</strong> — under load we simply run more copies of a container; the load balancer spreads traffic automatically.</li>
+    <li><strong>Managed, not hand-run</strong> — AWS handles the servers, patching, and backups, so the team focuses on the product, not infrastructure.</li>
+  </ul>
+
+  <div class="ok">
+    <b>Bottom line for the product team</b>
+    Forge is on a standard, boring-in-a-good-way production setup: one address, a shielded and private network, a self-healing container platform, automatic deploys with rollback, persistent data, full audit trails, and email alerts. It's built to grow with the drive and to fail safely.
+  </div>
+
+  <p style="margin-top:26px; font-size:13.5px; color:var(--muted);">Companion docs: the step-by-step build runbook is in <code>docs/aws/index.html</code>; the engineering source of truth is <code>CLAUDE.md</code>; the infrastructure code lives in <code>infra/terraform/</code>.</p>
+
+  <footer>Forge · AWS architecture overview · for product &amp; stakeholders</footer>
+</div>
+</body>
+</html>

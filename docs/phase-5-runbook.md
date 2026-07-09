@@ -28,7 +28,7 @@ SESSION_ABSOLUTE_HOURS=24
 
 GOOGLE_OAUTH_CLIENT_ID=...            # login
 GOOGLE_OAUTH_CLIENT_SECRET=...
-GOOGLE_OAUTH_REDIRECT_URI=http://localhost:4000/api/auth/google/callback
+GOOGLE_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/google/callback
 ALLOWED_HOSTED_DOMAIN=rishihood.edu.in
 
 GITHUB_ORG=newton-school-ai           # AI org mode
@@ -36,7 +36,7 @@ GITHUB_API_TOKEN=...                  # fine-grained org PAT
 GITHUB_WEBHOOK_SECRET=...             # openssl rand -hex 32 (org + repo webhooks)
 GITHUB_OAUTH_CLIENT_ID=...            # lcc-ai-nst OAuth App (Connect)
 GITHUB_OAUTH_CLIENT_SECRET=...
-GITHUB_OAUTH_REDIRECT_URI=http://localhost:4000/api/integrations/github/oauth/callback
+GITHUB_OAUTH_REDIRECT_URI=http://localhost:8000/api/integrations/github/oauth/callback
 GITHUB_READER_LOGIN=lcc-ai-nst
 GITHUB_READER_TOKEN=ghp_...           # classic PAT, public_repo (rate limit + collaborators)
 
@@ -57,18 +57,18 @@ npm run seed                # domains (AI/ML/SDSE/DVA) + allowlisted demo users
 
 ## 4. Public tunnel for webhooks (GitHub can't reach localhost)
 ```bash
-npx smee-client --url https://smee.io/<your-channel> --target http://localhost:4000/api/integrations/github/webhook
+npx smee-client --url https://smee.io/<your-channel> --target http://localhost:8000/api/integrations/github/webhook
 ```
 Use the smee URL as the webhook payload URL (the Connect flow uses `GITHUB_OAUTH_REDIRECT_URI`'s origin — for local webhook delivery, point the OAuth redirect origin at the tunnel or set the payload URL manually per `github-setup.html`).
 
 ## 5. Run server + client
 ```bash
 # terminal A
-cd portal/server && npm run dev          # http://localhost:4000
+cd portal/server && npm run dev          # http://localhost:8000
 
 # terminal B  — client in PRODUCTION data mode (calls the real API)
 cd portal/client
-APP_MODE=production NEXT_PUBLIC_APP_MODE=production NEXT_PUBLIC_API_URL=http://localhost:4000/api npm run dev
+APP_MODE=production NEXT_PUBLIC_APP_MODE=production NEXT_PUBLIC_API_URL=http://localhost:8000/api npm run dev
 ```
 
 ## 6. Smoke test (the live exercise)
