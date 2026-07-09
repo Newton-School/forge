@@ -66,6 +66,44 @@ export async function resolveGoogleLogin(p: GoogleProfileLite): Promise<string> 
   return updated.id;
 }
 
+export interface NewtonProfileLite {
+  uid: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  authorized: boolean;
+}
+
+/**
+ * Resolve a Newton School login into a Forge user id, or throw 403.
+ * Gate = Newton `authorized` AND the user already exists (admin allowlist). No signup, no
+ * domain check — Newton is the identity authority; Forge's invite-only allowlist decides access.
+ * Links by the stable Newton uid first, falling back to the allowlisted email on first login.
+ */
+export async function resolveNewtonLogin(p: NewtonProfileLite): Promise<string> {
+  if (!p.authorized) throw Errors.forbidden("This account is not authorized for Forge on Newton");
+  const email = p.email.toLowerCase();
+  const user = await prisma.user.findFirst({
+    where: { OR: [{ newtonUid: p.uid }, { email }] },
+  });
+  if (!user) throw Errors.forbidden("This account is not provisioned for Forge");
+  if (user.status === "SUSPENDED" || user.status === "DEACTIVATED") {
+    throw Errors.forbidden("Account is not active");
+  }
+  const wasInvited = user.status === "INVITED";
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      newtonUid: user.newtonUid ?? p.uid,
+      status: wasInvited ? "ACTIVE" : user.status,
+      lastLoginAt: new Date(),
+    },
+  });
+  // First successful sign-in completes the onboarding invitation (best-effort).
+  if (wasInvited) await completeForUser(updated.id).catch(() => undefined);
+  return updated.id;
+}
+
 /** Load the fresh authorization context for a user id (roles included). */
 export async function loadAuthContext(userId: string): Promise<AuthContext | null> {
   const user = await prisma.user.findUnique({ where: { id: userId }, include: { roles: true } });

@@ -4,7 +4,7 @@ import { z } from "zod";
 /** Zod-validated environment — fail fast on misconfiguration (no silent undefineds). */
 const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  PORT: z.coerce.number().int().positive().default(4000),
+  PORT: z.coerce.number().int().positive().default(8000),
   APP_BASE_URL: z.string().url().default("http://localhost:3000"),
 
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
@@ -27,7 +27,16 @@ const schema = z.object({
   GOOGLE_OAUTH_REDIRECT_URI: z
     .string()
     .url()
-    .default("http://localhost:4000/api/auth/google/callback"),
+    .default("http://localhost:8000/api/auth/google/callback"),
+
+  // Newton School authentication SDK (backend-only). When configured, powers the
+  // /newton/login + /newton/callback flow — the login method (replaces Google).
+  // Identity + platform access come from Newton; Forge's invite-only allowlist +
+  // RBAC still decide who gets in. CLIENT_SECRET/CALLBACK_SECRET are secrets.
+  NEWTON_AUTH_CLIENT_ID: z.string().optional(),
+  NEWTON_AUTH_CLIENT_SECRET: z.string().optional(),
+  NEWTON_AUTH_CALLBACK_SECRET: z.string().optional(),
+  NEWTON_AUTH_BASE_URL: z.string().url().default("https://staging-newtonschool.co/api/v1"),
 
   // Secret that gates internal job endpoints (e.g. recomputing public landing
   // stats) so a scheduled cron can trigger them without a user session. Optional:
@@ -61,7 +70,7 @@ const schema = z.object({
   GITHUB_OAUTH_REDIRECT_URI: z
     .string()
     .url()
-    .default("http://localhost:4000/api/integrations/github/oauth/callback"),
+    .default("http://localhost:8000/api/integrations/github/oauth/callback"),
 
   // Repository-mode reads (ML/DVA/SDSE public repos). The machine account added as a
   // read collaborator on connect; its optional classic PAT (public_repo) raises the read
@@ -80,7 +89,7 @@ const schema = z.object({
   DISCORD_OAUTH_REDIRECT_URI: z
     .string()
     .url()
-    .default("http://localhost:4000/api/integrations/discord/oauth/callback"),
+    .default("http://localhost:8000/api/integrations/discord/oauth/callback"),
 
   // Google Calendar (service account) — reads the shared LCC calendar + pushes events. The SA can
   // be supplied three ways (first that resolves wins): split fields, an inline JSON blob, or a path
@@ -123,6 +132,10 @@ export const env = loadEnv();
 /** Google login is only wired when both client id + secret are present. */
 export const googleConfigured = Boolean(
   env.GOOGLE_OAUTH_CLIENT_ID && env.GOOGLE_OAUTH_CLIENT_SECRET,
+);
+/** Newton login is wired when the client id + secret + callback secret are present. */
+export const newtonConfigured = Boolean(
+  env.NEWTON_AUTH_CLIENT_ID && env.NEWTON_AUTH_CLIENT_SECRET && env.NEWTON_AUTH_CALLBACK_SECRET,
 );
 /** SMTP is only wired when host + user + pass are present; else email is skipped. */
 export const mailerConfigured = Boolean(
