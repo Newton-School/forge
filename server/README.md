@@ -8,7 +8,7 @@ The backend. **All** authentication, authorization (RBAC), business logic, integ
 ```bash
 cp .env.example .env       # fill values (see ../docs/integration-setup.md)
 npm install
-npm run dev                # http://localhost:4000/api/health
+npm run dev                # http://localhost:8000/api/health
 ```
 Or via the full stack: `docker compose up` from `portal/`.
 

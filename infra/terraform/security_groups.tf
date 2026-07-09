@@ -1,5 +1,5 @@
 # Least-privilege security groups (CLAUDE.md §6):
-#   alb   ← 443 from Cloudflare only      ecs ← alb on 3000/4000
+#   alb   ← 443 from Cloudflare only      ecs ← alb on 3000/8000
 #   rds   ← 5432 from ecs only            redis ← 6379 from ecs only
 
 resource "aws_security_group" "alb" {
@@ -57,8 +57,8 @@ resource "aws_vpc_security_group_ingress_rule" "ecs_from_alb_server" {
   security_group_id            = aws_security_group.ecs.id
   description                  = "Server port from ALB"
   referenced_security_group_id = aws_security_group.alb.id
-  from_port                    = 4000
-  to_port                      = 4000
+  from_port                    = 8000
+  to_port                      = 8000
   ip_protocol                  = "tcp"
 }
 

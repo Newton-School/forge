@@ -5,8 +5,8 @@ The backend for **Forge**. This file is self-contained — the rules for this ap
 ## Hard rule
 The client never touches the database or external services. **Every** external API call (GitHub / Discord / Google / Groq) and **every** database query happens in this server. The client talks only to `/api`.
 
-## Authentication — Google OAuth ONLY
-- No email/password, no signup. Run the Google **OIDC** authorization-code flow; validate the ID token (Google JWKS signature, `iss`, `aud`, `exp`, `nonce`); grant access only if **both** the Google `hd` hosted-domain is `rishihood.edu.in` **and** the email exists in the users table (admin allowlist). Reject unknown emails.
+## Authentication — Newton School login + invite-only allowlist
+- No email/password, no signup. **Login = the Newton School auth SDK** (`newton-auth`, vendored at `vendor/newton-auth`): `/newton/login` + `/newton/callback` mounted at the app **root** (outside `/api`, to match the Newton-registered redirect URI). Verify the signed callback assertion, then grant access only if **both** Newton reports `authenticated` + `authorized` **and** the email exists in the users table (admin allowlist). Reject unknown accounts. Link by `User.newtonUid` (fallback: email on first login). The old `hd` domain gate no longer applies. **Google OAuth is retained but dormant** (`googleConfigured`) — not the login path.
 - **Server-side sessions** (Redis). Browser holds only an opaque session id in a `Secure`, `HttpOnly`, `SameSite` cookie with rolling + idle + absolute timeouts. No JWT/tokens in the browser. Refresh server-side. CSRF protection on state-changing requests. Logout revokes the session.
 
 ## Authorization (RBAC) — enforce on every request

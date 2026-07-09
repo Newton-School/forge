@@ -125,7 +125,7 @@
       <li>Security groups (least-privilege):
         <ul>
           <li><code>sg-alb</code> ← inbound 443 from Cloudflare IP ranges only.</li>
-          <li><code>sg-ecs</code> ← inbound from <code>sg-alb</code> on 3000 &amp; 4000.</li>
+          <li><code>sg-ecs</code> ← inbound from <code>sg-alb</code> on 3000 &amp; 8000.</li>
           <li><code>sg-rds</code> ← inbound 5432 from <code>sg-ecs</code> only.</li>
           <li><code>sg-redis</code> ← inbound 6379 from <code>sg-ecs</code> only.</li>
         </ul>
@@ -215,7 +215,7 @@ docker push $ACCT.dkr.ecr.$REGION.amazonaws.com/forge/client:latest</pre>
     <ul class="checks">
       <li>Request an <strong>ACM certificate</strong> for <code>forge.taj.works</code> (DNS-validated).</li>
       <li>Create an <strong>Application Load Balancer</strong> (internet-facing, public subnets, <code>sg-alb</code>).</li>
-      <li>Two target groups: <code>tg-client</code> (port 3000) and <code>tg-server</code> (port 4000), both <code>ip</code> target type.</li>
+      <li>Two target groups: <code>tg-client</code> (port 3000) and <code>tg-server</code> (port 8000), both <code>ip</code> target type.</li>
       <li>HTTPS:443 listener (ACM cert). Rules:
         <ul>
           <li><code>/api/*</code> → <code>tg-server</code></li>
@@ -226,7 +226,7 @@ docker push $ACCT.dkr.ecr.$REGION.amazonaws.com/forge/client:latest</pre>
     </ul>
     <div class="note">
       <b>Cookie simplification</b>
-      Because client &amp; server are now the same origin (<code>forge.taj.works</code>), set <code>COOKIE_DOMAIN</code> empty (host-only cookies) and the client's <code>API_PROXY_TARGET</code> can be the internal ALB / <code>http://localhost:4000</code>-equivalent. The cross-subdomain CSRF/session workarounds you needed on Render are no longer required.
+      Because client &amp; server are now the same origin (<code>forge.taj.works</code>), set <code>COOKIE_DOMAIN</code> empty (host-only cookies) and the client's <code>API_PROXY_TARGET</code> can be the internal ALB / <code>http://localhost:8000</code>-equivalent. The cross-subdomain CSRF/session workarounds you needed on Render are no longer required.
     </div>
   </section>
 

@@ -183,7 +183,8 @@ model User {
   email              String     @unique
   fullName           String
   status             UserStatus @default(INVITED)
-  googleSub          String?    @unique // Google OIDC subject — set on first login
+  googleSub          String?    @unique // Google OIDC subject — set on first login (legacy Google auth)
+  newtonUid          String?    @unique // Newton School opaque user id — stable identity key for Newton login
   avatarUrl          String?
   passwordHash       String? // unused under Google-only auth; retained for schema stability
   mustChangePassword Boolean    @default(false)

@@ -12,6 +12,7 @@ import { logger } from "./lib/logger.js";
 import { healthPayload } from "./lib/health.js";
 import { openapiDocument } from "./lib/openapi.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
+import { newtonRouter } from "./modules/auth/newton.routes.js";
 import { usersRouter } from "./modules/users/users.routes.js";
 import { orgRouter } from "./modules/org/org.routes.js";
 import { concernsRouter } from "./modules/concerns/concerns.routes.js";
@@ -79,6 +80,9 @@ export function buildApp(): Express {
 
   // Feature routers
   app.use("/api/auth", authRouter);
+  // Newton School login/callback — mounted at ROOT (not /api) to match the Newton-registered
+  // redirect URI. Establishes Forge's own session; RBAC/CSRF/audit unchanged.
+  app.use("/newton", newtonRouter);
   app.use("/api/users", requireAuth, usersRouter);
   app.use("/api/invitations", requireAuth, invitationsRouter);
   app.use("/api/org", requireAuth, orgRouter);

@@ -18,7 +18,7 @@ resource "aws_lb" "this" {
 # Target groups (ip targets — Fargate awsvpc).
 resource "aws_lb_target_group" "server" {
   name        = "${local.name}-server"
-  port        = 4000
+  port        = 8000
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = aws_vpc.this.id
@@ -79,6 +79,23 @@ resource "aws_lb_listener_rule" "api" {
   condition {
     path_pattern {
       values = ["/api/*"]
+    }
+  }
+}
+
+# Newton School login/callback live at the ROOT (/newton/*), outside /api, to match the
+# Newton-registered redirect URI. Route them to the SERVER (not the default client).
+resource "aws_lb_listener_rule" "newton" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 20
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.server.arn
+  }
+  condition {
+    path_pattern {
+      values = ["/newton/*"]
     }
   }
 }

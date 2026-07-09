@@ -77,7 +77,7 @@
       <input id="org" value="newton-school-ai" spellcheck="false" />
       <label for="dom">Production domain</label>
       <input id="dom" value="app.example.com" spellcheck="false" />
-      <span class="hint"><b>AI</b> is the only domain on a GitHub <b>org</b> (<b class="org">newton-school-ai</b>) — Steps 0–3. <b>ML &amp; SDSE</b> run the native Forge workflow and connect <b>individual repos</b> (Steps 4–5); they have no org. You must be an <b>owner</b> of the AI org. Local dev uses <code>http://localhost:4000</code> (server); prod becomes <span class="mono">https://<span class="ph">app.example.com</span></span>.</span>
+      <span class="hint"><b>AI</b> is the only domain on a GitHub <b>org</b> (<b class="org">newton-school-ai</b>) — Steps 0–3. <b>ML &amp; SDSE</b> run the native Forge workflow and connect <b>individual repos</b> (Steps 4–5); they have no org. You must be an <b>owner</b> of the AI org. Local dev uses <code>http://localhost:8000</code> (server); prod becomes <span class="mono">https://<span class="ph">app.example.com</span></span>.</span>
     </div>
   </div>
 </header>
@@ -127,8 +127,8 @@
       <div class="row"><span class="lbl">Production</span><span class="copy"><span class="u" data-tmpl="https://{host}/api/integrations/github/webhook"></span><button>copy</button></span></div>
       <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>https://smee.io/&lt;your-channel&gt;</span><button>copy</button></span></div>
       <div class="note"><b>GitHub can't reach <code>localhost</code></b> — webhooks POST from the public internet. For local dev, create a channel at <a href="https://smee.io/new" target="_blank">smee.io/new</a>, use that URL as the Payload URL, and forward it to your server:<br>
-        <span class="copy" style="margin-top:6px"><span>npx smee-client --url https://smee.io/&lt;your-channel&gt; --target http://localhost:4000/api/integrations/github/webhook</span><button>copy</button></span><br>
-        (ngrok works too: <code>ngrok http 4000</code> → <span class="mono">https://&lt;id&gt;.ngrok.io/api/integrations/github/webhook</span>.)
+        <span class="copy" style="margin-top:6px"><span>npx smee-client --url https://smee.io/&lt;your-channel&gt; --target http://localhost:8000/api/integrations/github/webhook</span><button>copy</button></span><br>
+        (ngrok works too: <code>ngrok http 8000</code> → <span class="mono">https://&lt;id&gt;.ngrok.io/api/integrations/github/webhook</span>.)
       </div>
     </li>
     <li><b>Content type</b> → <code>application/json</code> <span class="mono">(required — the server reads JSON and verifies the raw body; <code>x-www-form-urlencoded</code> will not work).</span></li>
@@ -214,7 +214,7 @@
     <li><b>Application name</b> → <code>Forge</code>. <b>Homepage URL</b> → <span class="mono">https://<span class="ph">app.example.com</span></span>.</li>
     <li><b>Authorization callback URL</b> — the server's callback:
       <div class="row"><span class="lbl">Production</span><span class="copy"><span class="u" data-tmpl="https://{host}/api/integrations/github/oauth/callback"></span><button>copy</button></span></div>
-      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:4000/api/integrations/github/oauth/callback</span><button>copy</button></span></div>
+      <div class="row"><span class="lbl">Local dev</span><span class="copy"><span>http://localhost:8000/api/integrations/github/oauth/callback</span><button>copy</button></span></div>
     </li>
     <li><b>Register</b> → copy the <b>Client ID</b>, then <b>Generate a new client secret</b> and copy it. These go in <code>server/.env</code> (below). <b>The secret is shown once</b> — store it now.</li>
   </ol>
@@ -251,7 +251,7 @@ GITHUB_WEBHOOK_SECRET=          # HMAC secret — AI org webhook + every ML/SDSE
 # One-click "Connect with GitHub" — OAuth App owned by lcc-ai-nst (Step 4)
 GITHUB_OAUTH_CLIENT_ID=         # OAuth App client id
 GITHUB_OAUTH_CLIENT_SECRET=     # OAuth App client secret (shown once)
-GITHUB_OAUTH_REDIRECT_URI=http://localhost:4000/api/integrations/github/oauth/callback</div>
+GITHUB_OAUTH_REDIRECT_URI=http://localhost:8000/api/integrations/github/oauth/callback</div>
   <table style="margin-top:14px">
     <tr><th>Var</th><th>Set up in</th><th>Used for</th></tr>
     <tr><td><code>GITHUB_ORG</code></td><td>Step 0</td><td>The AI organization slug the read token + dashboards target.</td></tr>

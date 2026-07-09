@@ -16,10 +16,10 @@ services:
       - APP_MODE=production
       - NEXT_PUBLIC_APP_MODE=production
       # Browser → server via the host port mapping.
-      - NEXT_PUBLIC_API_URL=http://localhost:4000/api
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
       # SSR/server-components → server over the Docker network (NOT localhost, which inside
       # the client container is the client itself). This is what the /auth/me session check uses.
-      - API_PROXY_TARGET=http://server:4000
+      - API_PROXY_TARGET=http://server:8000
     ports:
       - "3000:3000"
     volumes:
@@ -43,14 +43,14 @@ services:
     command: sh -c "npx prisma generate && npx prisma db push && npm run db:seed && npm run dev"
     environment:
       - NODE_ENV=development
-      - PORT=4000
+      - PORT=8000
       - APP_BASE_URL=http://localhost:3000
       - DATABASE_URL=postgresql://forge:forge@postgres:5432/forge?schema=public
       - DIRECT_URL=postgresql://forge:forge@postgres:5432/forge?schema=public
       - REDIS_URL=redis://redis:6379
       - SESSION_SECRET=dev-only-change-me
       - ALLOWED_HOSTED_DOMAIN=rishihood.edu.in
-      - GOOGLE_OAUTH_REDIRECT_URI=http://localhost:4000/api/auth/google/callback
+      - GOOGLE_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/google/callback
       # Host-only cookies for localhost (override any COOKIE_DOMAIN in server/.env — a prod
       # value like ".taj.works" would be rejected by the browser on localhost).
       - COOKIE_DOMAIN=
@@ -58,7 +58,7 @@ services:
       # NOT set here — the server reads them from the gitignored server/.env (tsx --env-file=.env).
       # Setting them to "" here would override .env (Node --env-file won't replace an already-set var).
     ports:
-      - "4000:4000"
+      - "8000:8000"
     volumes:
       - ./server:/app
       - /app/node_modules
