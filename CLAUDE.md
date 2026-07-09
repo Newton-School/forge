@@ -29,16 +29,16 @@ Internet → Cloudflare (WAF / DDoS / DNS proxy) → Route 53 → Application Lo
         → Amazon RDS for PostgreSQL
    + ECR (images) · Secrets Manager (secrets) · CloudWatch (logs/metrics) · ElastiCache Redis (sessions/cache)
 ```
-The ALB routes `/api/*` → server, everything else → client. Not Vercel. Not Lambda. Not EC2-only.
+The ALB routes `/api/*` **and `/newton/*`** → server, everything else → client. Not Vercel. Not Lambda. Not EC2-only.
 
 ## 3. Hard boundaries
 - **Client = UI only.** No business logic, no database access, and no direct calls to GitHub / Discord / Google / Groq. It calls the **server API** (`NEXT_PUBLIC_API_URL` → `/api`) and nothing else.
 - **Server owns everything else:** authentication, authorization (RBAC), business logic, integrations, email, notifications, analytics, audit logging, background jobs, webhooks. All external API and database access happens here.
 
-## 4. Authentication — Google OAuth ONLY
-- No email/password, no signup, no custom credentials.
-- The server runs the Google **OIDC** authorization-code flow, validates the ID token (signature via Google JWKS, `iss`, `aud`, `exp`, `nonce`), and grants access only if **both**: (a) the Google `hd` hosted-domain is `rishihood.edu.in`, and (b) the email already exists in the users table (admin-provisioned allowlist). Unknown emails are **rejected**.
-- Sessions are **server-side** (Redis-backed). The browser holds only an **opaque session id** in a `Secure`, `HttpOnly`, `SameSite` cookie, with rolling + idle + absolute timeouts. Refresh is handled server-side. **No JWT or tokens in the browser.** CSRF protection on all state-changing requests. Logout revokes the session.
+## 4. Authentication — Newton School login + invite-only allowlist
+- No email/password, no signup, no custom credentials. **Login is via the Newton School auth SDK** (`newton-auth`, vendored at `server/vendor/newton-auth`). The server runs Newton's login/callback at **`/newton/*`** — mounted at the app **root, outside `/api`**, to match the Newton-registered redirect URI (the ALB routes `/newton/*` → server). It verifies the signed callback assertion and grants access only if **both**: (a) Newton reports the user **`authenticated` + `authorized`**, and (b) the email already exists in the users table (admin-provisioned allowlist). Unknown emails are **rejected**. Users are linked by the stable Newton `uid` (`User.newtonUid`), falling back to email on first login.
+- The old Google `hd` hosted-domain gate **no longer applies** — Newton is the identity authority; the **allowlist is the access gate**. **Google OAuth is retained but dormant** (behind `googleConfigured`) for one-flag rollback; it is not the login path.
+- Sessions are **server-side** (Redis-backed): the Newton callback establishes Forge's **own** opaque session (no Newton session cookie). The browser holds only an **opaque session id** in a `Secure`, `HttpOnly`, `SameSite` cookie, with rolling + idle + absolute timeouts. Refresh is handled server-side. **No JWT or tokens in the browser.** CSRF protection on all state-changing requests. Logout revokes the session.
 
 ## 5. RBAC — server-side only, never trust the frontend
 - Roles: **Admin, LCC, Teacher, Mentor, Mentee** (five). The **Student Mentor leads the team** — there is no separate Team Lead role (the Mentor carries both mentorship and team delivery). *(If the team later confirms re-adding Team Lead, it's a small config change — until then, five roles.)*

@@ -178,6 +178,12 @@ variable "allowed_hosted_domain" {
   default     = "rishihood.edu.in"
 }
 
+variable "newton_auth_base_url" {
+  description = "Newton School auth API base URL (staging vs prod). Client id/secret + callback secret come from Secrets Manager."
+  type        = string
+  default     = "https://staging-newtonschool.co/api/v1"
+}
+
 variable "ses_identity_domain" {
   description = "Verified SES domain for outbound mail (grants the server task ses:SendEmail scoped to it). Leave empty to skip the SES grant (e.g. when using Gmail SMTP)."
   type        = string
@@ -209,5 +215,8 @@ variable "external_secret_names" {
     "GITHUB_WEBHOOK_SECRET",
     "DISCORD_BOT_TOKEN",
     "GROQ_API_KEY",
+    "NEWTON_AUTH_CLIENT_ID",
+    "NEWTON_AUTH_CLIENT_SECRET",
+    "NEWTON_AUTH_CALLBACK_SECRET",
   ]
 }

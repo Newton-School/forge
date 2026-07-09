@@ -26,7 +26,8 @@
         { "name": "GITHUB_OAUTH_REDIRECT_URI", "value": "<APP_ORIGIN>/api/integrations/github/oauth/callback" },
         { "name": "ALLOWED_HOSTED_DOMAIN", "value": "rishihood.edu.in" },
         { "name": "SMTP_FAMILY", "value": "4" },
-        { "name": "GROQ_MODEL", "value": "llama-3.1-8b-instant" }
+        { "name": "GROQ_MODEL", "value": "llama-3.1-8b-instant" },
+        { "name": "NEWTON_AUTH_BASE_URL", "value": "https://staging-newtonschool.co/api/v1" }
       ],
       "secrets": [
         { "name": "DATABASE_URL",               "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/DATABASE_URL" },
@@ -43,7 +44,10 @@
         { "name": "GITHUB_APP_PRIVATE_KEY",      "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/GITHUB_APP_PRIVATE_KEY" },
         { "name": "GITHUB_WEBHOOK_SECRET",       "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/GITHUB_WEBHOOK_SECRET" },
         { "name": "DISCORD_BOT_TOKEN",           "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/DISCORD_BOT_TOKEN" },
-        { "name": "GROQ_API_KEY",                "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/GROQ_API_KEY" }
+        { "name": "GROQ_API_KEY",                "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/GROQ_API_KEY" },
+        { "name": "NEWTON_AUTH_CLIENT_ID",       "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/NEWTON_AUTH_CLIENT_ID" },
+        { "name": "NEWTON_AUTH_CLIENT_SECRET",   "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/NEWTON_AUTH_CLIENT_SECRET" },
+        { "name": "NEWTON_AUTH_CALLBACK_SECRET", "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:/forge/<ENV>/NEWTON_AUTH_CALLBACK_SECRET" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",

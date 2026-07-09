@@ -83,6 +83,23 @@ resource "aws_lb_listener_rule" "api" {
   }
 }
 
+# Newton School login/callback live at the ROOT (/newton/*), outside /api, to match the
+# Newton-registered redirect URI. Route them to the SERVER (not the default client).
+resource "aws_lb_listener_rule" "newton" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 20
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.server.arn
+  }
+  condition {
+    path_pattern {
+      values = ["/newton/*"]
+    }
+  }
+}
+
 # HTTP:80 → 301 to HTTPS.
 resource "aws_lb_listener" "http_redirect" {
   load_balancer_arn = aws_lb.this.arn

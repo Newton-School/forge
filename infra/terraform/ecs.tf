@@ -31,6 +31,7 @@ locals {
     { name = "ALLOWED_HOSTED_DOMAIN", value = var.allowed_hosted_domain },
     { name = "SMTP_FAMILY", value = "4" },
     { name = "GROQ_MODEL", value = "llama-3.1-8b-instant" },
+    { name = "NEWTON_AUTH_BASE_URL", value = var.newton_auth_base_url },
   ]
 
   server_secrets = [for name, arn in local.secret_arns : { name = name, valueFrom = arn }]
