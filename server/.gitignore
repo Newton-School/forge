@@ -1,5 +1,7 @@
 node_modules
-dist
+# Anchor to the server's OWN build output only — do NOT ignore the vendored
+# prebuilt SDK at vendor/newton-auth/dist (it must be committed for CI builds).
+/dist
 .env
 .env.*
 !.env.example
