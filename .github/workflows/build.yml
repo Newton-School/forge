@@ -39,6 +39,12 @@ jobs:
   build:
     name: build & push (server + client)
     runs-on: monkci-ubuntu-24.04-2
+    # The Docker Hub creds live as ENVIRONMENT secrets in this environment, whose
+    # deployment-branch policy is restricted to `main`. So a collaborator cannot
+    # exfiltrate them by pushing a modified workflow to a feature branch and running
+    # workflow_dispatch — the secret is unreadable from any ref other than main.
+    # (Store DOCKERHUB_USERNAME/DOCKERHUB_TOKEN here, NOT as repo/org secrets.)
+    environment: image-publish
     steps:
       - uses: actions/checkout@v4
 
