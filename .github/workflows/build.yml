@@ -12,7 +12,7 @@
 #
 # Repo secrets (Settings → Secrets and variables → Actions; surfaced to Monk CI):
 #   DOCKERHUB_USERNAME  — Docker Hub user/robot with push to both repos
-#   DOCKERHUB_TOKEN     — Docker Hub access token (NOT the account password)
+#   DOCKERHUB_PASSWORD  — Docker Hub access token (a forge-scoped OAT; NOT an account password)
 # ──────────────────────────────────────────────────────────────────────────────
 name: build-and-push
 
