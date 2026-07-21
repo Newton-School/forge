@@ -1,0 +1,70 @@
+# Build Client (production) — MANUAL build & push of newtonschool/forge-client to Docker Hub.
+#
+# Monk CI runner. Manual only (workflow_dispatch). Dispatch from `main`: the Production
+# environment is branch-restricted to main, so the Docker Hub creds are only readable there.
+# Tags pushed: <commit-sha> + latest. Deploy is separate (pin the SHA in kubernetes-cluster-infra).
+#
+# Environment secrets (in the `Production` environment):
+#   DOCKERHUB_USERNAME  — Docker Hub user owning the forge-scoped push token
+#   DOCKERHUB_PASSWORD  — the forge-scoped Docker Hub access token (push to forge-* only)
+name: Build Client (production)
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: build-client-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_CLIENT: newtonschool/forge-client
+
+jobs:
+  build:
+    name: build & push client
+    runs-on: monkci-ubuntu-24.04-2
+    environment: Production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Image tag (immutable, full commit SHA)
+        id: meta
+        run: echo "sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build & push client
+        uses: docker/build-push-action@v6
+        with:
+          context: ./client
+          file: ./docker/client.Dockerfile
+          target: runner
+          push: true
+          provenance: false
+          # NEXT_PUBLIC_* is inlined at BUILD time. Single origin: the browser calls "/api"
+          # (the ALB routes /api/* and /newton/* → server). Testing Portal stays OFF in prod
+          # images (NEXT_PUBLIC_TESTING_PORTAL_ENABLED deliberately unset).
+          build-args: |
+            NEXT_PUBLIC_API_URL=/api
+            APP_MODE=production
+          tags: |
+            ${{ env.IMAGE_CLIENT }}:${{ steps.meta.outputs.sha }}
+            ${{ env.IMAGE_CLIENT }}:latest
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### forge-client pushed"
+            echo "- \`${IMAGE_CLIENT}:${GITHUB_SHA}\`"
+            echo "- \`${IMAGE_CLIENT}:latest\`"
+            echo ""
+            echo "**Deploy:** pin \`${GITHUB_SHA}\` in kubernetes-cluster-infra → Flux reconciles."
+          } >> "$GITHUB_STEP_SUMMARY"
