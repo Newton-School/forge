@@ -34,7 +34,6 @@ npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
 
-# Dependencies / build output (defensive)
-node_modules/
-dist/
-.next/
+# NOTE: dependency/build output (node_modules, dist, .next) is intentionally left to the
+# per-app .gitignore files (client/, server/). A repo-wide `dist/` here would also ignore
+# the deliberately-committed vendored SDK at server/vendor/newton-auth/dist.
