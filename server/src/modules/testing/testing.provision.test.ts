@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { AuthContext } from "../../rbac/types.js";
+import { __setTestingPortalConfigForTest } from "./testing.config.js";
 
 // Mock the data layer + side-effecting collaborators so the test exercises pure orchestration.
 const repo = {
@@ -22,11 +23,25 @@ vi.mock("../../lib/audit.js", () => ({ audit }));
 
 const { provisionDomain, endTesting } = await import("./testing.service.js");
 
-const ADMIN: AuthContext = { id: "u-admin", email: "shaik.tajuddin2024@nst.rishihood.edu.in" } as AuthContext;
-const TEACHER: AuthContext = { id: "u-t", email: "abhinav.choudhary2024@nst.rishihood.edu.in" } as AuthContext;
+const ADMIN: AuthContext = { id: "u-admin", email: "admin@example.test" } as AuthContext;
+const TEACHER: AuthContext = { id: "u-t", email: "teacher@example.test" } as AuthContext;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Roster + allowlist are config-driven; inject a PII-free config. admin@example.test is the
+  // Testing Admin; teacher@example.test is a tester but NOT an admin (so it's rejected as non-admin).
+  __setTestingPortalConfigForTest({
+    enabled: true,
+    adminEmails: new Set(["admin@example.test"]),
+    allowlist: new Set(["admin@example.test", "teacher@example.test"]),
+    roster: [
+      { email: "teacher@example.test", fullName: "Test Teacher", role: "TEACHER", scope: "DOMAIN", roleLabel: "the Teacher" },
+      { email: "mentor1@example.test", fullName: "Test Mentor One", role: "MENTOR", scope: "TEAM", memberRole: "Mentor", primaryMentor: true, roleLabel: "the Primary Mentor" },
+      { email: "mentor2@example.test", fullName: "Test Mentor Two", role: "MENTOR", scope: "TEAM", memberRole: "Mentor", roleLabel: "the Co-Mentor" },
+      { email: "mentee1@example.test", fullName: "Test Mentee One", role: "MENTEE", scope: "SELF", memberRole: "Mentee", roleLabel: "Mentee 1" },
+      { email: "mentee2@example.test", fullName: "Test Mentee Two", role: "MENTEE", scope: "SELF", memberRole: "Mentee", roleLabel: "Mentee 2" },
+    ],
+  });
   repo.domainByKey.mockResolvedValue({ id: "d-ml", key: "ML", name: "Machine Learning" });
   repo.upsertTeam.mockResolvedValue({ id: "t-test-ml", name: "ML Testing Team" });
   repo.setTeamMentor.mockResolvedValue({});
@@ -36,11 +51,12 @@ beforeEach(() => {
   repo.testerIds.mockResolvedValue([]);
   repo.existingTestTeams.mockResolvedValue([]);
   repo.teardown.mockResolvedValue(0);
-  // Everyone exists already except Khushi — so only Khushi should be invited (invite-once).
+  // Everyone exists already except Mentee 1 — so only Mentee 1 should be invited (invite-once).
   repo.ensureUser.mockImplementation(async (email: string, fullName: string) => ({
-    id: `id-${email}`, email, fullName, created: email.startsWith("khushi"),
+    id: `id-${email}`, email, fullName, created: email.startsWith("mentee1"),
   }));
 });
+afterEach(() => __setTestingPortalConfigForTest(null));
 
 describe("provisionDomain", () => {
   it("rejects a non-admin tester (real-email side effects stay behind the Testing Admin)", async () => {
@@ -57,31 +73,31 @@ describe("provisionDomain", () => {
   it("provisions the roster, sets the primary mentor, and invites only newly-created accounts", async () => {
     const result = await provisionDomain(ADMIN, "ML");
 
-    // 5 roster members upserted; team mentor set once (Aniket = primaryMentor).
+    // 5 roster members upserted; team mentor set once (the Primary Mentor = primaryMentor).
     expect(repo.ensureUser).toHaveBeenCalledTimes(5);
     expect(repo.setTeamMentor).toHaveBeenCalledTimes(1);
-    expect(repo.setTeamMentor).toHaveBeenCalledWith("t-test-ml", "id-aniket.pathak2024@nst.rishihood.edu.in");
+    expect(repo.setTeamMentor).toHaveBeenCalledWith("t-test-ml", "id-mentor1@example.test");
 
-    // Team Lead (Anwesha) maps to MENTOR, scoped to the team.
-    expect(repo.ensureRole).toHaveBeenCalledWith("id-anwesha.adhikari2024@nst.rishihood.edu.in", "MENTOR", "TEAM", "t-test-ml");
-    // Teacher (Abhinav) is DOMAIN-scoped.
-    expect(repo.ensureRole).toHaveBeenCalledWith("id-abhinav.choudhary2024@nst.rishihood.edu.in", "TEACHER", "DOMAIN", "d-ml");
-    // Mentee (Nikith) is SELF-scoped with a null scopeId.
-    expect(repo.ensureRole).toHaveBeenCalledWith("id-nikith.s2024@nst.rishihood.edu.in", "MENTEE", "SELF", null);
+    // The Co-Mentor maps to MENTOR, scoped to the team.
+    expect(repo.ensureRole).toHaveBeenCalledWith("id-mentor2@example.test", "MENTOR", "TEAM", "t-test-ml");
+    // The Teacher is DOMAIN-scoped.
+    expect(repo.ensureRole).toHaveBeenCalledWith("id-teacher@example.test", "TEACHER", "DOMAIN", "d-ml");
+    // Mentee 2 is SELF-scoped with a null scopeId.
+    expect(repo.ensureRole).toHaveBeenCalledWith("id-mentee2@example.test", "MENTEE", "SELF", null);
 
-    // Invite-once: only Khushi was newly created, so exactly one email.
+    // Invite-once: only Mentee 1 was newly created, so exactly one email.
     expect(inviteUser).toHaveBeenCalledTimes(1);
     expect(inviteUser).toHaveBeenCalledWith(
-      expect.objectContaining({ email: "khushi.2024@nst.rishihood.edu.in" }),
-      expect.objectContaining({ role: "Mentee", domain: "Machine Learning", team: "ML Testing Team" }),
+      expect.objectContaining({ email: "mentee1@example.test" }),
+      expect.objectContaining({ role: "Mentee 1", domain: "Machine Learning", team: "ML Testing Team" }),
       ADMIN, undefined,
     );
-    expect(result.members.filter((m) => m.invited).map((m) => m.email)).toEqual(["khushi.2024@nst.rishihood.edu.in"]);
+    expect(result.members.filter((m) => m.invited).map((m) => m.email)).toEqual(["mentee1@example.test"]);
     expect(audit).toHaveBeenCalled();
   });
 
   it("auto-clears a previously provisioned domain before starting a new one (one at a time)", async () => {
-    repo.testerIds.mockResolvedValue([{ id: "old-1", email: "khushi.2024@nst.rishihood.edu.in" }]);
+    repo.testerIds.mockResolvedValue([{ id: "old-1", email: "mentee1@example.test" }]);
     repo.existingTestTeams.mockResolvedValue([{ id: "t-test-ai" }]);
     repo.teardown.mockResolvedValue(1);
 

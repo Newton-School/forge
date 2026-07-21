@@ -1,20 +1,16 @@
 /**
- * Testing Portal access is restricted to a fixed email allowlist (NOT the RBAC roles) —
- * a small, explicit set of accounts validate the app before production. One Testing Admin
- * has full visibility into reported issues.
+ * Testing Portal access is restricted to the email allowlist declared in the config file
+ * (see testing.config.ts / testing-portal.example.json) — NOT the RBAC roles. NO personal
+ * data lives in code: an unset/disabled config yields an empty allowlist, so the portal is
+ * effectively closed. One or more Testing Admins have full visibility into reported issues.
  */
-export const TESTING_ADMIN_EMAIL = "shaik.tajuddin2024@nst.rishihood.edu.in";
+import { testingPortalConfig } from "./testing.config.js";
 
-const EMAILS = [
-  "shaik.tajuddin2024@nst.rishihood.edu.in",
-  "learnercareercouncil@nst.rishihood.edu.in",
-  "abhinav.choudhary2024@nst.rishihood.edu.in",
-  "aniket.pathak2024@nst.rishihood.edu.in",
-  "anwesha.adhikari2024@nst.rishihood.edu.in",
-  "khushi.2024@nst.rishihood.edu.in",
-  "nikith.s2024@nst.rishihood.edu.in",
-];
-export const TESTER_EMAILS = new Set(EMAILS.map((e) => e.toLowerCase()));
+export const isTester = (email?: string | null): boolean =>
+  !!email && testingPortalConfig().allowlist.has(email.toLowerCase());
 
-export const isTester = (email?: string | null): boolean => !!email && TESTER_EMAILS.has(email.toLowerCase());
-export const isTestingAdmin = (email?: string | null): boolean => (email ?? "").toLowerCase() === TESTING_ADMIN_EMAIL;
+export const isTestingAdmin = (email?: string | null): boolean =>
+  !!email && testingPortalConfig().adminEmails.has(email.toLowerCase());
+
+/** Recipient list for issue-report notifications — the configured Testing Admins (may be empty). */
+export const testingAdminEmails = (): string[] => [...testingPortalConfig().adminEmails];

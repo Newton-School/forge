@@ -9,6 +9,8 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { seedTestPlans } from "../src/modules/testing/testing.plans.data.js";
+import { env } from "../src/config/env.js";
+import { testingPortalEnabled } from "../src/modules/testing/testing.config.js";
 
 // Prisma 7: the client connects via a driver adapter. Seed uses the direct
 // (non-pooled) URL when available, falling back to DATABASE_URL.
@@ -42,12 +44,15 @@ async function main() {
     ),
   );
 
-  // The two real bootstrap accounts. Everyone else is onboarded in-app (invite-only).
+  // Bootstrap accounts come from env (no personal data in code). Everyone else is onboarded
+  // in-app (invite-only). Unset => that account is not seeded.
   type Seed = { email: string; fullName: string; role: "ADMIN" | "LCC" };
-  const users: Seed[] = [
-    { email: "shaik.tajuddin2024@nst.rishihood.edu.in", fullName: "Shaik Tajuddin", role: "ADMIN" },
-    { email: "learnercareercouncil@nst.rishihood.edu.in", fullName: "Learner Career Council", role: "LCC" },
-  ];
+  const users: Seed[] = [];
+  if (env.BOOTSTRAP_ADMIN_EMAIL) users.push({ email: env.BOOTSTRAP_ADMIN_EMAIL, fullName: env.BOOTSTRAP_ADMIN_NAME, role: "ADMIN" });
+  if (env.BOOTSTRAP_LCC_EMAIL) users.push({ email: env.BOOTSTRAP_LCC_EMAIL, fullName: env.BOOTSTRAP_LCC_NAME, role: "LCC" });
+  if (users.length === 0) {
+    console.warn("No BOOTSTRAP_ADMIN_EMAIL / BOOTSTRAP_LCC_EMAIL set — seeding no bootstrap users. Set them to provision the first Admin/LCC allowlist entries.");
+  }
 
   for (const u of users) {
     const user = await prisma.user.upsert({
@@ -65,7 +70,8 @@ async function main() {
     }
   }
 
-  const plans = await seedTestPlans(prisma);
+  // Guided test plans belong to the Testing Portal — only seed them when it's enabled.
+  const plans = testingPortalEnabled() ? await seedTestPlans(prisma) : 0;
 
   console.log(`Seeded drive, ${domains.length} domains (with repo models), ${users.length} bootstrap users (ADMIN + LCC), and ${plans} test plans.`);
 }

@@ -62,6 +62,23 @@ const schema = z.object({
   // The "to" is always the LCC; this just adds the org team on CC.
   CONCERN_CC_EMAILS: z.string().optional(),
 
+  // Bootstrap allowlist accounts the seed provisions (no personal data in code). The seed
+  // creates ONLY these; everyone else is invited in-app. Unset => that account is not seeded.
+  BOOTSTRAP_ADMIN_EMAIL: z.string().optional(),
+  BOOTSTRAP_ADMIN_NAME: z.string().default("Forge Admin"),
+  BOOTSTRAP_LCC_EMAIL: z.string().optional(),
+  BOOTSTRAP_LCC_NAME: z.string().default("Learner Career Council"),
+
+  // LCC / support contact used by concern notifications + the onboarding email. When unset,
+  // concern notifications are skipped and the onboarding email omits a support address.
+  LCC_EMAIL: z.string().optional(),
+  SUPPORT_EMAIL: z.string().optional(),
+
+  // Testing Portal (pre-prod UAT harness). Path to a git-ignored JSON config file. Unset,
+  // missing, or invalid => the portal is disabled (fail-safe). Production sets nothing here.
+  // Schema: see testing-portal.example.json.
+  TESTING_PORTAL_CONFIGURATION_FILE: z.string().optional(),
+
   // GitHub integration — webhook HMAC secret + read token + the AI-domain org slug.
   GITHUB_WEBHOOK_SECRET: z.string().optional(),
   GITHUB_API_TOKEN: z.string().optional(),

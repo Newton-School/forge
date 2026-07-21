@@ -6,8 +6,8 @@ import { emailProvider } from "../email/email.provider.js";
 import { buildIssueEmail } from "../email/issue-report.js";
 import { inviteUser } from "../invitations/invitations.service.js";
 import { testingRepo } from "./testing.repository.js";
-import { isTester, isTestingAdmin, TESTING_ADMIN_EMAIL } from "./testing.allowlist.js";
-import { TESTER_ROSTER, teamIdFor, teamNameFor, ROSTER_EMAILS, ALL_TEST_TEAM_IDS, ALL_DOMAIN_KEYS } from "./testing.roster.js";
+import { isTester, isTestingAdmin, testingAdminEmails } from "./testing.allowlist.js";
+import { testerRoster, teamIdFor, teamNameFor, rosterEmails, ALL_TEST_TEAM_IDS, ALL_DOMAIN_KEYS } from "./testing.roster.js";
 import type { SaveProgressInput, ReportIssueInput } from "./testing.schema.js";
 
 /** Gate: only the authorized tester allowlist may use the Testing Portal. */
@@ -67,9 +67,12 @@ export async function reportIssue(ctx: AuthContext, input: ReportIssueInput) {
     stepId: input.stepId,
     reporterEmail: ctx.email,
   });
-  void emailProvider()
-    .send({ to: [TESTING_ADMIN_EMAIL], subject: mail.subject, html: mail.html, text: mail.text })
-    .catch((err) => logger.warn({ err }, "testing issue email failed (recorded anyway)"));
+  const adminTo = testingAdminEmails();
+  if (adminTo.length) {
+    void emailProvider()
+      .send({ to: adminTo, subject: mail.subject, html: mail.html, text: mail.text })
+      .catch((err) => logger.warn({ err }, "testing issue email failed (recorded anyway)"));
+  }
   return issue;
 }
 
@@ -87,7 +90,7 @@ function assertTestingAdmin(ctx: AuthContext, what: string): void {
  */
 async function resetProvisioned(ctx: AuthContext, ip?: string) {
   const [users, teams] = await Promise.all([
-    testingRepo.testerIds(ROSTER_EMAILS),
+    testingRepo.testerIds(rosterEmails()),
     testingRepo.existingTestTeams(ALL_TEST_TEAM_IDS),
   ]);
   const userIds = users.map((u) => u.id);
@@ -128,7 +131,7 @@ export async function provisionDomain(ctx: AuthContext, domainKey: string, ip?: 
   const team = await testingRepo.upsertTeam(teamId, domain.id, teamNameFor(domainKey));
 
   const members: Array<{ email: string; role: string; created: boolean; invited: boolean }> = [];
-  for (const m of TESTER_ROSTER) {
+  for (const m of testerRoster()) {
     const user = await testingRepo.ensureUser(m.email, m.fullName);
     const scopeId = m.scope === "DOMAIN" ? domain.id : m.scope === "TEAM" ? teamId : null;
     await testingRepo.ensureRole(user.id, m.role, m.scope, scopeId);

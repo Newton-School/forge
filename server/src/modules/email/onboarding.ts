@@ -7,9 +7,11 @@
  * fallback. The `test` flag injects the TEST banner + a `[TEST]` subject for previews.
  */
 import { LOGO_URL } from "./branding.js";
+import { env } from "../../config/env.js";
 
-export const SUPPORT_EMAIL = "learnercareercouncil@nst.rishihood.edu.in";
-const SENDER = "Learner Career Council (LCC) <learnercareercouncil@nst.rishihood.edu.in>";
+/** Support contact + sender — env-configured (no personal data in code). */
+export const SUPPORT_EMAIL = (env.SUPPORT_EMAIL ?? env.LCC_EMAIL ?? "").trim();
+const SENDER = env.SMTP_FROM ?? (SUPPORT_EMAIL ? `Learner Career Council (LCC) <${SUPPORT_EMAIL}>` : "Forge");
 
 const PROD_SUBJECT = "Welcome to the Profile Building Drive Portal";
 const TEST_SUBJECT = "[TEST] Profile Building Drive Portal - User Onboarding";

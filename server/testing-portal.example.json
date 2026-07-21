@@ -1,0 +1,20 @@
+{
+  "_comment": "Testing Portal config — copy to testing-portal.json (git-ignored) and point TESTING_PORTAL_CONFIGURATION_FILE at it. Unset/missing/invalid => portal disabled (fail-safe). Production sets nothing. Use REAL emails only in the local (git-ignored) copy — never here.",
+  "enabled": true,
+  "admin_emails": ["admin@example.test"],
+  "allowlist": [
+    "admin@example.test",
+    "teacher@example.test",
+    "mentor1@example.test",
+    "mentor2@example.test",
+    "mentee1@example.test",
+    "mentee2@example.test"
+  ],
+  "roster": [
+    { "email": "teacher@example.test", "full_name": "Test Teacher",     "role": "TEACHER", "scope": "DOMAIN", "role_label": "the Teacher" },
+    { "email": "mentor1@example.test", "full_name": "Test Mentor One",   "role": "MENTOR",  "scope": "TEAM",   "member_role": "Mentor", "primary_mentor": true, "role_label": "the Primary Mentor" },
+    { "email": "mentor2@example.test", "full_name": "Test Mentor Two",   "role": "MENTOR",  "scope": "TEAM",   "member_role": "Mentor", "role_label": "the Co-Mentor" },
+    { "email": "mentee1@example.test", "full_name": "Test Mentee One",   "role": "MENTEE",  "scope": "SELF",   "member_role": "Mentee", "role_label": "Mentee 1" },
+    { "email": "mentee2@example.test", "full_name": "Test Mentee Two",   "role": "MENTEE",  "scope": "SELF",   "member_role": "Mentee", "role_label": "Mentee 2" }
+  ]
+}

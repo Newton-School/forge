@@ -128,7 +128,7 @@ export async function listTemplates(_ctx: AuthContext) {
   return { items };
 }
 
-/** "abhinav.choudhary2024" → "Abhinav Choudhary" — a friendly name for previews. */
+/** "test.mentee2024" → "Test Mentee" — a friendly name for previews. */
 function nameFromEmail(email: string): string {
   return (
     email.split("@")[0]!
