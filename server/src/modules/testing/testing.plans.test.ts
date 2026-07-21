@@ -14,7 +14,7 @@ describe("test plan seed", () => {
   it("never uses a 'Team Lead' role and exercises two distinct mentors", () => {
     for (const plan of TEST_PLAN_SEED) {
       expect(plan.steps.some((s) => /team lead/i.test(s.role))).toBe(false);
-      // Two separate mentor reviews — Aniket for Khushi, Anwesha for Nikith — prove two mentors.
+      // Two separate mentor reviews — the Primary Mentor for Mentee 1, the Co-Mentor for Mentee 2 — prove two mentors.
       const reviews = plan.steps.filter((s) => /-m-review[12]$/.test(s.stepKey));
       expect(reviews).toHaveLength(2);
       expect(reviews.every((s) => s.role === "Mentor")).toBe(true);
@@ -24,9 +24,9 @@ describe("test plan seed", () => {
   it("steps name specific people and concrete paths", () => {
     const plan = buildPlan("ML");
     const text = plan.steps.map((s) => s.instruction).join(" ");
-    // The two mentees are disambiguated by name (not just "Mentee").
-    expect(text).toMatch(/Khushi/);
-    expect(text).toMatch(/Nikith/);
+    // The two mentees are disambiguated (Mentee 1 vs Mentee 2, not just "Mentee").
+    expect(text).toMatch(/Mentee 1/);
+    expect(text).toMatch(/Mentee 2/);
     // Steps reference concrete app routes and the GitHub setup.
     expect(text).toMatch(/\/mentee\/github/);
     expect(text).toMatch(/GitHub\.com/);

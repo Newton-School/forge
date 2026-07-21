@@ -20,18 +20,18 @@ export interface Tester {
   isAdmin: boolean; // the Testing Admin controls the whole testing environment
 }
 
-export const TESTING_ADMIN_EMAIL = "shaik.tajuddin2024@nst.rishihood.edu.in";
+export const TESTING_ADMIN_EMAIL = "admin@example.test";
 /** Issue reports are emailed here in production (mocked in presentation). */
 export const ISSUE_REPORT_EMAIL = TESTING_ADMIN_EMAIL;
 
 export const TESTERS: Tester[] = [
-  { email: "shaik.tajuddin2024@nst.rishihood.edu.in", name: "Shaik Tajuddin", role: "Admin", isAdmin: true },
-  { email: "learnercareercouncil@nst.rishihood.edu.in", name: "Learner Career Council", role: "LCC", isAdmin: false },
-  { email: "abhinav.choudhary2024@nst.rishihood.edu.in", name: "Abhinav Choudhary", role: "Teacher", isAdmin: false },
-  { email: "aniket.pathak2024@nst.rishihood.edu.in", name: "Aniket Pathak", role: "Mentor", isAdmin: false },
-  { email: "anwesha.adhikari2024@nst.rishihood.edu.in", name: "Anwesha Adhikari", role: "Team Lead", isAdmin: false },
-  { email: "khushi.2024@nst.rishihood.edu.in", name: "Khushi", role: "Mentee", isAdmin: false },
-  { email: "nikith.s2024@nst.rishihood.edu.in", name: "Nikith S", role: "Mentee", isAdmin: false },
+  { email: "admin@example.test", name: "the Admin", role: "Admin", isAdmin: true },
+  { email: "lcc@example.test", name: "the LCC", role: "LCC", isAdmin: false },
+  { email: "teacher@example.test", name: "the Teacher", role: "Teacher", isAdmin: false },
+  { email: "mentor1@example.test", name: "the Primary Mentor", role: "Mentor", isAdmin: false },
+  { email: "mentor2@example.test", name: "the Co-Mentor", role: "Team Lead", isAdmin: false },
+  { email: "mentee1@example.test", name: "Mentee 1", role: "Mentee", isAdmin: false },
+  { email: "mentee2@example.test", name: "Mentee 2", role: "Mentee", isAdmin: false },
 ];
 
 export function isTester(email: string | undefined): boolean {
@@ -57,11 +57,11 @@ export interface DomainEnvironment {
 
 const P = (name: string, email: string, role: TestRole): EnvPerson => ({ name, email, role });
 // Real tester accounts mapped onto the demo roster.
-const TEACHER = P("Abhinav Choudhary", "abhinav.choudhary2024@nst.rishihood.edu.in", "Teacher");
-const MENTOR = P("Aniket Pathak", "aniket.pathak2024@nst.rishihood.edu.in", "Mentor");
-const LEAD = P("Anwesha Adhikari", "anwesha.adhikari2024@nst.rishihood.edu.in", "Team Lead");
-const STU1 = P("Khushi", "khushi.2024@nst.rishihood.edu.in", "Mentee");
-const STU2 = P("Nikith S", "nikith.s2024@nst.rishihood.edu.in", "Mentee");
+const TEACHER = P("the Teacher", "teacher@example.test", "Teacher");
+const MENTOR = P("the Primary Mentor", "mentor1@example.test", "Mentor");
+const LEAD = P("the Co-Mentor", "mentor2@example.test", "Team Lead");
+const STU1 = P("Mentee 1", "mentee1@example.test", "Mentee");
+const STU2 = P("Mentee 2", "mentee2@example.test", "Mentee");
 
 function environment(domain: DomainKey): DomainEnvironment {
   const base = { teachers: [TEACHER], mentors: [MENTOR], teamLeads: [LEAD], students: [STU1, STU2] };
@@ -81,9 +81,9 @@ function environment(domain: DomainKey): DomainEnvironment {
     return {
       ...base,
       teams: [
-        { name: "Insight Squad", mentor: MENTOR.name, lead: LEAD.name, members: [LEAD.name, STU1.name, STU2.name], repos: ["anwesha/forecast", "khushi/forecast", "nikith/forecast"] },
+        { name: "Insight Squad", mentor: MENTOR.name, lead: LEAD.name, members: [LEAD.name, STU1.name, STU2.name], repos: ["comentor/forecast", "mentee1/forecast", "mentee2/forecast"] },
       ],
-      repositories: ["anwesha/forecast", "khushi/forecast", "nikith/forecast"],
+      repositories: ["comentor/forecast", "mentee1/forecast", "mentee2/forecast"],
       milestones: ["M1 — Baseline", "M2 — Tuned model + report"],
       deliverables: ["Baseline notebook", "Model report v1", "Final model + writeup"],
     };
@@ -122,13 +122,13 @@ export interface TestStep {
 }
 
 // People — name the actor in every step so it's never ambiguous (mirrors the server seed).
-const P_ADMIN = "Shaik (Admin)";
-const P_LCC = "the LCC account (Learner Career Council)";
-const P_TEACHER = "Abhinav (Teacher)";
-const P_MENTOR1 = "Aniket (Mentor — the team lead)";
-const P_MENTOR2 = "Anwesha (Mentor — co-mentor)";
-const P_MENTEE1 = "Khushi (Mentee 1)";
-const P_MENTEE2 = "Nikith (Mentee 2)";
+const P_ADMIN = "the Admin";
+const P_LCC = "the LCC";
+const P_TEACHER = "the Teacher";
+const P_MENTOR1 = "the Primary Mentor (team lead)";
+const P_MENTOR2 = "the Co-Mentor";
+const P_MENTEE1 = "Mentee 1";
+const P_MENTEE2 = "Mentee 2";
 const P_ORG = "newton-school-ai";
 
 /** Common steps (same workflow validation across every domain), person-specific. */
@@ -137,7 +137,7 @@ function commonSteps(domain: DomainKey): TestStep[] {
     ({ id: `${domain}-${id}`, group, role, title, instruction, expected, success });
   return [
     s("um-create", "User Management", "Admin", "Admin creates a user",
-      `Sign in as ${P_ADMIN}. Sidebar → Users (/admin/users) → "Create User". Enter a name, an @nst.rishihood.edu.in email, Role = Mentee, choose ${domain}, click Create.`,
+      `Sign in as ${P_ADMIN}. Sidebar → Users (/admin/users) → "Create User". Enter a name, an @example.test email, Role = Mentee, choose ${domain}, click Create.`,
       "The user is created with status Invited and an onboarding invitation is generated.",
       "New user shows as Invited; a Pending invitation appears."),
     s("um-role", "User Management", "Admin", "Admin assigns a role + domain",
@@ -153,11 +153,11 @@ function commonSteps(domain: DomainKey): TestStep[] {
       "The user appears with correct role/domain and onboarding status.",
       "LCC can see the invited user and its state."),
     s("ts-team", "Team Setup", "Admin", "Verify the testing team + members",
-      `As ${P_ADMIN}, open Teams (/admin/teams) → "${domain} Testing Team". Confirm Mentor = Aniket; members = Anwesha, Khushi, Nikith.`,
-      "The team exists with Aniket as mentor and Anwesha/Khushi/Nikith as members.",
+      `As ${P_ADMIN}, open Teams (/admin/teams) → "${domain} Testing Team". Confirm Mentor = the Primary Mentor; members = the Co-Mentor, Mentee 1, Mentee 2.`,
+      "The team exists with the Primary Mentor as mentor and the Co-Mentor/Mentee 1/Mentee 2 as members.",
       "Team roster matches the provisioned roster."),
     s("ts-teacher", "Team Setup", "Teacher", "Teacher sees the team",
-      `Sign in as ${P_TEACHER}. Teams (/teacher/teams) → "${domain} Testing Team". Confirm mentor, both mentees (Khushi, Nikith) and co-mentor (Anwesha).`,
+      `Sign in as ${P_TEACHER}. Teams (/teacher/teams) → "${domain} Testing Team". Confirm mentor, both mentees (Mentee 1, Mentee 2) and co-mentor (the Co-Mentor).`,
       "Teacher's team view shows the same roster.",
       "Teacher sees the full team with correct roles."),
     s("t-overview", "Teacher", "Teacher", "Domain dashboard",
@@ -165,9 +165,9 @@ function commonSteps(domain: DomainKey): TestStep[] {
       "Dashboard renders rollups for teams/students/completion/at-risk.",
       "Tiles show numbers (no errors)."),
     s("t-students", "Teacher", "Teacher", "Student tracking",
-      `As ${P_TEACHER}, open Students (/teacher/students). Confirm Khushi and Nikith with team + status.`,
+      `As ${P_TEACHER}, open Students (/teacher/students). Confirm Mentee 1 and Mentee 2 with team + status.`,
       "Both mentees appear with team + status.",
-      "Khushi and Nikith are visible."),
+      "Mentee 1 and Mentee 2 are visible."),
     s("t-reviews", "Teacher", "Teacher", "Reviews & gates (L4)",
       `As ${P_TEACHER}, open Reviews & Gates (/teacher/reviews). Open a pending review and record the teacher decision.`,
       "The L4 review form opens; the decision can be recorded.",
@@ -176,40 +176,40 @@ function commonSteps(domain: DomainKey): TestStep[] {
       `As ${P_TEACHER}, open Analytics (/teacher/analytics). Confirm the charts render for ${domain}.`,
       "Analytics render without errors.",
       "Analytics page loads with data."),
-    s("m-review1", "Mentor", "Mentor", "Aniket reviews Khushi",
-      `Sign in as ${P_MENTOR1}. Reviews (/mentor/reviews) → for KHUSHI submit an L3 weekly review (summary, strength, improvement, status). Save.`,
-      "Khushi's L3 weekly review is saved.",
-      "A saved L3 review exists for Khushi by Aniket."),
-    s("m-mentees", "Mentor", "Mentor", "Aniket reviews mentee performance",
-      `As ${P_MENTOR1}, open My Mentees (/mentor/mentees). Confirm BOTH Khushi and Nikith with L2 status, last update, blockers.`,
+    s("m-review1", "Mentor", "Mentor", "the Primary Mentor reviews Mentee 1",
+      `Sign in as ${P_MENTOR1}. Reviews (/mentor/reviews) → for MENTEE 1 submit an L3 weekly review (summary, strength, improvement, status). Save.`,
+      "Mentee 1's L3 weekly review is saved.",
+      "A saved L3 review exists for Mentee 1 by the Primary Mentor."),
+    s("m-mentees", "Mentor", "Mentor", "the Primary Mentor reviews mentee performance",
+      `As ${P_MENTOR1}, open My Mentees (/mentor/mentees). Confirm BOTH Mentee 1 and Mentee 2 with L2 status, last update, blockers.`,
       "Both mentees show per-mentee status (L2) + updates.",
-      "Khushi and Nikith both appear."),
-    s("m-board", "Mentor", "Mentor", "Aniket checks Issues & PRs",
+      "Mentee 1 and Mentee 2 both appear."),
+    s("m-board", "Mentor", "Mentor", "the Primary Mentor checks Issues & PRs",
       `As ${P_MENTOR1}, open Issues & PRs (/mentor/board) and Blockers (/mentor/blockers).`,
       "Team issues/PRs and blockers render.",
       "The board shows the team's GitHub activity."),
-    s("m-review2", "Mentor", "Mentor", "Anwesha (co-mentor) reviews Nikith",
-      `Sign in as ${P_MENTOR2}. Confirm she ALSO has the mentor views for the same team. Reviews (/mentor/reviews) → submit an L3 review for NIKITH. Save.`,
-      "Anwesha can access the team and save a review for Nikith.",
-      "A saved L3 review exists for Nikith by Anwesha — two mentors on one team."),
-    s("me-update", "Mentee", "Mentee", "Khushi submits a bi-daily update",
+    s("m-review2", "Mentor", "Mentor", "the Co-Mentor reviews Mentee 2",
+      `Sign in as ${P_MENTOR2}. Confirm they ALSO have the mentor views for the same team. Reviews (/mentor/reviews) → submit an L3 review for MENTEE 2. Save.`,
+      "The Co-Mentor can access the team and save a review for Mentee 2.",
+      "A saved L3 review exists for Mentee 2 by the Co-Mentor — two mentors on one team."),
+    s("me-update", "Mentee", "Mentee", "Mentee 1 submits a bi-daily update",
       `Sign in as ${P_MENTEE1}. On the Dashboard (/mentee) submit a bi-daily update (worked on, learned, blocker, next goal).`,
-      "Khushi's update is recorded (L1).",
-      "The update appears in Khushi's history."),
-    s("me-tasks", "Mentee", "Mentee", "Khushi works tasks & deliverables",
+      "Mentee 1's update is recorded (L1).",
+      "The update appears in Mentee 1's history."),
+    s("me-tasks", "Mentee", "Mentee", "Mentee 1 works tasks & deliverables",
       `As ${P_MENTEE1}, Tasks (/mentee/tasks) → move a task to In Progress; Deliverables (/mentee/deliverables) → submit a deliverable with an artifact URL.`,
       "Task status updates and the deliverable is submitted.",
-      "A task is In Progress and a deliverable exists for Khushi."),
-    s("me-milestones", "Mentee", "Mentee", "Nikith checks milestones & feedback",
+      "A task is In Progress and a deliverable exists for Mentee 1."),
+    s("me-milestones", "Mentee", "Mentee", "Mentee 2 checks milestones & feedback",
       `Sign in as ${P_MENTEE2}. Milestones (/mentee/milestones) → confirm progress; Feedback (/mentee/feedback) → submit 360° mentor feedback.`,
       "Milestone progress shows and feedback can be submitted.",
-      "Nikith sees milestones and submits feedback."),
-    s("cn-raise", "Concerns & Demerits", "Mentee", "Khushi raises a concern",
+      "Mentee 2 sees milestones and submits feedback."),
+    s("cn-raise", "Concerns & Demerits", "Mentee", "Mentee 1 raises a concern",
       `As ${P_MENTEE1}, raise a concern (category, title, description, severity) and submit.`,
       "A concern ticket is created (CON-…).",
       "The concern appears OPEN."),
     s("cn-resolve", "Concerns & Demerits", "LCC", "LCC resolves it + issues a demerit",
-      `Sign in as ${P_LCC}. Concerns (/lcc/concerns) → assign Khushi's concern, move to Resolved with a note. Demerits (/lcc/demerits) → issue a demerit to a mentee.`,
+      `Sign in as ${P_LCC}. Concerns (/lcc/concerns) → assign Mentee 1's concern, move to Resolved with a note. Demerits (/lcc/demerits) → issue a demerit to a mentee.`,
       "The concern is Resolved and a demerit is recorded.",
       "Concern shows Resolved; a demerit row exists."),
     s("dc-connect", "Discord Integration", "Admin", "Connect Discord",
@@ -225,17 +225,17 @@ function commonSteps(domain: DomainKey): TestStep[] {
       "A connected calendar is shown.",
       "Calendar shows Connected."),
     s("cal-event", "Calendar Integration", "LCC", "Create an event + check visibility",
-      `As ${P_LCC}, Calendar (/calendar) → create an event for the ${domain} Testing Team. Then as ${P_MENTEE1} confirm Khushi sees it on /calendar.`,
+      `As ${P_LCC}, Calendar (/calendar) → create an event for the ${domain} Testing Team. Then as ${P_MENTEE1} confirm Mentee 1 sees it on /calendar.`,
       "The event is created and visible to the team member.",
-      "Khushi sees the event the LCC created."),
-    s("nt-mentee", "Notifications", "Mentee", "Khushi checks notifications",
+      "Mentee 1 sees the event the LCC created."),
+    s("nt-mentee", "Notifications", "Mentee", "Mentee 1 checks notifications",
       `As ${P_MENTEE1}, Notifications (/notifications) → confirm the list + unread count.`,
       "Notifications + unread count render.",
-      "Khushi sees notifications with an unread count."),
-    s("nt-mentor", "Notifications", "Mentor", "Aniket checks reminders",
+      "Mentee 1 sees notifications with an unread count."),
+    s("nt-mentor", "Notifications", "Mentor", "the Primary Mentor checks reminders",
       `As ${P_MENTOR1}, Notifications (/notifications) → confirm reminder-type notifications.`,
       "Reminder notifications are present.",
-      "Aniket sees reminder notifications."),
+      "The Primary Mentor sees reminder notifications."),
   ];
 }
 
@@ -253,8 +253,8 @@ function githubSteps(domain: DomainKey): TestStep[] {
         `On GitHub.com, create a repo inside the org (e.g. ${P_ORG}/engageiq-ai) → Settings → Collaborators and teams → add "AI Group 07" with Write access.`,
         "A shared org repo exists and the team has Write access.", "The org repo lists AI Group 07 with Write."),
       g("org-members", "GitHub Setup", "Admin", "Add the testers to the org team",
-        `On GitHub.com, AI Group 07 → Members → add the GitHub accounts of Aniket, Anwesha, Khushi and Nikith.`,
-        "All four testers are members of the org team.", "Aniket, Anwesha, Khushi, Nikith are in AI Group 07."),
+        `On GitHub.com, AI Group 07 → Members → add the GitHub accounts of the Primary Mentor, the Co-Mentor, Mentee 1 and Mentee 2.`,
+        "All four testers are members of the org team.", "The Primary Mentor, the Co-Mentor, Mentee 1, Mentee 2 are in AI Group 07."),
       g("connect", "GitHub Setup", "Admin", "Connect the org in the app + sync",
         `In the app as ${P_ADMIN}, Integrations (/admin/integrations) → confirm "${P_ORG}" is connected; trigger a sync.`,
         "The org is connected and a sync pulls teams + repos.", "The app shows the org connected and synced."),
@@ -268,34 +268,34 @@ function githubSteps(domain: DomainKey): TestStep[] {
         `As ${P_MENTOR1}, Issues (/mentor/github/issues) and Pull Requests (/mentor/github/pulls). Open the PR review.`,
         "Open issues and PRs (incl. review state) are shown.", "The created issue + PR are visible to the mentor."),
       g("contrib", "GitHub Validation", "Teacher", "Per-student contributions",
-        `As ${P_TEACHER}, Student Contributions (/teacher/github/students). Confirm Khushi's and Nikith's commits/PRs are counted separately.`,
-        "Per-student contribution analytics display.", "Khushi and Nikith show distinct counts."),
+        `As ${P_TEACHER}, Student Contributions (/teacher/github/students). Confirm Mentee 1's and Mentee 2's commits/PRs are counted separately.`,
+        "Per-student contribution analytics display.", "Mentee 1 and Mentee 2 show distinct counts."),
     ];
   }
 
   if (domain === "ML") {
     return [
       g("repos", "GitHub Setup", "Mentee", "Each student creates their OWN repo",
-        `ML = every student works in a SEPARATE repo. On GitHub.com: as ${P_MENTEE1} create "khushi-forecast"; as ${P_MENTEE2} create "nikith-forecast"; as ${P_MENTOR2} create "anwesha-forecast".`,
-        "Three independent student repos exist.", "khushi-forecast, nikith-forecast, anwesha-forecast all exist."),
+        `ML = every student works in a SEPARATE repo. On GitHub.com: as ${P_MENTEE1} create "mentee1-forecast"; as ${P_MENTEE2} create "mentee2-forecast"; as ${P_MENTOR2} create "comentor-forecast".`,
+        "Three independent student repos exist.", "mentee1-forecast, mentee2-forecast, comentor-forecast all exist."),
       g("collab", "GitHub Setup", "Mentee", "Add the mentor as collaborator on each repo",
         `On GitHub.com, on EACH of the three repos: Settings → Collaborators → add ${P_MENTOR1}'s account with Write access.`,
-        "Aniket has Write access to all three repos.", "Each student repo lists Aniket as collaborator."),
+        "The Primary Mentor has Write access to all three repos.", "Each student repo lists the Primary Mentor as collaborator."),
       g("connect", "GitHub Setup", "Mentee", "Each student connects their repo in the app",
         `In the app, sign in as ${P_MENTEE1} → Connections (/connections) → Connect GitHub. Repeat for ${P_MENTEE2} and ${P_MENTOR2}. Each repo shows under My Repository (/mentee/github).`,
-        "Each student's repo is linked to their account.", "khushi-forecast shows for Khushi, nikith-forecast for Nikith."),
+        "Each student's repo is linked to their account.", "mentee1-forecast shows for Mentee 1, mentee2-forecast for Mentee 2."),
       g("activity", "GitHub Setup", "Mentee", "Generate independent activity",
-        `On GitHub.com, as ${P_MENTEE1} push a commit + PR in khushi-forecast ONLY. As ${P_MENTEE2}, a different commit + PR in nikith-forecast.`,
-        "Each repo has its OWN commits/PRs (no overlap).", "Khushi's and Nikith's repos show independent activity."),
+        `On GitHub.com, as ${P_MENTEE1} push a commit + PR in mentee1-forecast ONLY. As ${P_MENTEE2}, a different commit + PR in mentee2-forecast.`,
+        "Each repo has its OWN commits/PRs (no overlap).", "Mentee 1's and Mentee 2's repos show independent activity."),
       g("teacher-grid", "GitHub Validation", "Teacher", "Teacher sees the per-student grid",
-        `Sign in as ${P_TEACHER}. GitHub → Teams (/teacher/github/teams) → the ML team. Confirm the PER-STUDENT grid lists khushi-forecast, nikith-forecast, anwesha-forecast.`,
+        `Sign in as ${P_TEACHER}. GitHub → Teams (/teacher/github/teams) → the ML team. Confirm the PER-STUDENT grid lists mentee1-forecast, mentee2-forecast, comentor-forecast.`,
         "The team view shows one independent repo per student.", "Three separate student repos are listed."),
       g("student-repo", "GitHub Validation", "Mentee", "Drill into one student's repo",
-        `As ${P_MENTEE1}, My Repository (/mentee/github). Confirm it shows ONLY Khushi's repo — none of Nikith's.`,
-        "The repo shows only that student's activity.", "Khushi's view contains only khushi-forecast."),
+        `As ${P_MENTEE1}, My Repository (/mentee/github). Confirm it shows ONLY Mentee 1's repo — none of Mentee 2's.`,
+        "The repo shows only that student's activity.", "Mentee 1's view contains only mentee1-forecast."),
       g("compare", "GitHub Validation", "Teacher", "Compare students side by side",
-        `As ${P_TEACHER}, Student Contributions (/teacher/github/students). Compare Khushi vs Nikith — counts differ (separate repos).`,
-        "Students can be compared; counts are independent.", "Khushi and Nikith show distinct metrics."),
+        `As ${P_TEACHER}, Student Contributions (/teacher/github/students). Compare Mentee 1 vs Mentee 2 — counts differ (separate repos).`,
+        "Students can be compared; counts are independent.", "Mentee 1 and Mentee 2 show distinct metrics."),
     ];
   }
 
@@ -307,7 +307,7 @@ function githubSteps(domain: DomainKey): TestStep[] {
       "A single shared repo exists for the team.", `${repoName} exists on GitHub.`),
     g("collab", "GitHub Setup", "Mentor", "Add the whole team as collaborators",
       `On GitHub.com, ${repoName} → Settings → Collaborators → add ${P_MENTOR2}, ${P_MENTEE1} and ${P_MENTEE2} with Write access.`,
-      "Anwesha, Khushi and Nikith all have Write access.", "The shared repo lists all members as collaborators."),
+      "The Co-Mentor, Mentee 1 and Mentee 2 all have Write access.", "The shared repo lists all members as collaborators."),
     g("connect", "GitHub Setup", "Mentor", "Connect the shared repo in the app",
       `In the app as ${P_MENTOR1}, Connections (/connections) → Connect GitHub, then confirm the repo under Repository (/mentor/github/repo).`,
       "The shared repo is linked to the team.", `${repoName} shows under the mentor's Repository view.`),
@@ -321,7 +321,7 @@ function githubSteps(domain: DomainKey): TestStep[] {
       `As ${P_MENTOR1}, Repository (/mentor/github/repo) → repo detail → Progress. Confirm deliverables and milestones.`,
       "Deliverables and milestones are tracked.", "Deliverables + milestones show for the shared repo."),
     g("contrib", "GitHub Validation", "Mentor", "Per-student contributions to the shared repo",
-      `As ${P_MENTOR1}, Student Performance (/mentor/github/students). Confirm each member's contribution to the ONE repo (Khushi vs Nikith vs Anwesha).`,
+      `As ${P_MENTOR1}, Student Performance (/mentor/github/students). Confirm each member's contribution to the ONE repo (Mentee 1 vs Mentee 2 vs the Co-Mentor).`,
       "Per-member contributions to the shared repo are shown.", "Each member's share is visible."),
   ];
 }

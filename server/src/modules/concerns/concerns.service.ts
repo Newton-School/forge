@@ -11,8 +11,8 @@ import { concernsRepo, type ConcernWithEvents } from "./concerns.repository.js";
 import type { CreateConcernInput, ListConcernsQuery, TransitionInput } from "./concerns.schema.js";
 import { allowedTransitions, canTransition } from "./concerns.state.js";
 
-/** Concern notifications go to the LCC; the organizing team is CC'd via env. */
-const LCC_EMAIL = "learnercareercouncil@nst.rishihood.edu.in";
+/** Concern notifications go to the LCC (env-configured); the organizing team is CC'd via env. */
+const lccEmail = (): string => (env.LCC_EMAIL ?? env.SUPPORT_EMAIL ?? "").trim();
 const concernCc = () =>
   (env.CONCERN_CC_EMAILS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 
@@ -110,9 +110,14 @@ export async function raiseConcern(ctx: AuthContext, input: CreateConcernInput, 
     concernUrl: `${env.APP_BASE_URL.replace(/\/$/, "")}/concerns/${created.id}`,
   });
   const cc = concernCc();
-  void emailProvider()
-    .send({ to: [LCC_EMAIL], cc: cc.length ? cc : undefined, subject: mail.subject, html: mail.html, text: mail.text })
-    .catch((err) => logger.warn({ err, concernId: created.id }, "concern notification email failed (recorded anyway)"));
+  const to = lccEmail();
+  if (to) {
+    void emailProvider()
+      .send({ to: [to], cc: cc.length ? cc : undefined, subject: mail.subject, html: mail.html, text: mail.text })
+      .catch((err) => logger.warn({ err, concernId: created.id }, "concern notification email failed (recorded anyway)"));
+  } else {
+    logger.warn({ concernId: created.id }, "LCC_EMAIL unset — concern notification email skipped (concern recorded)");
+  }
 
   return toDto(created);
 }

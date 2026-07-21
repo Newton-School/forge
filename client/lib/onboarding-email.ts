@@ -4,7 +4,7 @@
  * reference (`docs/onboarding-email.html`). Presentation only; the real send is server-side.
  */
 const LOGO_URL = "https://res.cloudinary.com/doexqrehm/image/upload/v1781667863/images_hllr4y.png";
-export const SUPPORT_EMAIL = "learnercareercouncil@nst.rishihood.edu.in";
+export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "";
 
 export const ONBOARDING_SUBJECT = {
   prod: "Welcome to the Profile Building Drive Portal",

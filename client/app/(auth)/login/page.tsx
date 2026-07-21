@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 const API = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 // Newton login/callback live at the server ROOT (/newton/*), not under /api.
 const SERVER_ORIGIN = API.replace(/\/api\/?$/, "");
-const SUPPORT = "learnercareercouncil@nst.rishihood.edu.in";
+const SUPPORT = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "";
 
 const ERRORS: Record<string, string> = {
   oauth_unconfigured: "Newton sign-in isn't configured on the server yet.",
@@ -48,10 +48,12 @@ export default async function LoginPage({
             <li>• Authenticating with Newton alone doesn&apos;t grant access.</li>
           </ul>
           <NewtonButton label="Try a different account" />
-          <p className="text-center text-xs text-subtle-foreground">
-            Think this is a mistake? Contact the LCC at{" "}
-            <a href={`mailto:${SUPPORT}`} className="underline">{SUPPORT}</a>.
-          </p>
+          {SUPPORT ? (
+            <p className="text-center text-xs text-subtle-foreground">
+              Think this is a mistake? Contact the LCC at{" "}
+              <a href={`mailto:${SUPPORT}`} className="underline">{SUPPORT}</a>.
+            </p>
+          ) : null}
         </CardContent>
       </Card>
     );

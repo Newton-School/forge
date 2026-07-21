@@ -146,14 +146,12 @@ export const INVITATIONS: MockInvitation[] = [
 
 /** Preset reviewers for the email-testing module (Phase-1 validation recipients). */
 export const TEST_EMAIL_RECIPIENTS: string[] = [
-  "shaik.tajuddin2024@nst.rishihood.edu.in",
-  "abhinav.choudhary2024@nst.rishihood.edu.in",
-  "aniket.pathak2024@nst.rishihood.edu.in",
-  "anwesha.adhikari2024@nst.rishihood.edu.in",
-  "khushi.2024@nst.rishihood.edu.in",
-  "nikith.s2024@nst.rishihood.edu.in",
-  "kushagra.r@nst.rishihood.edu.in",
-  "nipun.g@nst.rishihood.edu.in",
+  "admin@example.test",
+  "teacher@example.test",
+  "mentor1@example.test",
+  "mentor2@example.test",
+  "mentee1@example.test",
+  "mentee2@example.test",
 ];
 
 export interface MockGithub { id: string; type: "COMMIT" | "PR" | "ISSUE" | "REVIEW"; title: string; author: string; repo: string; state: string; when: string; }

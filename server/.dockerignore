@@ -6,3 +6,7 @@ dist
 *.log
 .git
 .DS_Store
+
+# Local Testing Portal config must never enter the image (portal is off in prod anyway)
+testing-portal.json
+testing-portal.*.json

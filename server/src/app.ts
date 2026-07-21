@@ -37,6 +37,7 @@ import { assistantRouter } from "./modules/assistant/assistant.routes.js";
 import { jobsRouter } from "./modules/jobs/jobs.routes.js";
 import { testingRouter } from "./modules/testing/testing.routes.js";
 import { publicRouter } from "./modules/public/public.routes.js";
+import { testingPortalEnabled } from "./modules/testing/testing.config.js";
 
 /**
  * Build the Express app. Middleware order matters:
@@ -105,7 +106,12 @@ export function buildApp(): Express {
   app.use("/api/calendar", requireAuth, calendarRouter);
   app.use("/api/assistant", requireAuth, assistantRouter);
   app.use("/api/jobs", requireAuth, jobsRouter);
-  app.use("/api/testing", requireAuth, testingRouter);
+  // Testing Portal is a pre-prod UAT harness — mounted ONLY when a config file enables it
+  // (TESTING_PORTAL_CONFIGURATION_FILE). Production sets nothing => not mounted (404).
+  if (testingPortalEnabled()) {
+    app.use("/api/testing", requireAuth, testingRouter);
+    logger.info("Testing Portal ENABLED — /api/testing is mounted");
+  }
 
   // Fallbacks
   app.use(notFound);

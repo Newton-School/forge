@@ -10,3 +10,8 @@ dist
 secrets/
 *.pem
 certs/
+
+# Testing Portal config — local only (contains real tester emails/roster). Never commit.
+testing-portal.json
+testing-portal.*.json
+!testing-portal.example.json
