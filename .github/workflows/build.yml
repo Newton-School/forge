@@ -23,7 +23,7 @@ on:
       - "client/**"
       - "server/**"
       - "docker/**"
-      - ".github/workflows/deploy.yml"
+      - ".github/workflows/build.yml"
   workflow_dispatch:
 
 concurrency:
