@@ -46,6 +46,11 @@ RUN apk add --no-cache dumb-init \
   && addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 express
 COPY --from=deps   --chown=express:nodejs /app/node_modules ./node_modules
+# The generated Prisma client lives in node_modules/.prisma (+ @prisma/client re-exports it).
+# The deps stage can't generate it (no schema at postinstall time), so overlay the copy the
+# builder generated during `npm run build` — else the runtime fails: MODULE_NOT_FOUND '.prisma/client'.
+COPY --from=builder --chown=express:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=express:nodejs /app/node_modules/@prisma/client ./node_modules/@prisma/client
 # The vendored newton-auth SDK is symlinked from node_modules → keep its target present.
 COPY --from=deps   --chown=express:nodejs /app/vendor ./vendor
 COPY --from=builder --chown=express:nodejs /app/dist ./dist
