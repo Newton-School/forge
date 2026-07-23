@@ -6,9 +6,11 @@
  * accounts — the Admin and the LCC — who then onboard everyone else in-app
  * (invite-only). No mock users, mock teams, or placeholder repos.
  */
-import { PrismaClient } from "@prisma/client";
+import pkg from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { seedTestPlans } from "../src/modules/testing/testing.plans.data.js";
+// @prisma/client is CommonJS — default-import + destructure for ESM/CJS interop.
+const { PrismaClient } = pkg;
 import { env } from "../src/config/env.js";
 import { testingPortalEnabled } from "../src/modules/testing/testing.config.js";
 
