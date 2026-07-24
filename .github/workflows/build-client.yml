@@ -22,7 +22,7 @@ env:
 jobs:
   build:
     name: build & push client
-    runs-on: ubuntu-latest # TEMP: GitHub-hosted while Monk CI runners are down — restore `monkci-ubuntu-24.04-2`
+    runs-on: monkci-ubuntu-24.04-2
     environment: Production
     steps:
       - uses: actions/checkout@v4
