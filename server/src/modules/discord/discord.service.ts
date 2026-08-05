@@ -15,9 +15,10 @@ export interface InteractionResponse {
 }
 
 /**
- * Verify and handle a Discord interaction. Throws `forbidden` on a bad signature so
- * the route returns 401 and Discord rejects the endpoint. PING → PONG; other
- * interactions are recorded as activity and acknowledged with an ephemeral-style reply.
+ * Verify and handle a Discord interaction. Throws `unauthorized` (HTTP 401) on a bad
+ * signature — Discord's webhook spec REQUIRES a 401 for an invalid signature, and its
+ * endpoint-validation probe sends deliberately-bad signatures expecting exactly that.
+ * PING → PONG; other interactions are recorded as activity and acknowledged with a reply.
  */
 export async function handleInteraction(
   publicKeyHeaderSig: string | undefined,
@@ -29,7 +30,7 @@ export async function handleInteraction(
   if (!discordConfigured) throw Errors.badRequest("Discord is not configured");
   if (!rawBody) throw Errors.badRequest("Missing request body");
   if (!verifyDiscordSignature(env.DISCORD_PUBLIC_KEY!, timestamp, rawBody, publicKeyHeaderSig)) {
-    throw Errors.forbidden("Invalid request signature");
+    throw Errors.unauthorized("Invalid request signature");
   }
 
   const n = normalizeInteraction(parsedBody);
