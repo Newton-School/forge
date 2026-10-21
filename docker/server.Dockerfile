@@ -39,9 +39,11 @@ RUN DIRECT_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 
 # ---- runner (production) ----
 FROM node:20-alpine AS runner
+RUN apk upgrade --no-cache ca-certificates-bundle
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8000
+ENV NODE_OPTIONS=--use-openssl-ca
 RUN apk add --no-cache dumb-init \
   && addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 express
