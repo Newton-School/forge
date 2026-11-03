@@ -37,10 +37,12 @@ RUN npm run build
 
 # ---- runner (production) ----
 FROM node:20-alpine AS runner
+RUN apk upgrade --no-cache ca-certificates-bundle
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
+ENV NODE_OPTIONS=--use-openssl-ca
 # Non-root user
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
